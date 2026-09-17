@@ -1,0 +1,202 @@
+{
+  "main": {
+    "id": "da9e4e7e2e546195",
+    "type": "split",
+    "children": [
+      {
+        "id": "aef430c7febfcfde",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2612bc434899ac12",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "Nueva pestaña"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "55c70d28097381cb",
+    "type": "split",
+    "children": [
+      {
+        "id": "cf2bf25ee2e97141",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3861b2d3c09f5684",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
+            }
+          },
+          {
+            "id": "5f88383381e309b6",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Buscar"
+            }
+          },
+          {
+            "id": "de401fa1893bc2a9",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "3c54f4584e146248",
+    "type": "split",
+    "children": [
+      {
+        "id": "5321988df74557ae",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fafa4d7cbfebfacf",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "README - Checklists del equipo.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Enlaces entrantes"
+            }
+          },
+          {
+            "id": "8441a9b0ef97a6f8",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "README - Checklists del equipo.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Enlaces salientes"
+            }
+          },
+          {
+            "id": "393ee949dc47f8ed",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "4cbfadc804d5d111",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas las propiedades"
+            }
+          },
+          {
+            "id": "62bec4bafd99ec54",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "README - Checklists del equipo.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Esquema"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false
+    }
+  },
+  "active": "2612bc434899ac12",
+  "lastOpenFiles": [
+    "Checklist-Jesus-MI.md",
+    "Checklist-Marco-LP.md",
+    "Checklist-Jorge-BD.md",
+    "Checklist-Anuar-MV.md",
+    "README - Checklists del equipo.md",
+    "Checklist-Marco-LP.md.tmp.34024.1f48715a941a",
+    "Checklist-Mario-AN.md.tmp.34024.1ee1cdec0232",
+    "FAFZWiOc",
+    "README - Checklists del equipo.md.tmp.34024.76fed4bcbf5d",
+    "Checklist-Mario-AN.md.tmp.34024.4bbe8e3171c3",
+    "01_Plan_de_Proyecto.md",
+    "Checklist-Mario-AN.md"
+  ]
+}

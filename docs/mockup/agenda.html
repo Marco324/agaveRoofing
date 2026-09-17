@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup - Agenda de Inspecciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased h-screen flex flex-col font-sans">
+    
+    <!-- Navbar -->
+    <header class="bg-white border-b border-gray-200 p-4 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold">AR</div>
+            <h1 class="text-xl font-bold">AgaveAlerta</h1>
+            <span class="ml-2 px-2 py-1 bg-[var(--border)] text-xs rounded text-gray-500">Panel Administrativo</span>
+        </div>
+        <nav class="flex gap-6 text-gray-500">
+            <a href="#" class="hover:text-gray-900 text-gray-900 font-semibold border-b-2 border-orange-500 pb-1">Agenda</a>
+            <a href="#" class="hover:text-gray-900">Inspectores</a>
+            <a href="#" class="hover:text-gray-900">Tablero</a>
+        </nav>
+        <div class="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-hidden flex flex-col">
+        <!-- Toolbar -->
+        <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+            <div class="flex items-center gap-4">
+                <h2 class="text-xl font-bold">Jueves, 17 Septiembre 2026</h2>
+                <div class="flex bg-[var(--border)] rounded-lg p-0.5">
+                    <button class="px-3 py-1 text-sm bg-white shadow-sm rounded-md font-medium text-gray-900">Día</button>
+                    <button class="px-3 py-1 text-sm text-gray-500 font-medium hover:text-gray-900">Semana</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="bg-white border border-gray-200 hover:bg-[var(--border)]/50 text-gray-900 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Exportar
+                </button>
+                <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition shadow-sm flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Nueva Cita
+                </button>
+            </div>
+        </div>
+
+        <!-- Schedule Grid -->
+        <div class="flex-1 flex overflow-hidden">
+            
+            <!-- Inspectors sidebar -->
+            <div class="w-64 border-r border-gray-200 bg-white flex flex-col overflow-y-auto">
+                <div class="p-3 border-b border-gray-200 bg-gray-50 sticky top-0 font-medium text-sm text-gray-500">Inspectores (Zonas)</div>
+                
+                <div class="p-4 border-b border-gray-200 flex items-center gap-3 hover:bg-[var(--border)]/30 cursor-pointer">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 text-blue-700 flex items-center justify-center font-bold">JB</div>
+                    <div>
+                        <p class="font-semibold text-sm">Juan Bautista</p>
+                        <p class="text-xs text-gray-500">Norte - Escobedo</p>
+                    </div>
+                </div>
+                
+                <div class="p-4 border-b border-gray-200 flex items-center gap-3 bg-[var(--border)]/20 cursor-pointer">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold">AR</div>
+                    <div>
+                        <p class="font-semibold text-sm">Ana Rodríguez</p>
+                        <p class="text-xs text-gray-500">Sur - Carretera</p>
+                    </div>
+                </div>
+
+                <div class="p-4 border-b border-gray-200 flex items-center gap-3 hover:bg-[var(--border)]/30 cursor-pointer opacity-60">
+                    <div class="w-10 h-10 rounded-full bg-[var(--border)] text-gray-500 flex items-center justify-center font-bold">LM</div>
+                    <div>
+                        <p class="font-semibold text-sm">Luis Migueles</p>
+                        <p class="text-xs text-gray-500 text-red-500">Día libre</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Grid -->
+            <div class="flex-1 overflow-auto bg-gray-50 relative">
+                <!-- Timeline headers -->
+                <div class="flex border-b border-gray-200 sticky top-0 bg-white z-20 min-w-[800px]">
+                    <div class="w-24 shrink-0 border-r border-gray-200"></div>
+                    <div class="flex-1 grid grid-cols-5 text-center text-xs font-medium text-gray-500">
+                        <div class="py-2 border-r border-gray-200">08:00 - 10:00</div>
+                        <div class="py-2 border-r border-gray-200">10:00 - 12:00</div>
+                        <div class="py-2 border-r border-gray-200">12:00 - 14:00</div>
+                        <div class="py-2 border-r border-gray-200">14:00 - 16:00</div>
+                        <div class="py-2 border-r border-gray-200">16:00 - 18:00</div>
+                    </div>
+                </div>
+
+                <!-- Grid Rows -->
+                <div class="relative min-w-[800px]">
+                    <!-- Current time line (mocked at 11:30) -->
+                    <div class="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 left-[35%]">
+                        <div class="absolute -top-1 -translate-x-1/2 w-3 h-3 rounded-full bg-red-500"></div>
+                    </div>
+
+                    <!-- Row 1: Juan Bautista -->
+                    <div class="flex border-b border-gray-200 relative h-24 hover:bg-[var(--border)]/10">
+                        <div class="w-24 shrink-0 border-r border-gray-200 bg-gray-50"></div>
+                        <div class="flex-1 grid grid-cols-5 relative">
+                            <!-- Background columns -->
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+
+                            <!-- Appointments overlay -->
+                            <!-- Completada (8 to 10) -->
+                            <div class="absolute top-2 bottom-2 left-[2%] w-[18%] bg-emerald-500/20 border border-emerald-500/50 rounded-md p-2 flex flex-col justify-center cursor-pointer hover:shadow-md transition">
+                                <div class="flex items-center gap-1 mb-0.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span class="text-[10px] font-bold text-emerald-700 uppercase">Completada</span>
+                                </div>
+                                <p class="text-xs font-semibold text-gray-900 truncate">Familia Garza</p>
+                                <p class="text-[10px] text-gray-500 truncate">INS-0021</p>
+                            </div>
+                            
+                            <!-- En Camino (10 to 12) -->
+                            <div class="absolute top-2 bottom-2 left-[21%] w-[18%] bg-blue-500/20 border border-blue-500/50 rounded-md p-2 flex flex-col justify-center cursor-pointer hover:shadow-md transition shadow-[0_0_0_2px_rgba(59,130,246,0.3)]">
+                                <div class="flex items-center gap-1 mb-0.5">
+                                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                    <span class="text-[10px] font-bold text-blue-700 uppercase">En Camino</span>
+                                </div>
+                                <p class="text-xs font-semibold text-gray-900 truncate">Sr. Martinez</p>
+                                <p class="text-[10px] text-gray-500 truncate">INS-0022</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Ana Rodriguez -->
+                    <div class="flex border-b border-gray-200 relative h-24 hover:bg-[var(--border)]/10 bg-[var(--border)]/5">
+                        <div class="w-24 shrink-0 border-r border-gray-200 bg-gray-50"></div>
+                        <div class="flex-1 grid grid-cols-5 relative">
+                            <!-- Background columns -->
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+                            <div class="border-r border-gray-200"></div>
+
+                            <!-- Appointments overlay -->
+                            <!-- Cliente Ausente (8 to 10) -->
+                            <div class="absolute top-2 bottom-2 left-[2%] w-[18%] bg-red-500/10 border border-red-500/30 rounded-md p-2 flex flex-col justify-center cursor-pointer hover:shadow-md transition">
+                                <div class="flex items-center gap-1 mb-0.5">
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span class="text-[10px] font-bold text-red-600 uppercase">Ausente</span>
+                                </div>
+                                <p class="text-xs font-semibold text-gray-900 truncate">Sra. Lozano</p>
+                                <p class="text-[10px] text-gray-500 truncate">INS-0023</p>
+                            </div>
+
+                            <!-- Confirmada (12 to 14) -->
+                            <div class="absolute top-2 bottom-2 left-[41%] w-[18%] bg-[var(--foreground)]/5 border border-gray-900/20 rounded-md p-2 flex flex-col justify-center cursor-pointer hover:shadow-md transition">
+                                <div class="flex items-center gap-1 mb-0.5">
+                                    <span class="w-2 h-2 rounded-full bg-[var(--foreground)]/50"></span>
+                                    <span class="text-[10px] font-bold text-gray-900/70 uppercase">Confirmada</span>
+                                </div>
+                                <p class="text-xs font-semibold text-gray-900 truncate">Empresa X</p>
+                                <p class="text-[10px] text-gray-500 truncate">INS-0024</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+</body>
+</html>
