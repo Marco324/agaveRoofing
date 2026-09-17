@@ -5,3 +5,6 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Obsidian workspace local state
+.obsidian/workspace.json
