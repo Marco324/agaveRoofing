@@ -1,0 +1,340 @@
+// =====================================================================
+// AgaveAlerta - Esquema Prisma (PostgreSQL 15 / Supabase)
+// Documento de referencia: docs/03_Diseno_Base_de_Datos.md
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoInspeccion {
+  PROGRAMADA
+  NOTIFICADA
+  CONFIRMADA
+  SIN_CONFIRMAR
+  REPROG_SOLICITADA
+  REPROGRAMADA
+  EN_CAMINO
+  EN_SITIO
+  COMPLETADA
+  CLIENTE_AUSENTE
+  CANCELADA
+}
+
+enum TipoNotificacion {
+  DIA_PROGRAMADO
+  RECORDATORIO
+  EN_CAMINO
+  POR_LLEGAR
+  LLEGADA
+  RESULTADO
+  REPROGRAMADA
+  MENSAJE
+}
+
+enum CanalNotificacion {
+  PUSH
+  SMS
+  CORREO
+}
+
+model Rol {
+  idRol       Int       @id @default(autoincrement()) @map("id_rol")
+  nombre      String    @unique @db.VarChar(20)
+  descripcion String?   @db.VarChar(120)
+  usuarios    Usuario[]
+
+  @@map("rol")
+}
+
+model Usuario {
+  idUsuario      String   @id @default(uuid()) @map("id_usuario") @db.Uuid
+  authUid        String   @unique @map("auth_uid") @db.Uuid
+  idRol          Int      @map("id_rol")
+  nombreCompleto String   @map("nombre_completo") @db.VarChar(120)
+  correo         String?  @unique @db.VarChar(120)
+  telefono       String?  @unique @db.VarChar(20)
+  activo         Boolean  @default(true)
+  creadoEn       DateTime @default(now()) @map("creado_en")
+
+  rol          Rol           @relation(fields: [idRol], references: [idRol])
+  cliente      Cliente?
+  inspector    Inspector?
+  dispositivos Dispositivo[]
+
+  @@map("usuario")
+}
+
+model Cliente {
+  idCliente      Int               @id @default(autoincrement()) @map("id_cliente")
+  idUsuario      String?           @unique @map("id_usuario") @db.Uuid
+  nombre         String            @db.VarChar(120)
+  telefono       String            @db.VarChar(20)
+  correo         String?           @db.VarChar(120)
+  canalPreferido CanalNotificacion @default(PUSH) @map("canal_preferido")
+  notas          String?           @db.VarChar(255)
+  activo         Boolean           @default(true)
+  creadoEn       DateTime          @default(now()) @map("creado_en")
+
+  usuario      Usuario?     @relation(fields: [idUsuario], references: [idUsuario])
+  domicilios   Domicilio[]
+  inspecciones Inspeccion[]
+
+  @@map("cliente")
+}
+
+model Zona {
+  idZona      Int             @id @default(autoincrement()) @map("id_zona")
+  nombre      String          @unique @db.VarChar(60)
+  descripcion String?         @db.VarChar(160)
+  activo      Boolean         @default(true)
+  domicilios  Domicilio[]
+  inspectores InspectorZona[]
+
+  @@map("zona")
+}
+
+model Domicilio {
+  idDomicilio   Int          @id @default(autoincrement()) @map("id_domicilio")
+  idCliente     Int          @map("id_cliente")
+  idZona        Int?         @map("id_zona")
+  alias         String?      @db.VarChar(40)
+  calle         String       @db.VarChar(120)
+  numero        String       @db.VarChar(20)
+  colonia       String       @db.VarChar(80)
+  ciudad        String       @db.VarChar(80)
+  estado        String       @default("Texas") @db.VarChar(60)
+  codigoPostal  String       @map("codigo_postal") @db.Char(5)
+  referencias   String?      @db.VarChar(255)
+  latitud       Decimal?     @db.Decimal(9, 6)
+  longitud      Decimal?     @db.Decimal(9, 6)
+  geocodificado Boolean      @default(false)
+  activo        Boolean      @default(true)
+
+  cliente      Cliente      @relation(fields: [idCliente], references: [idCliente])
+  zona         Zona?        @relation(fields: [idZona], references: [idZona])
+  inspecciones Inspeccion[]
+
+  @@map("domicilio")
+}
+
+model Inspector {
+  idInspector   Int             @id @default(autoincrement()) @map("id_inspector")
+  idUsuario     String          @unique @map("id_usuario") @db.Uuid
+  nombre        String          @db.VarChar(120)
+  telefono      String          @db.VarChar(20)
+  placaVehiculo String?         @map("placa_vehiculo") @db.VarChar(15)
+  urlFoto       String?         @map("url_foto") @db.VarChar(255)
+  activo        Boolean         @default(true)
+
+  usuario      Usuario         @relation(fields: [idUsuario], references: [idUsuario])
+  zonas        InspectorZona[]
+  inspecciones Inspeccion[]
+  trayectos    Trayecto[]
+
+  @@map("inspector")
+}
+
+model InspectorZona {
+  idInspector Int @map("id_inspector")
+  idZona      Int @map("id_zona")
+
+  inspector Inspector @relation(fields: [idInspector], references: [idInspector])
+  zona      Zona      @relation(fields: [idZona], references: [idZona])
+
+  @@id([idInspector, idZona])
+  @@map("inspector_zona")
+}
+
+model Inspeccion {
+  idInspeccion          BigInt           @id @default(autoincrement()) @map("id_inspeccion")
+  folio                 String           @unique @db.VarChar(16)
+  idCliente             Int              @map("id_cliente")
+  idDomicilio           Int              @map("id_domicilio")
+  idInspector           Int?             @map("id_inspector")
+  fechaProgramada       DateTime         @map("fecha_programada") @db.Date
+  ventanaInicio         DateTime         @map("ventana_inicio") @db.Time
+  ventanaFin            DateTime         @map("ventana_fin") @db.Time
+  estado                EstadoInspeccion @default(PROGRAMADA)
+  motivoVisita          String?          @map("motivo_visita") @db.VarChar(120)
+  notas                 String?          @db.VarChar(255)
+  idInspeccionOrigen    BigInt?          @map("id_inspeccion_origen")
+  vecesReprogramada     Int              @default(0) @map("veces_reprogramada") @db.SmallInt
+  confirmadoEn          DateTime?        @map("confirmado_en")
+  presenciaConfirmadaEn DateTime?        @map("presencia_confirmada_en")
+  creadaPor             String?          @map("creada_por") @db.Uuid
+  creadoEn              DateTime         @default(now()) @map("creado_en")
+  actualizadoEn         DateTime         @default(now()) @updatedAt @map("actualizado_en")
+
+  cliente          Cliente               @relation(fields: [idCliente], references: [idCliente])
+  domicilio        Domicilio             @relation(fields: [idDomicilio], references: [idDomicilio])
+  inspector        Inspector?            @relation(fields: [idInspector], references: [idInspector])
+  origen           Inspeccion?           @relation("Reintento", fields: [idInspeccionOrigen], references: [idInspeccion])
+  reintentos       Inspeccion[]          @relation("Reintento")
+  historial        InspeccionHistorial[]
+  reprogramaciones Reprogramacion[]
+  notificaciones   Notificacion[]
+  trayectos        Trayecto[]
+  resultado        ResultadoInspeccion?
+  evidencias       Evidencia[]
+  mensajes         Mensaje[]
+
+  @@index([fechaProgramada, idInspector])
+  @@index([estado, fechaProgramada])
+  @@map("inspeccion")
+}
+
+model InspeccionHistorial {
+  idHistorial    BigInt           @id @default(autoincrement()) @map("id_historial")
+  idInspeccion   BigInt           @map("id_inspeccion")
+  estadoAnterior EstadoInspeccion? @map("estado_anterior")
+  estadoNuevo    EstadoInspeccion @map("estado_nuevo")
+  idUsuario      String?          @map("id_usuario") @db.Uuid
+  origen         String           @db.VarChar(12)
+  nota           String?          @db.VarChar(255)
+  ocurridoEn     DateTime         @default(now()) @map("ocurrido_en")
+
+  inspeccion Inspeccion @relation(fields: [idInspeccion], references: [idInspeccion])
+
+  @@index([idInspeccion])
+  @@map("inspeccion_historial")
+}
+
+model Reprogramacion {
+  idReprogramacion        BigInt    @id @default(autoincrement()) @map("id_reprogramacion")
+  idInspeccion            BigInt    @map("id_inspeccion")
+  fechaAnterior           DateTime  @map("fecha_anterior") @db.Date
+  ventanaInicioAnterior   DateTime  @map("ventana_inicio_anterior") @db.Time
+  fechaSolicitada         DateTime  @map("fecha_solicitada") @db.Date
+  ventanaInicioSolicitada DateTime  @map("ventana_inicio_solicitada") @db.Time
+  motivo                  String?   @db.VarChar(200)
+  solicitadaPor           String    @map("solicitada_por") @db.VarChar(15)
+  estado                  String    @default("SOLICITADA") @db.VarChar(12)
+  resueltaPor             String?   @map("resuelta_por") @db.Uuid
+  resueltaEn              DateTime? @map("resuelta_en")
+  creadoEn                DateTime  @default(now()) @map("creado_en")
+
+  inspeccion Inspeccion @relation(fields: [idInspeccion], references: [idInspeccion])
+
+  @@map("reprogramacion")
+}
+
+model Dispositivo {
+  idDispositivo BigInt    @id @default(autoincrement()) @map("id_dispositivo")
+  idUsuario     String    @map("id_usuario") @db.Uuid
+  tokenPush     String    @unique @map("token_push") @db.VarChar(255)
+  plataforma    String    @db.VarChar(10)
+  versionApp    String?   @map("version_app") @db.VarChar(15)
+  activo        Boolean   @default(true)
+  ultimoUso     DateTime? @map("ultimo_uso")
+  creadoEn      DateTime  @default(now()) @map("creado_en")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
+
+  @@map("dispositivo")
+}
+
+model Notificacion {
+  idNotificacion BigInt            @id @default(autoincrement()) @map("id_notificacion")
+  idInspeccion   BigInt            @map("id_inspeccion")
+  tipo           TipoNotificacion
+  canal          CanalNotificacion
+  destinatario   String            @db.VarChar(120)
+  titulo         String?           @db.VarChar(80)
+  cuerpo         String            @db.VarChar(400)
+  estado         String            @default("PENDIENTE") @db.VarChar(12)
+  intentos       Int               @default(0) @db.SmallInt
+  programadaPara DateTime          @map("programada_para")
+  enviadaEn      DateTime?         @map("enviada_en")
+  entregadaEn    DateTime?         @map("entregada_en")
+  leidaEn        DateTime?         @map("leida_en")
+  errorUltimo    String?           @map("error_ultimo") @db.VarChar(255)
+
+  inspeccion Inspeccion @relation(fields: [idInspeccion], references: [idInspeccion])
+
+  @@map("notificacion")
+}
+
+model Trayecto {
+  idTrayecto    BigInt           @id @default(autoincrement()) @map("id_trayecto")
+  idInspeccion  BigInt           @map("id_inspeccion")
+  idInspector   Int              @map("id_inspector")
+  estado        String           @default("ACTIVO") @db.VarChar(12)
+  iniciadoEn    DateTime         @default(now()) @map("iniciado_en")
+  finalizadoEn  DateTime?        @map("finalizado_en")
+  etaActualS    Int?             @map("eta_actual_s")
+  etaAproximado Boolean          @default(false) @map("eta_aproximado")
+  distanciaM    Int?             @map("distancia_m")
+  duracionS     Int?             @map("duracion_s")
+
+  inspeccion Inspeccion       @relation(fields: [idInspeccion], references: [idInspeccion])
+  inspector  Inspector        @relation(fields: [idInspector], references: [idInspector])
+  puntos     PuntoUbicacion[]
+
+  @@map("trayecto")
+}
+
+model PuntoUbicacion {
+  idPunto      BigInt   @id @default(autoincrement()) @map("id_punto")
+  idTrayecto   BigInt   @map("id_trayecto")
+  latitud      Decimal  @db.Decimal(9, 6)
+  longitud     Decimal  @db.Decimal(9, 6)
+  precisionM   Decimal? @map("precision_m") @db.Decimal(5, 2)
+  velocidadMps Decimal? @map("velocidad_mps") @db.Decimal(5, 2)
+  registradoEn DateTime @default(now()) @map("registrado_en")
+
+  trayecto Trayecto @relation(fields: [idTrayecto], references: [idTrayecto])
+
+  @@map("punto_ubicacion")
+}
+
+model ResultadoInspeccion {
+  idResultado        BigInt    @id @default(autoincrement()) @map("id_resultado")
+  idInspeccion       BigInt    @unique @map("id_inspeccion")
+  estadoTecho        String    @map("estado_techo") @db.VarChar(15)
+  hallazgos          String    @db.Text
+  requiereReparacion Boolean   @default(false) @map("requiere_reparacion")
+  urgencia           String?   @db.VarChar(10)
+  idLocal            String?   @unique @map("id_local") @db.Uuid
+  registradoSinSenal Boolean   @default(false) @map("registrado_sin_senal")
+  registradoEn       DateTime  @map("registrado_en")
+  sincronizadoEn     DateTime? @map("sincronizado_en")
+
+  inspeccion Inspeccion @relation(fields: [idInspeccion], references: [idInspeccion])
+
+  @@map("resultado_inspeccion")
+}
+
+model Evidencia {
+  idEvidencia        BigInt   @id @default(autoincrement()) @map("id_evidencia")
+  idInspeccion       BigInt   @map("id_inspeccion")
+  tipoEvidencia      String   @map("tipo_evidencia") @db.VarChar(15)
+  urlFoto            String   @map("url_foto") @db.VarChar(255)
+  idLocal            String?  @unique @map("id_local") @db.Uuid
+  registradoSinSenal Boolean  @default(false) @map("registrado_sin_senal")
+  tomadaEn           DateTime @map("tomada_en")
+  subidaEn           DateTime @default(now()) @map("subida_en")
+
+  inspeccion Inspeccion @relation(fields: [idInspeccion], references: [idInspeccion])
+
+  @@map("evidencia")
+}
+
+model Mensaje {
+  idMensaje    BigInt   @id @default(autoincrement()) @map("id_mensaje")
+  idInspeccion BigInt   @map("id_inspeccion")
+  idUsuario    String   @map("id_usuario") @db.Uuid
+  remitente    String   @db.VarChar(10)
+  cuerpo       String   @db.VarChar(500)
+  leido        Boolean  @default(false)
+  enviadoEn    DateTime @default(now()) @map("enviado_en")
+
+  inspeccion Inspeccion @relation(fields: [idInspeccion], references: [idInspeccion])
+
+  @@map("mensaje")
+}

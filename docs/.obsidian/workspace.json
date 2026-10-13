@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "01_Plan_de_Proyecto.md",
+                "file": "02_SRS_Requerimientos.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "01_Plan_de_Proyecto"
+              "title": "02_SRS_Requerimientos"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "01_Plan_de_Proyecto.md",
+                "file": "mockup/Mockup - AgaveAlerta.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "01_Plan_de_Proyecto.md",
+                "file": "mockup/Mockup - AgaveAlerta.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "01_Plan_de_Proyecto.md",
+                "file": "mockup/Mockup - AgaveAlerta.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -188,23 +188,34 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "b5ab48f4765c75fd",
+  "active": "89651dda6ccea699",
   "lastOpenFiles": [
+    "pruebas/resultados/Jesus-Pruebas-Agenda-E07.md",
+    "pruebas/resultados",
+    "entregas/E07/Marco-Minuta-Sprint-3.md",
+    "entregas/E07",
+    "entregas",
+    "pruebas/Casos-de-Prueba-Agenda-E07.md",
+    "pruebas",
+    "manual/Manual-Capitulo-4-Agenda.md",
+    "manual",
+    "Checklists/README - Checklists del equipo.md",
+    "01_Plan_de_Proyecto.md",
+    "Entrega-E01-Resumen.pdf",
+    "mockup/Mockup - AgaveAlerta.md",
+    "Checklists/Checklist-Mario-AN.md",
+    "Checklists/Checklist-Marco-LP.md",
+    "Checklists/Checklist-Jorge-BD.md",
+    "Checklists/Checklist-Jesus-CL.md",
+    "Checklists/Checklist-Anuar-IN.md",
     "mockup/agenda.html",
     "mockup/tablero.html",
     "mockup/app_inspector.html",
     "mockup/app_cliente.html",
-    "06_Acta_Congelacion_Alcance.pdf",
     "06_Acta_Congelacion_Alcance.md",
     "07_Minutas_Sprint_1_y_2.md",
-    "Entrega-E01-Resumen.pdf",
-    "mockup/Mockup - AgaveAlerta.md",
     "03_Diseno_Base_de_Datos.md",
-    "setup_rls.sql",
     "02_SRS_Requerimientos.md",
-    "01_Plan_de_Proyecto.md",
-    "Checklists/README - Checklists del equipo.md",
-    "Checklists/Checklist-Anuar-IN.md",
     "05_Calendario_Entregas.md",
     "04_Diagramas_UML.md",
     "03b_Modelo_Datos_Resumen_E03.md"

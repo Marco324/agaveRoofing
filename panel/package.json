@@ -1,0 +1,14 @@
+{
+  "name": "@agave/panel",
+  "version": "1.0.0",
+  "description": "Panel Web de Administración de AgaveAlerta para Agave Roofing",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@agave/shared": "*"
+  }
+}

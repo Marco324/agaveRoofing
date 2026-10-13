@@ -45,17 +45,17 @@ tags: [agavealerta, checklist, rol/app-inspector]
 ## E03 — Requerimientos cerrados + diseño de interfaz
 `#agave/E03` · jue 17 sep · Sprint 1 (cierre)
 
-- [ ] **Mockup final — ruta del día**
+- [x] **Mockup final — ruta del día**
   → Lista de paradas ordenadas por ventana, cada una con cliente, colonia, hora comprometida y su estado con color. Arriba: cuántas faltan.
-- [ ] **Mockup final — detalle de la parada**
+- [x] **Mockup final — detalle de la parada**
   → Datos del cliente, dirección con referencias, botón grande **"Voy en camino"**, botón de llamar y botón de mensaje.
-- [ ] **Mockup final — trayecto activo**
+- [x] **Mockup final — trayecto activo**
   → Mapa con la ruta, tiempo estimado, y dos botones: **"Llegué"** y **"Cliente ausente"**. Indicador visible de que se está compartiendo la ubicación.
-- [ ] **Mockup final — captura del resultado**
+- [x] **Mockup final — captura del resultado**
   → Estado del techo (4 opciones grandes), hallazgos, si requiere reparación y su urgencia, y la galería de fotos tomadas. Con el indicador de "se guardará y se enviará cuando haya señal".
-- [ ] **Mockup final — cliente ausente**
+- [x] **Mockup final — cliente ausente**
   → Pantalla que **obliga** a tomar foto de la fachada y escribir una nota antes de dejar continuar.
-- [ ] 📦 **Entregable:** Mockups de la app del inspector.
+- [x] 📦 **Entregable:** Mockups de la app del inspector.
 
 ## E04 — Diseño técnico + infraestructura
 `#agave/E04` · jue 24 sep · Sprint 2
@@ -100,17 +100,17 @@ tags: [agavealerta, checklist, rol/app-inspector]
 
 > [!warning] Esta entrega ⛔ **Requiere:** Jorge · `GET /inspecciones/mi-ruta` (BD E07).
 
-- [ ] **Ruta del día**
+- [x] **Ruta del día**
   → Lista de las citas de hoy ordenadas por ventana de atención, con nombre del cliente, colonia, horario comprometido y el estado con color. Con "jalar para actualizar".
-- [ ] **Selector de fecha**
+- [x] **Selector de fecha**
   → Poder ver la ruta de mañana o la de días pasados.
-- [ ] **Detalle de la parada**
+- [x] **Detalle de la parada**
   → Cliente, teléfono, dirección completa con referencias, motivo de la visita, notas del administrador, y el estado de confirmación del cliente.
-- [ ] **Abrir en el mapa**
+- [x] **Abrir en el mapa**
   → Botón que abre Google Maps con las coordenadas del domicilio para navegar hasta allá.
-- [ ] **Caché local de la ruta**
+- [x] **Caché local de la ruta**
   → Guardar la ruta del día en SQLite al cargarla, para que el inspector pueda consultarla aunque se quede sin señal a media jornada.
-- [ ] 📦 **Entregable:** Ruta del día del inspector con caché local.
+- [x] 📦 **Entregable:** Ruta del día del inspector con caché local.
 
 ## E08 — Motor de notificaciones push
 `#agave/E08` · jue 22 oct · Sprint 4

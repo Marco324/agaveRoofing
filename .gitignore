@@ -8,3 +8,15 @@ Thumbs.db
 
 # Obsidian workspace local state
 .obsidian/workspace.json
+
+# Node & Build
+node_modules/
+dist/
+.env
+.env.local
+
+# SQLite local data
+data/
+*.db
+*.db-wal
+*.db-shm

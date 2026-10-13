@@ -54,21 +54,21 @@ tags: [agavealerta, checklist, rol/lider, rol/panel]
 > [!warning] Depende de
 > Mario · SRS completo (AN E03) para poder validarlo con el cliente.
 
-- [ ] **Validar el SRS con Agave Roofing**
+- [x] **Validar el SRS con Agave Roofing**
   → Sesión con el responsable de operaciones repasando requerimiento por requerimiento los de prioridad Alta. Terminada cuando dice "sí, eso es lo que necesito" y firma.
   ⛔ **Requiere:** Mario · SRS completo (AN E03).
-- [ ] **Acta de congelación de alcance**
+- [x] **Acta de congelación de alcance**
   → Documento corto: qué entra, qué no entra y cómo se tramita un cambio (entra al backlog, lo prioriza el PO). Firmado por el cliente y por la catedrática.
-- [ ] **Mockup final — agenda del panel**
+- [x] **Mockup final — agenda del panel**
   → Calendario semanal con las citas por inspector, colores por estado y un panel lateral para programar una cita nueva.
-- [ ] **Mockup final — tablero de indicadores**
+- [x] **Mockup final — tablero de indicadores**
   → Tarjetas (citas del mes, tasa de confirmación, visitas fallidas, reprogramaciones) + gráfica de citas por estado + ranking de puntualidad por inspector.
-- [ ] **Sprint Review 1 + Retrospectiva + Planning 2**
+- [x] **Sprint Review 1 + Retrospectiva + Planning 2**
   → Demostrar lo del sprint, anotar qué mejorar y planear el Sprint 2.
-- [ ] **Consolidar el diseño de la base de datos en la entrega**
+- [x] **Consolidar el diseño de la base de datos en la entrega**
   → Jorge entrega esta semana el **diseño de la BD**: [[03_Diseno_Base_de_Datos]] (normativo) y [[03b_Modelo_Datos_Resumen_E03]] (ERD de 5 entidades + flujo de datos, para exponer). Terminado cuando ambos van en el paquete de E03 junto al SRS y los mockups.
   🔸 **Mejor después de:** Jorge · diccionario de datos y ERD (BD E03).
-- [ ] 📦 **Entregable:** SRS validado y firmado + acta de congelación + mockups del panel + **diseño de la base de datos consolidado** en la entrega.
+- [x] 📦 **Entregable:** SRS validado y firmado + acta de congelación + mockups del panel + **diseño de la base de datos consolidado** en la entrega.
 
 ## E04 — Diseño técnico + infraestructura
 `#agave/E04` · jue 24 sep · Sprint 2
@@ -117,18 +117,18 @@ tags: [agavealerta, checklist, rol/lider, rol/panel]
 
 > [!warning] Toda esta entrega ⛔ **Requiere:** Jorge · API de agenda con folio, validación de traslape y máquina de estados (BD E07).
 
-- [ ] **Calendario de citas**
+- [x] **Calendario de citas**
   → Vista semanal y diaria, con filtro por inspector y por zona. Cada cita se pinta con el color de su estado (programada, notificada, confirmada, sin confirmar, en camino, completada, ausente).
-- [ ] **Programar una inspección**
+- [x] **Programar una inspección**
   → Formulario: cliente → domicilio → fecha → ventana de atención (ej. 10:00–12:00) → inspector → motivo de la visita. Si el inspector ya tiene una cita traslapada, la API lo rechaza y tú muestras el mensaje claro.
-- [ ] **Reasignar, mover o cancelar**
+- [x] **Reasignar, mover o cancelar**
   → Cambiar de inspector, mover la fecha u hora, o cancelar con motivo. Cada acción queda en el historial de la cita.
-- [ ] **Detalle de la cita con su línea de tiempo**
+- [x] **Detalle de la cita con su línea de tiempo**
   → Pantalla que muestra todos los cambios de estado de esa cita con fecha, hora y quién lo hizo (viene de `inspeccion_historial`). Es lo que se consulta cuando un cliente se queja.
-- [ ] **Demo intermedia al cliente**
+- [x] **Demo intermedia al cliente**
   → Enseñarle a Agave Roofing lo que ya corre: catálogos y agenda. Recoger comentarios y meterlos al backlog.
-- [ ] **Sprint Review 3 + Retrospectiva + Planning 4**
-- [ ] 📦 **Entregable:** Agenda del panel + demo + minuta.
+- [x] **Sprint Review 3 + Retrospectiva + Planning 4**
+- [x] 📦 **Entregable:** Agenda del panel + demo + minuta.
 
 ## E08 — Motor de notificaciones push
 `#agave/E08` · jue 22 oct · Sprint 4

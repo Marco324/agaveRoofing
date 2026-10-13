@@ -1,0 +1,10 @@
+{
+  "name": "@agave/app-inspector",
+  "version": "1.0.0",
+  "description": "Aplicación móvil del inspector técnico de Agave Roofing en San Antonio, TX",
+  "private": true,
+  "main": "index.ts",
+  "dependencies": {
+    "@agave/shared": "*"
+  }
+}

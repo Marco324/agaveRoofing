@@ -1,0 +1,10 @@
+{
+  "name": "@agave/app-cliente",
+  "version": "1.0.0",
+  "description": "Aplicación móvil del cliente de Agave Roofing en San Antonio, TX",
+  "private": true,
+  "main": "index.ts",
+  "dependencies": {
+    "@agave/shared": "*"
+  }
+}

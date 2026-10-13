@@ -56,19 +56,19 @@ tags: [agavealerta, checklist, rol/backend]
 > [!warning] Se entrega **mañana jueves 17 de septiembre**
 > El **diseño de la base de datos** va en esta entrega: ERD, diccionario de datos y borrador de `schema.prisma`. Documentos: [[03_Diseno_Base_de_Datos]] (normativo) y [[03b_Modelo_Datos_Resumen_E03]] (vista resumida de 5 entidades para exponer). Súbelo a la carpeta de documentación antes de que Marco consolide.
 
-- [ ] **ERD y vista resumida del modelo de datos**
+- [x] **ERD y vista resumida del modelo de datos**
   → Diagrama entidad-relación de las cinco entidades centrales (usuarios, perfiles de cliente, citas, notificaciones y ubicaciones en tiempo real) con el flujo de datos de punta a punta. Ya está en [[03b_Modelo_Datos_Resumen_E03]]; terminado cuando lo puedes exponer en 5 minutos y la tabla de equivalencia contra el modelo completo (§5) cuadra con lo que vas a migrar en E04.
-- [ ] **Diccionario de datos**
+- [x] **Diccionario de datos**
   → Cada tabla con sus columnas: tipo, nulidad, restricción y descripción en español. Es lo que Mario necesita para el diagrama de clases.
-- [ ] **Normalización documentada**
+- [x] **Normalización documentada**
   → Justificar que el modelo está en 3FN y **documentar las desnormalizaciones deliberadas** (`veces_reprogramada`, `confirmado_en`, `distancia_m`, `destinatario`) con su razón.
-- [ ] **Borrador del `schema.prisma`**
+- [x] **Borrador del `schema.prisma`**
   → Los modelos principales escritos, aunque todavía no se migren. Con los enums `EstadoInspeccion` y `TipoNotificacion`.
-- [ ] **Diseño del motor de notificaciones**
+- [x] **Diseño del motor de notificaciones**
   → Decidir en papel: tabla `notificacion` con estados, tabla `plantilla_notificacion`, despachador que corre cada minuto, política de reintentos y cuándo se cae al respaldo por SMS. Terminado cuando puedes dibujarlo en el pizarrón.
-- [ ] **Índices y decisión de retención**
+- [x] **Índices y decisión de retención**
   → Definir los índices de las consultas calientes y el índice único parcial del trayecto activo. Decidir la retención de `punto_ubicacion` (30 días) y dejarlo escrito.
-- [ ] 📦 **Entregable:** **Diseño de la base de datos** ([[03_Diseno_Base_de_Datos]] + [[03b_Modelo_Datos_Resumen_E03]]) + diccionario de datos + Prisma borrador + diseño del motor de notificaciones.
+- [x] 📦 **Entregable:** **Diseño de la base de datos** ([[03_Diseno_Base_de_Datos]] + [[03b_Modelo_Datos_Resumen_E03]]) + diccionario de datos + Prisma borrador + diseño del motor de notificaciones.
 
 ## E04 — Diseño técnico + infraestructura
 `#agave/E04` · jue 24 sep · Sprint 2
@@ -120,19 +120,19 @@ tags: [agavealerta, checklist, rol/backend]
 ## E07 — Agenda de inspecciones y asignación
 `#agave/E07` · jue 15 oct · Sprint 3 (cierre)
 
-- [ ] **Generación de folio**
+- [x] **Generación de folio**
   → Folio consecutivo por año con formato `INS-2026-000124`, único y **estable al reprogramar**.
-- [ ] **Crear inspección con validación de traslape**
+- [x] **Crear inspección con validación de traslape**
   → `POST /inspecciones` valida que el inspector no tenga otra cita con ventana traslapada ese día (RN-02) y que la ventana caiga en el horario de operación. Devuelve error claro si no.
-- [ ] **Máquina de estados implementada**
+- [x] **Máquina de estados implementada**
   → Servicio `transicionar(cita, nuevoEstado, actor, origen)` que **rechaza cualquier transición inválida** y escribe siempre en `inspeccion_historial`. Ningún otro código debe cambiar `estado` directamente.
-- [ ] **Endpoints de agenda**
+- [x] **Endpoints de agenda**
   → Listar por día / inspector / zona / estado; detalle con su línea de tiempo; reasignar; mover; cancelar con motivo.
-- [ ] **Endpoint de la ruta del día del inspector**
+- [x] **Endpoint de la ruta del día del inspector**
   → `GET /inspecciones/mi-ruta?fecha=` devuelve las citas del inspector autenticado, **ordenadas por ventana**, con cliente, dirección, coordenadas y estado. Lo consume Anuar.
-- [ ] **Endpoint de mis citas del cliente**
+- [x] **Endpoint de mis citas del cliente**
   → `GET /inspecciones/mias` con la próxima cita y el historial. Lo consume Jesús.
-- [ ] 📦 **Entregable:** API de agenda + máquina de estados + endpoints de ruta y mis citas.
+- [x] 📦 **Entregable:** API de agenda + máquina de estados + endpoints de ruta y mis citas.
 
 ## E08 — Motor de notificaciones push
 `#agave/E08` · jue 22 oct · Sprint 4

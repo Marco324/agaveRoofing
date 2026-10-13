@@ -1,0 +1,18 @@
+{
+  "name": "@agave/api",
+  "version": "1.0.0",
+  "description": "API REST de AgaveAlerta para gestión de inspecciones de techo",
+  "main": "src/server.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types --experimental-sqlite src/server.ts",
+    "seed": "node --experimental-strip-types --experimental-sqlite src/seed.ts",
+    "test": "node --experimental-strip-types --experimental-sqlite test/agenda.test.ts"
+  },
+  "dependencies": {
+    "@agave/shared": "*"
+  },
+  "devDependencies": {
+    "prisma": "^5.20.0"
+  }
+}

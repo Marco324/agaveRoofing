@@ -1,0 +1,9 @@
+{
+  "name": "@agave/shared",
+  "version": "1.0.0",
+  "description": "Tipos y contratos compartidos de AgaveAlerta",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true
+}

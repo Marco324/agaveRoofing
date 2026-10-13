@@ -43,17 +43,17 @@ tags: [agavealerta, checklist, rol/analista]
 ## E03 — Requerimientos cerrados + diseño de interfaz
 `#agave/E03` · jue 17 sep · Sprint 1 (cierre)
 
-- [ ] **SRS — requerimientos funcionales de los módulos 6 a 10**
+- [x] **SRS — requerimientos funcionales de los módulos 6 a 10**
   → Módulo 6 trayecto y seguimiento en vivo; 7 ejecución y resultado; 8 comunicación; 9 tablero; 10 configuración.
-- [ ] **SRS — requerimientos no funcionales**
+- [x] **SRS — requerimientos no funcionales**
   → Usabilidad (el cliente confirma en 3 toques), rendimiento (el mapa se actualiza cada 15 s), confiabilidad, **seguridad y privacidad** (la ubicación solo es visible durante el trayecto), mantenibilidad.
-- [ ] **Reglas de negocio**
+- [x] **Reglas de negocio**
   → Las 17 reglas RN-01 a RN-17: máquina de estados, no traslapar citas, un solo trayecto activo, límite de 3 reprogramaciones, evidencia obligatoria, horario de silencio, retención de puntos GPS.
-- [ ] **Casos de uso — resumen y dos detallados**
+- [x] **Casos de uso — resumen y dos detallados**
   → Tabla de CU-01 a CU-26 con actor y RF relacionados, más dos casos de uso escritos a detalle (flujo principal, alternos y excepciones): **CU-16 iniciar trayecto** y **CU-11 solicitar reprogramación**.
-- [ ] **Matriz de trazabilidad**
+- [x] **Matriz de trazabilidad**
   → Tabla que liga cada objetivo específico del [[01_Plan_de_Proyecto]] con sus requerimientos funcionales.
-- [ ] 📦 **Entregable:** SRS completo versión 1.0, listo para que Marco lo valide con el cliente.
+- [x] 📦 **Entregable:** SRS completo versión 1.0, listo para que Marco lo valide con el cliente.
 
 ## E04 — Diseño técnico + infraestructura
 `#agave/E04` · jue 24 sep · Sprint 2
@@ -96,15 +96,15 @@ tags: [agavealerta, checklist, rol/analista]
 ## E07 — Agenda de inspecciones y asignación
 `#agave/E07` · jue 15 oct · Sprint 3 (cierre)
 
-- [ ] **Manual capítulo 4 — Programar y mover una cita**
+- [x] **Manual capítulo 4 — Programar y mover una cita**
   → Paso a paso para el administrador: elegir cliente, domicilio, fecha, ventana e inspector. Explicar qué significa cada estado de la cita y qué hacer cuando el sistema avisa de un traslape.
   🔸 **Mejor después de:** Marco · agenda del panel (LP E07).
-- [ ] **Casos de prueba de la agenda**
+- [x] **Casos de prueba de la agenda**
   → Programar una cita válida; intentar traslapar dos citas del mismo inspector; cancelar; reasignar; verificar que **cada cambio deja renglón en el historial**.
-- [ ] **Diagrama de estados de la inspección — verificado**
+- [x] **Diagrama de estados de la inspección — verificado**
   → Comparar el diagrama con lo que la API realmente permite. Cualquier transición que el código acepte y el diagrama no (o al revés) es un error que hay que reportar.
   ⛔ **Requiere:** Jorge · máquina de estados (BD E07).
-- [ ] 📦 **Entregable:** Manual cap. 4 + casos de prueba de la agenda + estados verificados.
+- [x] 📦 **Entregable:** Manual cap. 4 + casos de prueba de la agenda + estados verificados.
 
 ## E08 — Motor de notificaciones push
 `#agave/E08` · jue 22 oct · Sprint 4

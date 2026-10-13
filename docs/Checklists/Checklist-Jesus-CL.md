@@ -45,21 +45,21 @@ tags: [agavealerta, checklist, rol/app-cliente, rol/pruebas]
 ## E03 — Requerimientos cerrados + diseño de interfaz
 `#agave/E03` · jue 17 sep · Sprint 1 (cierre)
 
-- [ ] **Mockup final — la notificación**
+- [x] **Mockup final — la notificación**
   → Cómo se ve el aviso del día programado en la pantalla bloqueada, con los botones **"Sí estaré"** y **"Mover cita"**. Es la pantalla más importante del proyecto.
-- [ ] **Mockup final — mis citas**
+- [x] **Mockup final — mis citas**
   → La próxima cita en grande (fecha, horario, inspector) con el botón de acción que toque según el estado, y abajo el historial.
-- [ ] **Mockup final — detalle de la cita**
+- [x] **Mockup final — detalle de la cita**
   → Fecha, ventana de atención, domicilio, datos del inspector con su foto y placa, y el estado con lenguaje humano ("El inspector va en camino").
-- [ ] **Mockup final — reprogramar**
+- [x] **Mockup final — reprogramar**
   → Lista de horarios disponibles como tarjetas grandes, campo de motivo opcional y confirmación.
-- [ ] **Mockup final — mapa de seguimiento**
+- [x] **Mockup final — mapa de seguimiento**
   → Mapa con el inspector, tu casa y arriba el tiempo estimado en letra grande ("Llega en 12 minutos"), más el botón **"Ya estoy en mi casa"**.
-- [ ] **Mockup final — reporte de inspección**
+- [x] **Mockup final — reporte de inspección**
   → Estado del techo, hallazgos, fotos y si requiere reparación. Con opción de descargar el PDF.
-- [ ] **Revisar el diseño de la base de datos contra tus pantallas**
+- [x] **Revisar el diseño de la base de datos contra tus pantallas**
   → Jorge entrega el modelo de datos esta semana ([[03_Diseno_Base_de_Datos]] y la vista resumida [[03b_Modelo_Datos_Resumen_E03]]). Recorre tus seis mockups y confirma que cada dato que muestras existe en el modelo: inspector asignado con foto, ventana de atención, estado en lenguaje humano, ETA, motivo de reprogramación, hallazgos y fotos del reporte. Terminado cuando le pasas a Jorge la lista de campos faltantes **antes** de que migre el esquema en E04.
-- [ ] 📦 **Entregable:** Mockups de la app del cliente + revisión del modelo de datos desde la app del cliente.
+- [x] 📦 **Entregable:** Mockups de la app del cliente + revisión del modelo de datos desde la app del cliente.
 
 ## E04 — Diseño técnico + infraestructura
 `#agave/E04` · jue 24 sep · Sprint 2
@@ -109,15 +109,15 @@ tags: [agavealerta, checklist, rol/app-cliente, rol/pruebas]
 
 > [!warning] Esta entrega ⛔ **Requiere:** Jorge · `GET /inspecciones/mias` (BD E07).
 
-- [ ] **Pantalla "Mis citas"**
+- [x] **Pantalla "Mis citas"**
   → La **próxima cita destacada** con fecha, ventana de atención y estado en lenguaje humano. Abajo, el historial de inspecciones pasadas.
-- [ ] **Detalle de la cita**
+- [x] **Detalle de la cita**
   → Domicilio, motivo de la visita, datos del inspector asignado (nombre, foto, placa del vehículo) y la línea de tiempo de la cita.
-- [ ] **Estado sin citas**
+- [x] **Estado sin citas**
   → Qué ve un cliente que todavía no tiene ninguna inspección programada: un mensaje claro, no una pantalla en blanco.
-- [ ] **Ejecutar casos de prueba de la agenda**
+- [x] **Ejecutar casos de prueba de la agenda**
   → Llenar resultados de la tabla de Mario.
-- [ ] 📦 **Entregable:** Mis citas + detalle + resultados de pruebas.
+- [x] 📦 **Entregable:** Mis citas + detalle + resultados de pruebas.
 
 ## E08 — Motor de notificaciones push
 `#agave/E08` · jue 22 oct · Sprint 4

@@ -116,11 +116,11 @@ flowchart LR
 
 ### 2.3 Características de los usuarios
 
-| Usuario | Perfil | Conocimientos |
-|---------|--------|---------------|
-| Cliente | Propietario de la casa a inspeccionar; edad y alfabetización digital muy variadas | Uso básico del teléfono; debe poder confirmar con un toque desde la notificación, sin capacitación |
-| Inspector | Personal de campo de Agave Roofing | Uso básico de apps móviles; capacitación de 1 sesión; trabaja de pie, a la intemperie y a veces sin señal |
-| Administrador | Coordinador de operaciones de Agave Roofing | Manejo de computadora y de agendas; interesa el cumplimiento de la ruta y las visitas fallidas |
+| Usuario       | Perfil                                                                            | Conocimientos                                                                                             |
+| ------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Cliente       | Propietario de la casa a inspeccionar; edad y alfabetización digital muy variadas | Uso básico del teléfono; debe poder confirmar con un toque desde la notificación, sin capacitación        |
+| Inspector     | Personal de campo de Agave Roofing                                                | Uso básico de apps móviles; capacitación de 1 sesión; trabaja de pie, a la intemperie y a veces sin señal |
+| Administrador | Coordinador de operaciones de Agave Roofing                                       | Manejo de computadora y de agendas; interesa el cumplimiento de la ruta y las visitas fallidas            |
 
 ### 2.4 Restricciones
 
