@@ -24,7 +24,7 @@ export const AgendaPage: React.FC = () => {
 
   const cargarAgenda = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/inspecciones?fecha=${fechaSeleccionada}`);
+      const res = await fetch(`http://localhost:4000/api/inspecciones?fecha=${fechaSeleccionada}`);
       if (res.ok) {
         const data = await res.json();
         setInspecciones(data.inspecciones || []);
@@ -43,7 +43,7 @@ export const AgendaPage: React.FC = () => {
     setErrorTraslape(null);
 
     try {
-      const res = await fetch('http://localhost:3001/api/inspecciones', {
+      const res = await fetch('http://localhost:4000/api/inspecciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formulario)

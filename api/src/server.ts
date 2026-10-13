@@ -18,7 +18,7 @@ import { EstadoInspeccion, OrigenTransicion } from '../../shared/src/types/estad
 
 initDatabase();
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
 
 function json(res: http.ServerResponse, statusCode: number, data: any) {
   res.writeHead(statusCode, {

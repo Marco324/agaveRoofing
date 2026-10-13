@@ -21,7 +21,7 @@ export const RutaDelDiaScreen: React.FC<RutaDelDiaProps> = ({
     setModoSinConexion(false);
 
     try {
-      const res = await fetch(`http://localhost:3001/api/inspecciones/mi-ruta?idInspector=${idInspector}&fecha=${fecha}`);
+      const res = await fetch(`http://localhost:4000/api/inspecciones/mi-ruta?idInspector=${idInspector}&fecha=${fecha}`);
       if (res.ok) {
         const data = await res.json();
         const listaParadas = data.paradas || [];

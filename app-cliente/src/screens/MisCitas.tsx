@@ -17,7 +17,7 @@ export const MisCitasScreen: React.FC<MisCitasProps> = ({
   const cargarCitas = async () => {
     setCargando(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/inspecciones/mias?idCliente=${idCliente}`);
+      const res = await fetch(`http://localhost:4000/api/inspecciones/mias?idCliente=${idCliente}`);
       if (res.ok) {
         const data = await res.json();
         setProximaCita(data.proximaCita || null);
