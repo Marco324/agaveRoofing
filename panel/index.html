@@ -24,7 +24,10 @@
             <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
               AgaveAlerta <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">San Antonio, TX</span>
             </h1>
-            <p class="text-xs text-slate-400">Sistema de Alerta y Seguimiento de Inspecciones de Techo</p>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse"></span>
+              <span id="apiStatusText" class="text-[11px] text-rose-300 font-medium">API Desconectada (Modo Offline)</span>
+            </div>
           </div>
         </div>
 
@@ -489,15 +492,27 @@
     let selectedCita = null;
 
     async function cargarCitasDesdeApi() {
+      const dot = document.getElementById('apiStatusDot');
+      const text = document.getElementById('apiStatusText');
       try {
         const res = await fetch(`${API_URL}/inspecciones?fecha=${fechaFiltro}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.inspecciones && data.inspecciones.length > 0) {
-            citasData = data.inspecciones;
+          citasData = data.inspecciones || [];
+          if (dot && text) {
+            dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block';
+            text.className = 'text-[11px] text-emerald-300 font-medium';
+            text.textContent = '🟢 API Conectada (Puerto 4000) — Base de Datos Activa';
           }
+        } else {
+          throw new Error('Respuesta no exitosa');
         }
       } catch (err) {
+        if (dot && text) {
+          dot.className = 'w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse';
+          text.className = 'text-[11px] text-rose-300 font-medium';
+          text.textContent = '🔴 API Apagada — Modo Simulado (No guarda en Base de Datos)';
+        }
         console.warn('API local no accesible, usando datos precargados:', err);
       }
       renderCalendar();
@@ -641,15 +656,60 @@
       document.getElementById('modalDetalleCita').classList.add('hidden');
     };
 
-    // Form submit with overlap detection
+    // Form submit with real API call and offline fallback
     document.getElementById('formNuevaInspeccion').onsubmit = async (e) => {
       e.preventDefault();
+      const idCliente = parseInt(document.getElementById('inputCliente').value, 10);
+      const idDomicilio = parseInt(document.getElementById('inputDomicilio').value, 10);
       const idInspector = parseInt(document.getElementById('inputInspector').value, 10);
       const fecha = document.getElementById('inputFecha').value;
       const vInicio = document.getElementById('inputVentanaInicio').value;
       const vFin = document.getElementById('inputVentanaFin').value;
+      const motivo = document.getElementById('inputMotivo').value;
+      const notas = document.getElementById('inputNotas').value;
 
-      // Validación de traslape local (RN-02)
+      document.getElementById('alertErrorTraslape').classList.add('hidden');
+
+      // 1. Intentar guardar a través de la API real
+      try {
+        const res = await fetch(`${API_URL}/inspecciones`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idCliente,
+            idDomicilio,
+            idInspector,
+            fechaProgramada: fecha,
+            ventanaInicio: vInicio,
+            ventanaFin: vFin,
+            motivoVisita: motivo,
+            notas: notas || undefined,
+            creadaPor: 'u-admin-001'
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (data.codigo === 'TRASLAPE_INSPECTOR_RN02') {
+            document.getElementById('msgErrorTraslape').textContent = data.error;
+            document.getElementById('alertErrorTraslape').classList.remove('hidden');
+          } else {
+            alert(`Error de la API: ${data.error || 'No se pudo crear'}`);
+          }
+          return;
+        }
+
+        // Éxito con la API real
+        document.getElementById('modalNuevaInspeccion').classList.add('hidden');
+        await cargarCitasDesdeApi();
+        alert(`✅ ¡Cita guardada en la base de datos real (SQLite)!\nFolio oficial generado por API: ${data.inspeccion.folio}`);
+        return;
+      } catch (errApi) {
+        console.warn('API apagada al intentar POST, procediendo con modo memoria:', errApi);
+      }
+
+      // 2. Modo Offline / Simulado (si la API está apagada)
       const traslape = citasData.find(c => 
         c.id_inspector === idInspector &&
         c.fecha_programada === fecha &&
@@ -664,17 +724,16 @@
         return;
       }
 
-      // Si no hay traslape, crear cita
       const nueva = {
         id_inspeccion: citasData.length + 1,
         folio: `INS-2026-00000${citasData.length + 1}`,
         id_inspector: idInspector,
         inspector_nombre: idInspector === 1 ? 'Carlos Garza' : 'David Vance',
         placa_vehiculo: idInspector === 1 ? 'TX-ROOF-01' : 'TX-AGAVE-02',
-        id_cliente: 1,
+        id_cliente: idCliente,
         cliente_nombre: 'Robert B. Martinez',
         cliente_telefono: '+1-210-555-0201',
-        id_domicilio: 1,
+        id_domicilio: idDomicilio,
         calle: 'Stone Oak Pkwy',
         numero: '19202',
         colonia: 'Stone Oak',
@@ -685,13 +744,13 @@
         ventana_inicio: vInicio,
         ventana_fin: vFin,
         estado: 'PROGRAMADA',
-        motivo_visita: document.getElementById('inputMotivo').value
+        motivo_visita: motivo
       };
 
       citasData.push(nueva);
       document.getElementById('modalNuevaInspeccion').classList.add('hidden');
       renderCalendar();
-      alert(`¡Inspección programada con éxito! Folio generado: ${nueva.folio}`);
+      alert(`⚠️ La API está apagada. La cita se creó temporalmente en la memoria de esta pestaña (Folio: ${nueva.folio}).\nPara que se guarde permanentemente en la base de datos real, arranca la API en la terminal: 'node --experimental-strip-types --experimental-sqlite api/src/server.ts'.`);
     };
 
     // Filter events
