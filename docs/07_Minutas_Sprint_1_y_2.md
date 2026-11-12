@@ -60,10 +60,10 @@
    - Desplegar API inicial en Node/Express y configurar GitHub Actions (CI).
    - Implementar JWT y validación de roles en la API.
 4. **Anuar (IN):** 
-   - Crear el proyecto base de Expo para el Inspector e integrar SQLite local.
+   - Crear el proyecto base de Flutter para el Inspector e integrar SQLite local (sqflite).
    - Desarrollar pantalla de Login de inspector.
 5. **Jesús (CL):** 
-   - Crear el proyecto base de Expo para el Cliente.
+   - Crear el proyecto base de Flutter para el Cliente.
    - Implementar diagramas de secuencia.
    - Desarrollar login del cliente usando validación por teléfono (OTP).
 

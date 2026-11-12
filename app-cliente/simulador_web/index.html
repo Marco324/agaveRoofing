@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgaveAlerta — App del Cliente (San Antonio, TX)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+    .phone-frame {
+      width: 100%;
+      max-width: 440px;
+      min-height: 860px;
+      border-radius: 40px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 10px #1e293b, 0 0 0 12px #334155;
+    }
+    .map-grid-client {
+      background-color: #0f172a;
+      background-image:
+        radial-gradient(circle at 25% 35%, rgba(16, 185, 129, 0.18), transparent 45%),
+        linear-gradient(to right, rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+      background-size: 100% 100%, 24px 24px, 24px 24px;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 py-6 px-4 flex flex-col items-center">
+
+  <!-- Barra de Control del Simulador (Arriba del Teléfono) -->
+  <div class="w-full max-w-5xl bg-slate-800/90 border border-slate-700 rounded-2xl p-4 mb-6 text-white shadow-lg space-y-3">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-xl shadow">
+          📱
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white flex items-center gap-2">
+            Simulador App del Cliente — AgaveAlerta
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-extrabold">E07 · E08 · E09 · E10 · E11</span>
+          </h1>
+          <div class="flex items-center gap-2 mt-0.5">
+            <span id="apiDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse"></span>
+            <span id="apiText" class="text-[11px] text-rose-300 font-medium">Conectando con API...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selector de Cliente Activo y Simulador de Push E10/E11 -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Sesión del Cliente (OTP)</label>
+          <select id="selectClienteActivo" class="bg-slate-900 border border-slate-600 text-white text-xs rounded-lg px-3 py-2 focus:border-emerald-500">
+            <option value="4">Elena Rodriguez — EN_CAMINO con Mapa en Vivo (E10)</option>
+            <option value="1">Robert B. Martinez — CONFIRMADA + Reporte Completado en Historial (E11)</option>
+            <option value="2">Sarah Jenkins — Inspector EN_SITIO en Alamo Heights (E11)</option>
+            <option value="3">Michael A. Flores — SIN_CONFIRMAR / Canal SMS (E08/E09)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Simular Avisos Push E10 / E11</label>
+          <div class="flex gap-1.5">
+            <button onclick="simularPushClienteE10('EN_CAMINO')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold px-2.5 py-2 rounded-lg transition">
+              🛻 Va en camino
+            </button>
+            <button onclick="simularPushClienteE10('POR_LLEGAR')" class="bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold px-2.5 py-2 rounded-lg transition">
+              📍 &lt; 1 km (Por llegar)
+            </button>
+            <button onclick="simularPushClienteE10('RESULTADO')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-2 rounded-lg transition">
+              📄 Reporte listo
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Estado App (E08)</label>
+          <select id="selectEstadoApp" class="bg-slate-900 border border-slate-600 text-emerald-300 text-xs rounded-lg px-2.5 py-2">
+            <option value="LOCKED">🔒 Bloqueada</option>
+            <option value="BACKGROUND">🌗 Segundo Plano</option>
+            <option value="FOREGROUND">📲 Abierta</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Marco del Teléfono Móvil -->
+  <div class="phone-frame bg-slate-50 overflow-hidden flex flex-col relative">
+
+    <!-- Barra de Estado iOS / Android -->
+    <div class="bg-slate-900 text-white px-6 pt-3 pb-2 flex justify-between items-center text-[11px] font-semibold">
+      <span>9:41 AM</span>
+      <div class="w-24 h-4 bg-black rounded-full"></div>
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-signal text-[10px]"></i>
+        <i class="fa-solid fa-wifi text-[10px]"></i>
+        <i class="fa-solid fa-battery-full text-emerald-400"></i>
+      </div>
+    </div>
+
+    <!-- Header de la App -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🌵</span>
+        <div>
+          <div class="font-bold text-sm text-slate-900 leading-tight">Agave Roofing</div>
+          <div id="headerNombreCliente" class="text-[11px] text-slate-500">Elena Rodriguez · San Antonio, TX</div>
+        </div>
+      </div>
+      <button onclick="cargarMisCitas()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-2.5 py-1.5 rounded-lg border border-emerald-200 transition">
+        <i class="fa-solid fa-rotate mr-1"></i>Actualizar
+      </button>
+    </header>
+
+    <!-- Banner de Notificación Push Interactiva (E08 / E09 / E10 / E11) -->
+    <div id="pushNotificationBanner" class="mx-3 mt-3 bg-slate-900/95 backdrop-blur text-white rounded-2xl p-3.5 shadow-xl border border-slate-700 space-y-2.5">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded bg-emerald-600 flex items-center justify-center text-xs">🌵</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">AGAVE ROOFING · AHORA</span>
+        </div>
+        <span id="pushCanalBadge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">Expo Push</span>
+      </div>
+
+      <!-- Cuerpo tocable de la notificación -->
+      <div onclick="accionDesdeNotificacion('TOCAR_CUERPO')" class="cursor-pointer hover:opacity-90 transition">
+        <div id="pushTitulo" class="text-xs font-bold text-white">Inspección de techo programada</div>
+        <p id="pushCuerpo" class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+          Su inspector va en camino. Toque para abrir el mapa en vivo con ETA.
+        </p>
+      </div>
+
+      <!-- Botones de Acción de la Notificación (E08 / E09 / E11) -->
+      <div id="pushActionButtons" class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800">
+        <button onclick="accionDesdeNotificacion('SI_ESTARE')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1">
+          <i class="fa-solid fa-check"></i> Sí estaré / En casa
+        </button>
+        <button onclick="accionDesdeNotificacion('TOCAR_CUERPO')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1">
+          <i class="fa-solid fa-map-location-dot"></i> Ver en Vivo / Detalle
+        </button>
+      </div>
+
+      <!-- Feedback de acción -->
+      <div id="pushToastFeedback" class="hidden text-[11px] bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 p-2 rounded-xl font-medium"></div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- PANTALLA 1: MIS CITAS (Lista Principal + Historial con Reportes)     -->
+    <!-- ==================================================================== -->
+    <div id="screenMisCitas" class="flex-1 p-4 space-y-5 overflow-y-auto">
+      <div>
+        <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+          Tu Próxima Cita de Inspección
+        </h2>
+        <div id="contenedorProximaCita">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+          Historial de Inspecciones y Reportes PDF (E11)
+        </h2>
+        <div id="contenedorHistorialCitas" class="space-y-2.5">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- PANTALLA 2: DETALLE DE CITA, MAPA EN VIVO E10 Y REPORTE E11          -->
+    <!-- ==================================================================== -->
+    <div id="screenDetalleCita" class="hidden flex-1 p-4 space-y-4 overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <button onclick="volverAMisCitas()" class="text-xs bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl font-semibold shadow-sm transition">
+          ← Volver a Mis Citas
+        </button>
+        <span id="detFolio" class="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+          INS-2026-000012
+        </span>
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- E10: MAPA DE SEGUIMIENTO EN VIVO CON ETA (Solo activo EN_CAMINO)   -->
+      <!-- ================================================================== -->
+      <div id="cardSeguimientoVivoE10" class="hidden bg-slate-900 text-white rounded-2xl p-4 border-2 border-indigo-500 shadow-lg space-y-3">
+        <div class="flex justify-between items-center">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">
+              🛰️ Seguimiento en Vivo (E10)
+            </span>
+            <h3 id="liveInspHeader" class="text-sm font-extrabold text-white mt-1">
+              Tu inspector va en camino
+            </h3>
+          </div>
+          <div class="text-right bg-emerald-500/20 border border-emerald-400/50 rounded-xl px-3 py-1.5">
+            <div class="text-[10px] text-emerald-300 font-bold uppercase">Llegada Estimada</div>
+            <div id="liveEtaMinutos" class="text-lg font-black text-emerald-400">12 min</div>
+          </div>
+        </div>
+
+        <!-- Mapa interactivo visual de San Antonio -->
+        <div class="map-grid-client relative h-44 rounded-xl border border-slate-700 overflow-hidden p-3 flex flex-col justify-between">
+          <div class="flex justify-between items-center text-[10px] font-mono text-slate-400">
+            <span id="liveDistanciaBadge" class="bg-slate-950/85 px-2 py-0.5 rounded border border-slate-700 text-emerald-300">Distancia: 3,200 m</span>
+            <span id="liveModoEtaBadge" class="bg-slate-950/85 px-2 py-0.5 rounded border border-slate-700">GPS Realtime (15s)</span>
+          </div>
+
+          <!-- Representación visual de ruta entre Inspector y Casa del Cliente -->
+          <div class="relative h-20 flex items-center px-4">
+            <div class="w-full h-1 bg-slate-700 rounded-full relative">
+              <div id="liveProgressBar" class="h-1 bg-emerald-400 rounded-full transition-all duration-500" style="width: 55%;"></div>
+              <!-- Pin del Inspector en movimiento -->
+              <div id="livePinInspector" class="absolute -top-4 transition-all duration-500 flex flex-col items-center" style="left: 52%;">
+                <div class="w-8 h-8 rounded-full bg-indigo-600 border-2 border-white shadow-lg flex items-center justify-center text-sm animate-bounce">
+                  🛻
+                </div>
+                <span class="text-[9px] font-bold bg-slate-950/90 text-white px-1.5 py-0.5 rounded mt-0.5 whitespace-nowrap">Inspector</span>
+              </div>
+              <!-- Pin del Domicilio del Cliente -->
+              <div class="absolute -top-4 right-0 flex flex-col items-center">
+                <div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-white shadow-lg flex items-center justify-center text-sm">
+                  🏠
+                </div>
+                <span class="text-[9px] font-bold bg-slate-950/90 text-emerald-300 px-1.5 py-0.5 rounded mt-0.5">Tu Casa</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center text-[10px] text-slate-300 bg-slate-950/85 px-2.5 py-1.5 rounded-lg border border-slate-800">
+            <span id="liveCoordsTexto" class="font-mono">GPS: 29.5380, -98.5450</span>
+            <span id="liveEstadoSenalTexto" class="text-emerald-400 font-bold">● Señal GPS en vivo</span>
+          </div>
+        </div>
+
+        <!-- Controles de simulación en vivo para probar acercamiento < 1 km -->
+        <div class="flex gap-2">
+          <button onclick="simularAvanceDesdeCliente(false)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold py-2 rounded-xl border border-slate-700 transition">
+            🛰️ Avanzar Inspector (+15s)
+          </button>
+          <button onclick="simularAvanceDesdeCliente(true)" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold py-2 rounded-xl transition">
+            📍 Acercar a &lt; 1 km (RN-02)
+          </button>
+        </div>
+      </div>
+
+      <!-- Aviso de Privacidad RN-08 / R7 cuando NO está EN_CAMINO -->
+      <div id="cardPrivacidadGpsRN08" class="bg-slate-100 border border-slate-200 rounded-2xl p-3 text-[11px] text-slate-600 flex items-center gap-2.5">
+        <span class="text-base">🔒</span>
+        <span id="textoPrivacidadGpsRN08">
+          <strong>Privacidad GPS (RN-08 / R7):</strong> La ubicación del inspector solo se comparte mientras se dirige hacia tu domicilio y se apaga automáticamente al llegar.
+        </span>
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- E11: REPORTE DE INSPECCIÓN CON FOTOS Y DESCARGA PDF                -->
+      <!-- ================================================================== -->
+      <div id="cardReporteInspeccionE11" class="hidden bg-white rounded-2xl p-4 border-2 border-teal-500 shadow-md space-y-3">
+        <div class="flex justify-between items-center">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full">
+              📋 Dictamen Técnico Finalizado (E11)
+            </span>
+            <h3 class="text-sm font-extrabold text-slate-900 mt-1">Reporte de Inspección de Techo</h3>
+          </div>
+          <span id="repEstadoTechoBadge" class="text-xs font-black px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+            REGULAR
+          </span>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2 text-xs">
+          <div>
+            <span class="font-bold text-slate-500 uppercase text-[10px] block">Hallazgos en Cubierta:</span>
+            <p id="repHallazgosTexto" class="text-slate-800 font-medium mt-0.5"></p>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+            <div>
+              <span class="font-bold text-slate-500 uppercase text-[10px] block">¿Requiere Reparación?</span>
+              <span id="repRequiereTexto" class="font-extrabold text-rose-700">Sí</span>
+            </div>
+            <div>
+              <span class="font-bold text-slate-500 uppercase text-[10px] block">Urgencia Estimada</span>
+              <span id="repUrgenciaTexto" class="font-extrabold text-amber-700">MEDIA</span>
+            </div>
+          </div>
+          <div class="pt-1 border-t border-slate-200">
+            <span class="font-bold text-slate-500 uppercase text-[10px] block">Recomendaciones de Agave Roofing:</span>
+            <p id="repRecomendacionesTexto" class="text-slate-700 mt-0.5"></p>
+          </div>
+        </div>
+
+        <!-- Galería de Evidencias Fotográficas (RN-11) -->
+        <div>
+          <div class="text-[11px] font-bold text-slate-500 uppercase mb-2">
+            📸 Evidencias Fotográficas Capturadas
+          </div>
+          <div id="repGaleriaFotos" class="grid grid-cols-2 gap-2">
+            <!-- Fotos -->
+          </div>
+        </div>
+
+        <a id="btnDescargarReportePdf" href="#" target="_blank" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs py-3 rounded-xl shadow flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-file-pdf"></i> Abrir / Descargar Reporte PDF Oficial
+        </a>
+      </div>
+
+      <!-- Tarjeta Principal de Estado, Presencia "Ya estoy en mi casa" (E11) y Confirmación (E09) -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-slate-500 font-medium">Estado de tu Cita</span>
+          <span id="detEstadoBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+            EN_CAMINO
+          </span>
+        </div>
+
+        <div>
+          <div id="detFecha" class="text-lg font-extrabold text-slate-900">2026-11-12</div>
+          <div id="detVentana" class="text-xs font-semibold text-slate-600 mt-0.5">
+            ⏰ Ventana comprometida: 09:00 - 11:00
+          </div>
+          <div id="detContadorReprog" class="text-[11px] text-slate-500 mt-1">
+            Cambios de horario utilizados: <strong>0 de 3</strong> permitidos (RN-06)
+          </div>
+        </div>
+
+        <!-- Mensajes de éxito / error / solicitud en revisión -->
+        <div id="detAlertExito" class="hidden p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-semibold"></div>
+        <div id="detAlertError" class="hidden p-3 bg-rose-50 border border-rose-200 text-rose-900 rounded-xl text-xs font-medium"></div>
+        <div id="detBoxSolicitudReprog" class="hidden p-3 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl text-xs space-y-1"></div>
+
+        <!-- Botones de Acción del Cliente (E09 y E11) -->
+        <div class="pt-2 space-y-2 border-t border-slate-100">
+          <!-- E11: Botón "Ya estoy en mi casa" -->
+          <button id="btnEstoyEnCasa" onclick="confirmarPresenciaEnCasa()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+            🏠 Ya estoy en mi casa (Avisar de inmediato al Inspector)
+          </button>
+
+          <button id="btnConfirmarApp" onclick="confirmarCitaDesdeApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-check"></i> Sí estaré en mi domicilio (Confirmar Cita)
+          </button>
+
+          <button id="btnAbrirReprogramar" onclick="abrirSelectorHorarios()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs py-2.5 rounded-xl border border-slate-300 transition flex items-center justify-center gap-2">
+            📅 No puedo ese día — Solicitar mover la cita
+          </button>
+        </div>
+      </div>
+
+      <!-- Selector de Horarios Disponibles Reales (E09) -->
+      <div id="boxSelectorHorarios" class="hidden bg-white rounded-2xl p-4 border-2 border-emerald-500 shadow-md space-y-3">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="text-xs font-bold text-slate-900 uppercase">Horarios Disponibles en tu Zona</h3>
+            <p class="text-[10px] text-slate-500">Calculados sin traslapes de inspectores (RN-02)</p>
+          </div>
+          <button onclick="cerrarSelectorHorarios()" class="text-xs text-slate-400 hover:text-slate-700 font-bold">✕</button>
+        </div>
+
+        <div id="listaTarjetasHorarios" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-700 mb-1">Motivo del cambio (opcional)</label>
+          <input id="inputMotivoCliente" type="text" placeholder="Ej. Tengo cita médica / saldré de viaje..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5">
+        </div>
+
+        <button onclick="enviarSolicitudReprogramacion()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl shadow transition">
+          Enviar Solicitud a Agave Roofing
+        </button>
+      </div>
+
+      <!-- Inspector Asignado + Mensajería / Chat en Vivo (E11) -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="detInspAvatar" class="w-11 h-11 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-sm">
+              DV
+            </div>
+            <div>
+              <div id="detInspNombre" class="font-bold text-sm text-slate-900">David Vance</div>
+              <div id="detInspPlaca" class="text-[11px] font-mono text-slate-500">🚗 Vehículo oficial: TX-AGAVE-02</div>
+            </div>
+          </div>
+          <a id="detInspTel" href="tel:+12105550188" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-2 rounded-xl transition">
+            📞 Llamar
+          </a>
+        </div>
+
+        <!-- Chat E11 Cliente <-> Inspector -->
+        <div class="pt-2 border-t border-slate-100 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-[11px] font-bold text-slate-500 uppercase">💬 Mensajes con tu Inspector (E11)</span>
+            <button onclick="cargarMensajesCliente()" class="text-[10px] text-emerald-600 font-bold hover:underline">↻ Actualizar</button>
+          </div>
+          <div id="contenedorMensajesCliente" class="space-y-1.5 max-h-36 overflow-y-auto bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
+            <!-- Mensajes -->
+          </div>
+          <div class="flex gap-2">
+            <input id="inputMensajeCliente" type="text" placeholder="Escribe al inspector (ej. El portón está abierto)..." class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs">
+            <button onclick="enviarMensajeDesdeCliente()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl">
+              Enviar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Línea de Tiempo Auditada -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Línea de Tiempo Auditada</h3>
+        <div id="detTimeline" class="space-y-3 relative before:absolute before:inset-0 before:left-2 before:w-0.5 before:bg-slate-200 pl-5">
+          <!-- Eventos -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Navegación Inferior del Teléfono -->
+    <nav class="bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center text-[11px] font-semibold text-slate-400">
+      <button onclick="volverAMisCitas()" class="text-emerald-600 flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-calendar-check text-base"></i>
+        <span>Mis Citas</span>
+      </button>
+      <a href="../../app-inspector/simulador_web/index.html" target="_blank" class="hover:text-slate-700 flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-truck-pickup text-base"></i>
+        <span>App Inspector</span>
+      </a>
+      <a href="../../panel/index.html" target="_blank" class="hover:text-slate-700 flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-desktop text-base"></i>
+        <span>Abrir Panel</span>
+      </a>
+    </nav>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:4000/api';
+    let idClienteActual = 4; // Elena Rodriguez por defecto (EN_CAMINO en vivo E10)
+    let proximaCita = null;
+    let historialCitas = [];
+    let citaSeleccionada = null;
+    let horariosDisponiblesCache = [];
+    let horarioSeleccionado = null;
+
+    const nombresClientes = {
+      1: 'Robert B. Martinez · Stone Oak',
+      2: 'Sarah Jenkins · Alamo Heights',
+      3: 'Michael A. Flores · Southtown',
+      4: 'Elena Rodriguez · Medical Center'
+    };
+
+    function traducirEstadoHumano(estado) {
+      switch (estado) {
+        case 'CONFIRMADA': return '✅ Confirmada — Te esperamos en tu domicilio';
+        case 'NOTIFICADA': return '📩 Acción requerida: Confirma si estarás en casa o pide otro horario';
+        case 'SIN_CONFIRMAR': return '⚠️ Pendiente de respuesta — Por favor confirma tu asistencia';
+        case 'REPROG_SOLICITADA': return '🔄 Tu solicitud de cambio de horario está en revisión por la oficina';
+        case 'REPROGRAMADA': return '📅 Tu cita fue actualizada al nuevo horario';
+        case 'EN_CAMINO': return '🛻 ¡Tu inspector va en camino! Toca para ver el mapa y ETA en vivo';
+        case 'EN_SITIO': return '📍 Tu inspector ya está afuera de tu domicilio realizando la revisión';
+        case 'COMPLETADA': return '📋 Inspección finalizada — Toca para consultar tu Reporte PDF y fotos';
+        default: return estado;
+      }
+    }
+
+    async function cargarMisCitas() {
+      idClienteActual = parseInt(document.getElementById('selectClienteActivo').value, 10);
+      document.getElementById('headerNombreCliente').textContent = nombresClientes[idClienteActual];
+
+      const dot = document.getElementById('apiDot');
+      const txt = document.getElementById('apiText');
+
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/mias?idCliente=${idClienteActual}`);
+        if (res.ok) {
+          const data = await res.json();
+          proximaCita = data.proximaCita;
+          historialCitas = data.historial || [];
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block';
+          txt.className = 'text-[11px] text-emerald-300 font-medium';
+          txt.textContent = '🟢 Conectada en Vivo a la API (Puerto 4000)';
+        }
+      } catch (_) {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block';
+        txt.className = 'text-[11px] text-amber-300 font-medium';
+        txt.textContent = '🟡 Modo Local';
+      }
+
+      actualizarBannerNotificacion();
+      renderMisCitas();
+      if (citaSeleccionada) {
+        const todas = [proximaCita, ...historialCitas].filter(Boolean);
+        const actualizada = todas.find((c) => c.idInspeccion === citaSeleccionada.idInspeccion);
+        if (actualizada) abrirDetalleCita(actualizada);
+      }
+    }
+
+    function actualizarBannerNotificacion() {
+      const banner = document.getElementById('pushNotificationBanner');
+      if (!proximaCita) {
+        banner.classList.add('hidden');
+        return;
+      }
+      banner.classList.remove('hidden');
+      document.getElementById('pushCanalBadge').textContent =
+        proximaCita.canalPreferidoCliente === 'SMS' ? 'Respaldo SMS (Twilio)' : 'Expo Push';
+
+      if (proximaCita.estado === 'EN_CAMINO') {
+        document.getElementById('pushTitulo').textContent = `🛻 ¡Su inspector ${proximaCita.inspector?.nombre || ''} va en camino!`;
+        document.getElementById('pushCuerpo').textContent =
+          `Seguimiento en vivo activado para ${proximaCita.folio}. Llegada estimada en ${proximaCita.seguimientoVivo?.etaMinutos ?? 12} min.`;
+      } else if (proximaCita.estado === 'EN_SITIO') {
+        document.getElementById('pushTitulo').textContent = `📍 Su inspector ha llegado al domicilio`;
+        document.getElementById('pushCuerpo').textContent =
+          `${proximaCita.inspector?.nombre || 'El inspector'} se encuentra en ${proximaCita.domicilio.direccionCompleta}.`;
+      } else {
+        document.getElementById('pushTitulo').textContent = `Inspección ${proximaCita.folio} (${proximaCita.estado})`;
+        document.getElementById('pushCuerpo').textContent =
+          `Cita el ${proximaCita.fechaProgramada} (${proximaCita.ventanaInicio} - ${proximaCita.ventanaFin}) en ${proximaCita.domicilio.colonia}.`;
+      }
+    }
+
+    function renderMisCitas() {
+      const contProx = document.getElementById('contenedorProximaCita');
+      const contHist = document.getElementById('contenedorHistorialCitas');
+      contProx.innerHTML = '';
+      contHist.innerHTML = '';
+
+      if (proximaCita) {
+        const badgeColor =
+          proximaCita.estado === 'EN_CAMINO'
+            ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
+            : proximaCita.estado === 'EN_SITIO'
+            ? 'bg-purple-100 text-purple-800 border-purple-300'
+            : proximaCita.estado === 'CONFIRMADA'
+            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+            : 'bg-amber-100 text-amber-800 border-amber-200';
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-4 border-2 border-emerald-500 shadow-md cursor-pointer hover:shadow-lg transition space-y-2.5';
+        card.onclick = () => abrirDetalleCita(proximaCita);
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${proximaCita.folio}</span>
+            <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${badgeColor}">${proximaCita.estado}</span>
+          </div>
+          <div>
+            <div class="text-base font-extrabold text-slate-900">📅 ${proximaCita.fechaProgramada}</div>
+            <div class="text-xs font-semibold text-slate-600">⏰ Ventana: ${proximaCita.ventanaInicio} - ${proximaCita.ventanaFin}</div>
+            <div class="text-xs text-emerald-900 bg-emerald-50/80 border border-emerald-200 p-2 rounded-xl mt-2 font-medium">
+              ${traducirEstadoHumano(proximaCita.estado)}
+            </div>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
+            <span class="text-slate-500 truncate max-w-[230px]">📍 ${proximaCita.domicilio.direccionCompleta}, ${proximaCita.domicilio.colonia}</span>
+            <span class="text-emerald-600 font-bold">Abrir ➔</span>
+          </div>
+        `;
+        contProx.appendChild(card);
+      } else {
+        contProx.innerHTML = `
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 text-center space-y-2">
+            <div class="text-sm font-bold text-slate-800">No tienes citas activas</div>
+          </div>
+        `;
+      }
+
+      if (historialCitas.length === 0) {
+        contHist.innerHTML = `<div class="bg-white rounded-xl p-4 border border-slate-200 text-center text-xs text-slate-400">Sin inspecciones anteriores.</div>`;
+      } else {
+        historialCitas.forEach((c) => {
+          const item = document.createElement('div');
+          item.className = 'bg-white p-3.5 rounded-xl border border-slate-200 flex justify-between items-center cursor-pointer hover:border-teal-400 transition';
+          item.onclick = () => abrirDetalleCita(c);
+          item.innerHTML = `
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-900">${c.fechaProgramada}</span>
+                <span class="text-[10px] font-mono text-slate-500">${c.folio}</span>
+              </div>
+              <div class="text-[11px] text-slate-600 mt-0.5">${c.motivoVisita || 'Inspección de techo'}</div>
+              ${
+                c.resultado
+                  ? `<div class="text-[11px] font-bold text-teal-700 mt-1">📋 Dictamen: ${c.resultado.estadoTecho} · Ver Reporte y Fotos ➔</div>`
+                  : ''
+              }
+            </div>
+            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${
+              c.estado === 'COMPLETADA' ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-700'
+            }">${c.estado}</span>
+          `;
+          contHist.appendChild(item);
+        });
+      }
+    }
+
+    async function abrirDetalleCita(cita) {
+      citaSeleccionada = cita;
+      document.getElementById('screenMisCitas').classList.add('hidden');
+      document.getElementById('screenDetalleCita').classList.remove('hidden');
+      document.getElementById('detAlertExito').classList.add('hidden');
+      document.getElementById('detAlertError').classList.add('hidden');
+      document.getElementById('boxSelectorHorarios').classList.add('hidden');
+
+      document.getElementById('detFolio').textContent = cita.folio;
+      document.getElementById('detEstadoBadge').textContent = cita.estado;
+      document.getElementById('detFecha').textContent = cita.fechaProgramada;
+      document.getElementById('detVentana').textContent = `⏰ Ventana acordada: ${cita.ventanaInicio} - ${cita.ventanaFin}`;
+      document.getElementById('detContadorReprog').innerHTML =
+        `Cambios de horario utilizados: <strong>${cita.vecesReprogramada || 0} de 3</strong> permitidos (RN-06)`;
+
+      // 1. E10: Mapa en Vivo vs Privacidad RN-08
+      const cardVivo = document.getElementById('cardSeguimientoVivoE10');
+      const cardPriv = document.getElementById('cardPrivacidadGpsRN08');
+      const txtPriv = document.getElementById('textoPrivacidadGpsRN08');
+
+      if (cita.estado === 'EN_CAMINO') {
+        cardVivo.classList.remove('hidden');
+        cardPriv.classList.add('hidden');
+        await refrescarSeguimientoVivoCliente(cita.idInspeccion);
+      } else {
+        cardVivo.classList.add('hidden');
+        cardPriv.classList.remove('hidden');
+        txtPriv.innerHTML =
+          cita.estado === 'EN_SITIO' || cita.estado === 'COMPLETADA'
+            ? '📍 <strong>Privacidad GPS (RN-08 / R7):</strong> Tu inspector ya llegó al domicilio; el rastreo GPS se desactivó automáticamente.'
+            : '🔒 <strong>Privacidad GPS (RN-08 / R7):</strong> El mapa en vivo se activará únicamente cuando tu inspector inicie el trayecto hacia tu casa.';
+      }
+
+      // 2. E11: Tarjeta de Reporte de Inspección si está COMPLETADA
+      const cardRep = document.getElementById('cardReporteInspeccionE11');
+      if (cita.estado === 'COMPLETADA' || cita.resultado) {
+        cardRep.classList.remove('hidden');
+        await cargarReporteInspeccionCliente(cita.idInspeccion);
+      } else {
+        cardRep.classList.add('hidden');
+      }
+
+      // 3. Botón "Ya estoy en mi casa" (E11)
+      const btnCasa = document.getElementById('btnEstoyEnCasa');
+      if (['CONFIRMADA', 'EN_CAMINO', 'EN_SITIO', 'NOTIFICADA'].includes(cita.estado)) {
+        btnCasa.classList.remove('hidden');
+        if (cita.clienteEnCasa) {
+          btnCasa.className = 'w-full bg-emerald-100 text-emerald-900 font-extrabold text-xs py-2.5 rounded-xl border border-emerald-300';
+          btnCasa.innerHTML = '🏠 ¡Ya avisaste que estás en tu casa! El inspector fue notificado';
+        } else {
+          btnCasa.className = 'w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2';
+          btnCasa.innerHTML = '🏠 Ya estoy en mi casa (Avisar de inmediato al Inspector)';
+        }
+      } else {
+        btnCasa.classList.add('hidden');
+      }
+
+      // 4. Botón de confirmar asistencia
+      const btnConf = document.getElementById('btnConfirmarApp');
+      if (['CONFIRMADA', 'EN_CAMINO', 'EN_SITIO', 'COMPLETADA'].includes(cita.estado)) {
+        btnConf.className = 'w-full bg-emerald-50 text-emerald-800 font-bold text-xs py-2.5 rounded-xl border border-emerald-200 cursor-default';
+        btnConf.innerHTML = '✅ Asistencia confirmada';
+      } else {
+        btnConf.className = 'w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2';
+        btnConf.innerHTML = '<i class="fa-solid fa-circle-check"></i> Sí estaré en mi domicilio (Confirmar Cita)';
+      }
+
+      // Inspector
+      if (cita.inspector) {
+        document.getElementById('detInspAvatar').textContent = cita.inspector.nombre.substring(0, 2).toUpperCase();
+        document.getElementById('detInspNombre').textContent = cita.inspector.nombre;
+        document.getElementById('detInspPlaca').textContent = `🚗 Vehículo oficial: ${cita.inspector.placaVehiculo || 'TX-ROOF-01'}`;
+        document.getElementById('detInspTel').href = `tel:${cita.inspector.telefono}`;
+      }
+
+      // Timeline
+      const contTl = document.getElementById('detTimeline');
+      contTl.innerHTML = '';
+      (cita.lineaDeTiempo || []).forEach((ev) => {
+        const div = document.createElement('div');
+        div.className = 'relative';
+        div.innerHTML = `
+          <div class="absolute -left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-white"></div>
+          <div class="text-xs font-bold text-slate-800">${ev.estado}</div>
+          <div class="text-[11px] text-slate-600">${ev.descripcion}</div>
+          <div class="text-[10px] text-slate-400">${ev.fechaHora}</div>
+        `;
+        contTl.appendChild(div);
+      });
+
+      await cargarMensajesCliente();
+    }
+
+    async function refrescarSeguimientoVivoCliente(idInspeccion) {
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/seguimiento`);
+        if (!res.ok) return;
+        const seg = await res.json();
+
+        document.getElementById('liveInspHeader').textContent =
+          `${seg.inspectorNombre || 'Tu inspector'} va en camino (${seg.placaVehiculo || 'TX-AGAVE'})`;
+        document.getElementById('liveEtaMinutos').textContent = `${seg.etaMinutos ?? 8} min`;
+        document.getElementById('liveDistanciaBadge').textContent =
+          `Distancia: ${seg.distanciaMetros ?? 1200} m${seg.porLlegar ? ' · ¡POR LLEGAR (<1 km)!' : ''}`;
+        document.getElementById('liveModoEtaBadge').textContent =
+          seg.etaAproximado ? 'ETA Aproximado (RN-09)' : 'GPS Realtime (15s)';
+
+        if (seg.posicionInspector) {
+          document.getElementById('liveCoordsTexto').textContent =
+            `GPS: ${seg.posicionInspector.latitud.toFixed(4)}, ${seg.posicionInspector.longitud.toFixed(4)}`;
+        }
+        document.getElementById('liveEstadoSenalTexto').textContent =
+          seg.sinSenalGps
+            ? `⚠️ Última ubicación hace ${seg.minutosDesdeUltimoPunto} min`
+            : '● Señal GPS en vivo';
+
+        const dist = seg.distanciaMetros ?? 2000;
+        const pct = Math.max(15, Math.min(90, Math.round(100 - (dist / 5000) * 100)));
+        document.getElementById('liveProgressBar').style.width = `${pct}%`;
+        document.getElementById('livePinInspector').style.left = `${Math.max(10, pct - 4)}%`;
+      } catch (_) {}
+    }
+
+    async function simularAvanceDesdeCliente(acercar) {
+      if (!citaSeleccionada) return;
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${citaSeleccionada.idInspeccion}/simular-avance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ acercarAlDomicilio: acercar })
+        });
+        if (res.ok) {
+          await refrescarSeguimientoVivoCliente(citaSeleccionada.idInspeccion);
+          if (acercar) {
+            simularPushClienteE10('POR_LLEGAR');
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function cargarReporteInspeccionCliente(idInspeccion) {
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/reporte`);
+        if (!res.ok) return;
+        const rep = await res.json();
+        if (!rep.resultado) return;
+
+        document.getElementById('repEstadoTechoBadge').textContent = rep.resultado.estado_techo;
+        document.getElementById('repHallazgosTexto').textContent = rep.resultado.hallazgos;
+        document.getElementById('repRequiereTexto').textContent = rep.resultado.requiere_reparacion ? 'Sí requiere intervención' : 'No requiere';
+        document.getElementById('repUrgenciaTexto').textContent = rep.resultado.urgencia || 'BAJA';
+        document.getElementById('repRecomendacionesTexto').textContent = rep.resultado.recomendaciones || 'Mantenimiento preventivo.';
+        document.getElementById('btnDescargarReportePdf').href = `${API_URL}/inspecciones/${idInspeccion}/reporte-html`;
+
+        const gal = document.getElementById('repGaleriaFotos');
+        gal.innerHTML = (rep.evidencias || [])
+          .map(
+            (ev) => `
+            <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+              <img src="${ev.ruta_archivo}" alt="${ev.tipo}" class="w-full h-24 object-cover">
+              <div class="p-1.5 text-[10px] text-slate-600 font-medium truncate">📷 ${ev.descripcion || ev.tipo}</div>
+            </div>
+          `
+          )
+          .join('');
+      } catch (_) {}
+    }
+
+    async function confirmarPresenciaEnCasa() {
+      if (!citaSeleccionada) return;
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${citaSeleccionada.idInspeccion}/presencia`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idCliente: idClienteActual })
+        });
+        if (res.ok) {
+          const alertExito = document.getElementById('detAlertExito');
+          alertExito.textContent = '🏠 ¡Listo! Tu inspector acaba de recibir el aviso de que ya te encuentras en casa.';
+          alertExito.classList.remove('hidden');
+          await cargarMisCitas();
+        }
+      } catch (_) {}
+    }
+
+    async function cargarMensajesCliente() {
+      if (!citaSeleccionada) return;
+      const cont = document.getElementById('contenedorMensajesCliente');
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${citaSeleccionada.idInspeccion}/mensajes`);
+        if (res.ok) {
+          const data = await res.json();
+          const msgs = data.mensajes || [];
+          if (msgs.length === 0) {
+            cont.innerHTML = `<div class="text-slate-400 text-center py-2">Sin mensajes aún. Puedes escribirle a tu inspector.</div>`;
+            return;
+          }
+          cont.innerHTML = msgs
+            .map(
+              (m) => `
+              <div class="p-2 rounded-lg ${
+                m.remitente_rol === 'CLIENTE'
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-950 ml-6'
+                  : 'bg-white border border-slate-200 text-slate-800 mr-6'
+              }">
+                <div class="text-[10px] font-bold text-slate-400">${m.remitente_rol} · ${m.enviado_en}</div>
+                <div class="mt-0.5">${m.texto}</div>
+              </div>
+            `
+            )
+            .join('');
+        }
+      } catch (_) {}
+    }
+
+    async function enviarMensajeDesdeCliente() {
+      if (!citaSeleccionada) return;
+      const input = document.getElementById('inputMensajeCliente');
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${citaSeleccionada.idInspeccion}/mensajes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            deUsuario: `u-cli-00${idClienteActual}`,
+            remitenteRol: 'CLIENTE',
+            texto
+          })
+        });
+        if (res.ok) {
+          input.value = '';
+          await cargarMensajesCliente();
+        }
+      } catch (_) {}
+    }
+
+    function simularPushClienteE10(tipo) {
+      const banner = document.getElementById('pushNotificationBanner');
+      const titulo = document.getElementById('pushTitulo');
+      const cuerpo = document.getElementById('pushCuerpo');
+      banner.classList.remove('hidden');
+
+      if (tipo === 'EN_CAMINO') {
+        titulo.textContent = '🛻 ¡Su inspector va en camino! (Aviso E10)';
+        cuerpo.textContent = 'El inspector inició su traslado hacia su domicilio. Toque para seguir su ubicación y ETA en el mapa.';
+      } else if (tipo === 'POR_LLEGAR') {
+        titulo.textContent = '📍 ¡Su inspector está a menos de 1 km! (RN-02 · POR_LLEGAR)';
+        cuerpo.textContent = 'Llegará en aproximadamente 2 a 3 minutos a su domicilio.';
+      } else if (tipo === 'RESULTADO') {
+        titulo.textContent = '📄 ¡Su Reporte de Inspección está listo! (E11)';
+        cuerpo.textContent = 'Consulte el estado de su techo, fotografías de evidencia y descargue su reporte en PDF.';
+      }
+    }
+
+    async function accionDesdeNotificacion(accion) {
+      if (!proximaCita) return;
+      const estadoApp = document.getElementById('selectEstadoApp').value;
+      const toast = document.getElementById('pushToastFeedback');
+
+      if (accion === 'SI_ESTARE') {
+        if (proximaCita.estado === 'EN_CAMINO') {
+          await fetch(`${API_URL}/inspecciones/${proximaCita.idInspeccion}/presencia`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idCliente: idClienteActual })
+          });
+          toast.classList.remove('hidden');
+          toast.textContent = `🏠 [${estadoApp}] Confirmaste que ya estás en casa desde la notificación.`;
+          await cargarMisCitas();
+          return;
+        }
+        await fetch(`${API_URL}/inspecciones/${proximaCita.idInspeccion}/confirmar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ origen: 'APP_CLI', nota: `Confirmada desde notificación (${estadoApp})` })
+        });
+        toast.classList.remove('hidden');
+        toast.textContent = `✅ [${estadoApp}] ¡Cita ${proximaCita.folio} confirmada!`;
+        await cargarMisCitas();
+        return;
+      }
+
+      abrirDetalleCita(proximaCita);
+    }
+
+    function volverAMisCitas() {
+      citaSeleccionada = null;
+      document.getElementById('screenDetalleCita').classList.add('hidden');
+      document.getElementById('screenMisCitas').classList.remove('hidden');
+      cargarMisCitas();
+    }
+
+    async function confirmarCitaDesdeApp() {
+      if (!citaSeleccionada) return;
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${citaSeleccionada.idInspeccion}/confirmar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ origen: 'APP_CLI' })
+        });
+        if (res.ok) {
+          await cargarMisCitas();
+        }
+      } catch (_) {}
+    }
+
+    async function abrirSelectorHorarios() {
+      if (!citaSeleccionada) return;
+      const alertError = document.getElementById('detAlertError');
+      alertError.classList.add('hidden');
+
+      if (['EN_CAMINO', 'EN_SITIO', 'COMPLETADA'].includes(citaSeleccionada.estado)) {
+        alertError.innerHTML = '⚠️ <strong>No se puede reprogramar (Regla RN-05):</strong> Tu inspector ya va en camino o está en sitio.';
+        alertError.classList.remove('hidden');
+        return;
+      }
+      if ((citaSeleccionada.vecesReprogramada || 0) >= 3) {
+        alertError.innerHTML = '⚠️ <strong>Límite alcanzado (Regla RN-06):</strong> Esta cita ya se reprogramó 3 veces.';
+        alertError.classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('boxSelectorHorarios').classList.remove('hidden');
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${citaSeleccionada.idInspeccion}/horarios-disponibles`);
+        if (res.ok) {
+          const data = await res.json();
+          horariosDisponiblesCache = data.horarios || [];
+        }
+      } catch (_) {}
+      horarioSeleccionado = horariosDisponiblesCache[0] || null;
+      renderTarjetasHorarios();
+    }
+
+    function renderTarjetasHorarios() {
+      const cont = document.getElementById('listaTarjetasHorarios');
+      cont.innerHTML = '';
+      horariosDisponiblesCache.slice(0, 6).forEach((h) => {
+        const activo = horarioSeleccionado && horarioSeleccionado.fecha === h.fecha && horarioSeleccionado.ventanaInicio === h.ventanaInicio;
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-xl border cursor-pointer transition ${
+          activo ? 'bg-emerald-50 border-emerald-600 ring-1 ring-emerald-500' : 'bg-slate-50 border-slate-200 hover:border-emerald-300'
+        }`;
+        div.onclick = () => {
+          horarioSeleccionado = h;
+          renderTarjetasHorarios();
+        };
+        div.innerHTML = `
+          <div class="flex justify-between items-center text-xs font-bold text-slate-900">
+            <span>📅 ${h.fecha}</span>
+            <span class="text-emerald-700">⏰ ${h.ventanaInicio} - ${h.ventanaFin}</span>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Inspector: ${h.inspectorNombre}</div>
+        `;
+        cont.appendChild(div);
+      });
+    }
+
+    function cerrarSelectorHorarios() {
+      document.getElementById('boxSelectorHorarios').classList.add('hidden');
+    }
+
+    async function enviarSolicitudReprogramacion() {
+      if (!citaSeleccionada || !horarioSeleccionado) return;
+      const motivo = document.getElementById('inputMotivoCliente').value || 'Cambio solicitado desde la app';
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${citaSeleccionada.idInspeccion}/reprogramacion`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fechaSolicitada: horarioSeleccionado.fecha,
+            ventanaInicioSolicitada: horarioSeleccionado.ventanaInicio,
+            ventanaFinSolicitada: horarioSeleccionado.ventanaFin,
+            motivo,
+            solicitadaPor: 'CLIENTE'
+          })
+        });
+        if (res.ok) {
+          cerrarSelectorHorarios();
+          await cargarMisCitas();
+        }
+      } catch (_) {}
+    }
+
+    document.getElementById('selectClienteActivo').onchange = () => {
+      volverAMisCitas();
+    };
+
+    cargarMisCitas();
+  </script>
+</body>
+</html>

@@ -43,14 +43,14 @@ Completar la gestión de clientes, domicilios en San Antonio, inspectores, zonas
 * **¿Qué podemos mejorar?**
   * Asegurarse de que las pruebas en teléfonos reales comiencen desde el martes de cada sprint para no saturar el miércoles previo a la entrega.
 * **Acciones de mejora para el Sprint 4:**
-  * Configurar los tokens de prueba de Expo Push Notifications desde el inicio del Sprint 4.
+  * Configurar los tokens de prueba de Firebase Cloud Messaging (FCM) desde el inicio del Sprint 4.
 
 ---
 
 ### 3. Sprint Planning 4 (Arranque del Sprint 4: E08 y E09)
 
 * **Objetivo del Sprint 4:**
-  Implementar el **Motor de Notificaciones Push**, el registro de dispositivos móviles (Expo Push Tokens), los tres momentos de aviso (día programado, recordatorio previo y proximidad), el respaldo por SMS, y la confirmación/reprogramación directa por parte del cliente.
+  Implementar el **Motor de Notificaciones Push**, el registro de dispositivos móviles (FCM Push Tokens), los tres momentos de aviso (día programado, recordatorio previo y proximidad), el respaldo por SMS, y la confirmación/reprogramación directa por parte del cliente.
 * **Historias de Usuario comprometidas para E08 (jueves 22 de octubre):**
   * **HU-12:** Registro de tokens de dispositivo en la base de datos (Jorge, Anuar, Jesús).
   * **HU-13:** Despachador de notificaciones push automáticas (Jorge).

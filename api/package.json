@@ -5,9 +5,11 @@
   "main": "src/server.ts",
   "type": "module",
   "scripts": {
+    "api": "node --experimental-strip-types --experimental-sqlite src/server.ts",
     "start": "node --experimental-strip-types --experimental-sqlite src/server.ts",
     "seed": "node --experimental-strip-types --experimental-sqlite src/seed.ts",
-    "test": "node --experimental-strip-types --experimental-sqlite test/agenda.test.ts"
+    "test": "node --experimental-strip-types --experimental-sqlite test/agenda.test.ts && node --experimental-strip-types --experimental-sqlite test/e08_e09.test.ts",
+    "test:e08-e09": "node --experimental-strip-types --experimental-sqlite test/e08_e09.test.ts"
   },
   "dependencies": {
     "@agave/shared": "*"

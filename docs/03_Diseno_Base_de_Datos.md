@@ -503,7 +503,7 @@ El modelo está en **Tercera Forma Normal (3FN)**:
 |---------|------|------|-------------|-------------|
 | id_dispositivo | BIGSERIAL | No | PK | |
 | id_usuario | UUID | No | FK → usuario | Dueño del teléfono. |
-| token_push | VARCHAR(255) | No | UNIQUE | Token de Expo/FCM/APNs. |
+| token_push | VARCHAR(255) | No | UNIQUE | Token de FCM / APNs. |
 | plataforma | VARCHAR(10) | No | CHECK (`ANDROID`,`IOS`) | |
 | version_app | VARCHAR(15) | Sí | | Para diagnosticar fallas de entrega. |
 | activo | BOOLEAN | No | DEFAULT true | Se apaga cuando el proveedor reporta el token como inválido. |

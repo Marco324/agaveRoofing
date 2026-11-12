@@ -1,0 +1,16 @@
+{
+  "name": "agave-alerta-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema AgaveAlerta — Gestión de Inspecciones de Techo para Agave Roofing (San Antonio, TX)",
+  "type": "module",
+  "scripts": {
+    "api": "node --experimental-strip-types --experimental-sqlite api/src/server.ts",
+    "start": "node --experimental-strip-types --experimental-sqlite api/src/server.ts",
+    "seed": "node --experimental-strip-types --experimental-sqlite api/src/seed.ts",
+    "test": "node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts && node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts && node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts",
+    "test:e07": "node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts",
+    "test:e08-e09": "node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts",
+    "test:e10-e11": "node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts"
+  }
+}

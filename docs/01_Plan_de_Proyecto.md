@@ -108,7 +108,7 @@ Se empleará **Scrum** con adaptaciones al contexto académico.
 
 - **Product Backlog:** historias de usuario derivadas del SRS, con criterios de aceptación y estimación en puntos (escala Fibonacci).
 - **Sprint Backlog:** historias comprometidas del sprint, desglosadas en tareas.
-- **Incremento:** software potencialmente entregable al final de cada sprint, desplegado en el ambiente de pruebas (panel en Vercel y apps distribuidas con Expo).
+- **Incremento:** software potencialmente entregable al final de cada sprint, desplegado en el ambiente de pruebas (panel en Vercel y compilados móviles en Flutter).
 - **Tablero** en GitHub Projects (columnas: Backlog → Por hacer → En curso → En revisión → Hecho).
 - **Definición de Terminado (DoD):** historia con criterios de aceptación cumplidos; código en Pull Request revisado por otro integrante y fusionado a `main`; pruebas (unitarias/manuales) del caso ejecutadas **en dispositivo real**; sin errores conocidos de severidad alta; documentación y tablero actualizados; incremento desplegado.
 
@@ -118,24 +118,24 @@ Se empleará **Scrum** con adaptaciones al contexto académico.
 
 | Capa | Tecnología | Detalle |
 |------|-----------|---------|
-| App del Cliente | **React Native + Expo + TypeScript** | App móvil Android/iOS. Notificaciones push, mapa de seguimiento, confirmación y reprogramación. |
-| App del Inspector | **React Native + Expo + TypeScript** | App móvil Android/iOS. Ruta del día, ubicación en segundo plano, cámara para evidencia, modo sin señal. |
+| App del Cliente | **Flutter + Dart** | App móvil Android/iOS. Notificaciones push (FCM/APNs), mapa de seguimiento, confirmación y reprogramación. |
+| App del Inspector | **Flutter + Dart** | App móvil Android/iOS. Ruta del día, ubicación en segundo plano, cámara para evidencia, modo sin señal (offline). |
 | Panel de administración | **React 18 + TypeScript + Vite** | Aplicación web desplegada en **Vercel**. Agenda, asignación y tablero. |
-| UI / componentes | React Native Paper (móvil) y shadcn/ui o Material UI (web) | Lenguaje visual consistente entre los tres servicios. |
+| UI / componentes | Flutter Material Design 3 (móvil) y shadcn/ui o Material UI (web) | Lenguaje visual consistente entre los tres servicios. |
 | API / backend | **Node.js 20 + Express + TypeScript** | API REST única para las tres aplicaciones; concentra la lógica de negocio (agenda, estados de la cita, notificaciones, ETA). |
 | Acceso a datos | **Prisma ORM** | Modelo de datos tipado, migraciones versionadas. |
 | Base de datos | **PostgreSQL 15 (gestionada por Supabase)** | Una sola base central. |
 | Autenticación | **Supabase Auth** (JWT) | Correo/contraseña para Administrador e Inspector; teléfono con código (OTP) para el Cliente. |
-| Notificaciones push | **Expo Push Notifications** sobre FCM (Android) y APNs (iOS) | Tres tipos de alerta con acciones (Confirmar / Reprogramar). |
+| Notificaciones push | **Firebase Cloud Messaging (FCM)** sobre FCM (Android) y APNs (iOS) | Tres tipos de alerta con acciones (Confirmar / Reprogramar). |
 | Respaldo de notificación | SMS (Twilio) y correo (Resend) | Si la push no se entrega en el plazo configurado. |
 | Seguimiento en vivo | **Supabase Realtime** (canal por inspección) | Publicación de la ubicación del inspector y recepción en la app del cliente. |
-| Ubicación en segundo plano | `expo-location` (background updates) | Solo mientras el trayecto está activo. |
-| Mapas y ETA | `react-native-maps` (Google Maps) y **Google Directions API** | Mapa del cliente e inspector; cálculo del tiempo estimado de llegada. |
+| Ubicación en segundo plano | `geolocator` / `background_locator_2` | Solo mientras el trayecto está activo. |
+| Mapas y ETA | `google_maps_flutter` y **Google Directions API** | Mapa del cliente e inspector; cálculo del tiempo estimado de llegada. |
 | Almacenamiento de archivos | Supabase Storage | Fotografías de evidencia y reportes PDF. |
-| Modo sin señal (inspector) | SQLite (`expo-sqlite`) + cola de sincronización | Llegada, resultado y fotos en local; se envían al reconectar. |
+| Modo sin señal (inspector) | SQLite (`sqflite`) + cola de sincronización | Llegada, resultado y fotos en local; se envían al reconectar. |
 | Reportes / PDF | Generación en la API (pdfkit) | Reporte de inspección para el cliente. |
 | Control de versiones | **Git + GitHub** | Rama `main` protegida, ramas por historia, Pull Requests. |
-| Integración continua | GitHub Actions | Lint + build + pruebas en cada PR; build de las apps con EAS. |
+| Integración continua | GitHub Actions | Lint + build + pruebas en cada PR; build de las apps con Flutter. |
 | Gestión del proyecto | GitHub Projects | Product Backlog y tablero. |
 | Modelado | draw.io / Mermaid / PlantUML | Diagramas del proyecto. |
 
@@ -156,8 +156,8 @@ Se empleará **Scrum** con adaptaciones al contexto académico.
 ### 6.3 Materiales
 
 - Un **teléfono Android** por integrante para pruebas en dispositivo real (mínimo Android 10) y, de ser posible, un iPhone del equipo para verificar iOS.
-- Una PC por integrante para desarrollo (Windows 10/11, 64 bits).
-- Cuenta de **Expo (EAS)** para compilar y distribuir las apps de prueba.
+- Una PC por integrante para desarrollo (Windows 10/11, 64 bits) con Flutter SDK configurado.
+- Cuenta o configuración de **Firebase (FCM)** para el servicio de notificaciones push en Android e iOS.
 - Cuenta de **Google Cloud** con Maps SDK y Directions API habilitadas (crédito gratuito).
 - Cuentas gratuitas de Supabase, Vercel y GitHub; cuenta de prueba de Twilio para SMS.
 - Plan de datos móviles para las pruebas de campo (seguimiento en vivo y modo sin señal).
@@ -179,7 +179,7 @@ Se empleará **Scrum** con adaptaciones al contexto académico.
    3.3 Diagramas UML (clases, secuencia, actividad, estados, componentes, despliegue)
    3.4 Diseño de interfaz (mockups de las dos apps y del panel)
 4. Construcción
-   4.1 Infraestructura: repos, Supabase, Vercel, Expo/EAS, CI, esqueletos de los tres clientes
+   4.1 Infraestructura: repos, Supabase, Vercel, Firebase/FCM, CI, esqueletos de los tres clientes
    4.2 Autenticación y roles (Supabase Auth + guardas en API y clientes)
    4.3 Clientes, domicilios, inspectores y zonas
    4.4 Agenda de inspecciones y asignación (panel)
@@ -197,7 +197,7 @@ Se empleará **Scrum** con adaptaciones al contexto académico.
    5.3 Pruebas integrales de campo y de aceptación
 6. Implantación
    6.1 Manual de usuario e instalación
-   6.2 Compilación de las apps (EAS) y despliegue de API/panel
+   6.2 Compilación de las apps (Flutter APK / bundle) y despliegue de API/panel
    6.3 Instalación con inspectores y clientes piloto, y capacitación
 ```
 
@@ -207,7 +207,7 @@ Duración: **12 semanas** con **entregas de avance todos los jueves** (ver `05_C
 
 | Sprint | Entregas | Fechas | Objetivo del sprint |
 |--------|----------|--------|---------------------|
-| Sprint 0 | Prep. + E01 | 01–03 sep | Backlog, repositorios, cuentas Supabase/Vercel/Expo/Google Maps, decisión de stack (ADR), tablero |
+| Sprint 0 | Prep. + E01 | 01–03 sep | Backlog, repositorios, cuentas Supabase/Vercel/Firebase/Google Maps, decisión de stack (ADR), tablero |
 | Sprint 1 | E02–E03 | 04–17 sep | SRS y casos de uso; MER y diccionario de datos; mockups de los tres servicios; alcance validado y congelado |
 | Sprint 2 | E04–E05 | 18 sep–01 oct | Diseño técnico cerrado; infraestructura y CI; autenticación y roles; esquema Prisma en PostgreSQL |
 | Sprint 3 | E06–E07 | 02–15 oct | Clientes, domicilios, inspectores y zonas; agenda de inspecciones y asignación |
@@ -246,7 +246,7 @@ gantt
     Pruebas por historia          :t1, 2026-10-09, 42d
     Pruebas integrales de campo   :t2, 2026-11-13, 6d
     section Implantacion
-    Build EAS e instalacion       :i1, 2026-11-09, 10d
+    Build Flutter e instalacion   :i1, 2026-11-09, 10d
 ```
 
 ## 9. Gestión de riesgos
@@ -255,13 +255,13 @@ gantt
 |---|--------|-------|---------|--------------------------|
 | R1 | Requerimientos incompletos o cambiantes del negocio | Media | Alto | Validar SRS con el responsable de operaciones en el Sprint 1; congelar alcance; cambios entran al backlog priorizados por el PO |
 | R2 | Integrante con baja disponibilidad por carga académica | Alta | Medio | Historias pequeñas; tablero visible; pair programming; el Scrum Master rebalancea el Sprint Backlog |
-| R3 | Curva de aprendizaje de React Native / Expo / Prisma / Supabase | Media | Medio | Spikes técnicos en Sprint 0–1; guía de arranque; plantillas de código |
+| R3 | Curva de aprendizaje de Flutter / Dart / Prisma / Supabase | Media | Medio | Spikes técnicos en Sprint 0–1; guía de arranque; plantillas de código |
 | R4 | **La notificación push no se entrega** (permiso denegado, token vencido, teléfono apagado, app desinstalada) | Alta | Alto | Registro de estado de cada envío; **reintentos** y **respaldo por SMS y correo**; el panel marca "cliente no alcanzado" y el administrador llama; el permiso de notificaciones se pide explicándolo en el primer arranque |
 | R5 | Consumo de batería y datos por la ubicación en segundo plano | Alta | Medio | Publicar solo durante el trayecto activo, con intervalo configurable (15 s) y filtro por distancia; apagado automático al llegar o a los 90 min |
 | R6 | Costo/cuota de Google Directions y Maps | Media | Medio | Calcular el ETA a intervalos, no en cada punto; caché por trayecto; alternativa Mapbox; monitorear el crédito gratuito |
 | R7 | **Privacidad**: el cliente ve la ubicación del inspector y la empresa guarda rastros GPS | Media | Alto | Consentimiento explícito de ambas partes; la ubicación solo es visible mientras el trayecto está activo y solo para el cliente de esa cita; retención de puntos GPS de 30 días; aviso de privacidad en las dos apps |
 | R8 | Cobertura celular deficiente en el domicilio del cliente | Media | Medio | Modo sin señal en la app del inspector (llegada, resultado y fotos en cola); el cliente conserva el último punto y ETA conocidos con su hora |
-| R9 | Publicación en tiendas (App Store / Play Store) tardada o rechazada | Media | Medio | Distribución interna con **EAS Build / Expo Go** y APK directo para la demo; la publicación en tienda queda fuera del alcance evaluable |
+| R9 | Publicación en tiendas (App Store / Play Store) tardada o rechazada | Media | Medio | Distribución interna con APK directo generado en Flutter para la demo; la publicación en tienda queda fuera del alcance evaluable |
 | R10 | Límites del plan gratuito de Supabase/Vercel (proyecto en pausa, cuotas) | Media | Medio | Mantener actividad; respaldos periódicos con `pg_dump`; documentar cómo recrear el proyecto |
 | R11 | Adopción: clientes que no instalan la app | Media | Alto | Respaldo por SMS con enlace corto de confirmación; el administrador puede registrar la confirmación por llamada |
 | R12 | Pérdida de código o datos | Baja | Alto | GitHub, migraciones versionadas, respaldos de la base |
@@ -272,10 +272,10 @@ gantt
 2. Documento de Especificación de Requerimientos de Software (SRS).
 3. Diseño de base de datos: MER, diccionario de datos, esquema Prisma y script SQL para PostgreSQL.
 4. Diagramas UML: casos de uso, clases, secuencia, actividad, estados, componentes y despliegue.
-5. Código fuente en el repositorio: API (Express), panel (React), app del inspector y app del cliente (React Native + Expo).
+5. Código fuente en el repositorio: API (Express), panel (React), app del inspector y app del cliente (Flutter + Dart).
 6. Plan y evidencias de pruebas, incluida la **prueba de campo** de una inspección real de principio a fin.
 7. Manual de usuario e instalación (los tres servicios).
-8. Compilados de las apps (APK / build de EAS) y despliegue del panel y la API.
+8. Compilados de las apps (APK generado con Flutter) y despliegue del panel y la API.
 9. Presentación final y demostración del sistema.
 
 ## 11. Criterios de éxito

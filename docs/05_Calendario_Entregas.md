@@ -39,7 +39,7 @@
 
 | # | Fecha (jueves) | Sprint | Hito de la semana | Entregable integrador |
 |---|----------------|--------|-------------------|-----------------------|
-| E01 | 03 / sep / 2026 | Sprint 0 | Arranque y planeación | ADR de stack, Product Backlog, tablero, repos + Supabase + Vercel + Expo + Google Maps creados, spikes técnicos (push, GPS, mapa) |
+| E01 | 03 / sep / 2026 | Sprint 0 | Arranque y planeación | ADR de stack, Product Backlog, tablero, repos + Supabase + Vercel + Firebase + Google Maps creados, spikes técnicos (push, GPS, mapa) |
 | E02 | 10 / sep / 2026 | Sprint 1 | Análisis | SRS (borrador) e historias de usuario de los tres servicios; MER v1 centrado en la inspección |
 | E03 | 17 / sep / 2026 | Sprint 1 (cierre) | Requerimientos cerrados + diseño de interfaz + **diseño de base de datos** | SRS validado con Agave Roofing, **diseño de la base de datos** (ERD, diccionario de datos y borrador de `schema.prisma`), mockups de las dos apps y del panel |
 | E04 | 24 / sep / 2026 | Sprint 2 | Diseño técnico + infraestructura | Esquema Prisma migrado en Supabase, diagramas UML, CI configurada, esqueletos de las tres aplicaciones |
@@ -50,7 +50,7 @@
 | E09 | 29 / oct / 2026 | Sprint 4 (cierre) | Confirmación y reprogramación | Confirmar desde la notificación, horarios disponibles, solicitud del cliente y aprobación del administrador |
 | E10 | 05 / nov / 2026 | Sprint 5 | Trayecto y seguimiento en vivo | "Voy en camino", ubicación en segundo plano, mapa del cliente con ETA, aviso "está por llegar" |
 | E11 | 12 / nov / 2026 | Sprint 5 (cierre) | Llegada, resultado, tablero y modo sin señal | "Estoy en casa", registro de llegada, resultado con evidencia, cliente ausente, tablero de indicadores, cola de sincronización, manuales |
-| E12 | 19 / nov / 2026 | Sprint 6 | Pruebas integrales, implantación y entrega final | Prueba de campo de una inspección completa, builds EAS instalados, capacitación, aceptación, presentación final |
+| E12 | 19 / nov / 2026 | Sprint 6 | Pruebas integrales, implantación y entrega final | Prueba de campo de una inspección completa, compilados de Flutter (APK) instalados, capacitación, aceptación, presentación final |
 
 ## 4. Calendario detallado por integrante
 
@@ -62,9 +62,9 @@
 |-------|---------------------|---------------------|
 | LP | Acta de equipo; Product Backlog inicial (épicas e historias a partir de la propuesta); tablero en GitHub Projects; Definición de Terminado; agendar ceremonias; este calendario. | Product Backlog + tablero + DoD |
 | AN | Guion de entrevista con el responsable de operaciones de Agave Roofing; glosario del negocio (inspección, ventana, visita fallida); levantamiento del proceso actual por correo y su costo. | Documento de levantamiento inicial |
-| BD | Decisión de stack y ADR-001; crear el monorepo (`api/`, `panel/`, `app-inspector/`, `app-cliente/`) con README de arranque; crear proyectos en **Supabase**, **Vercel**, **Expo (EAS)** y **Google Cloud** (Maps + Directions). | Repos + cuentas + ADR-001 |
-| IN | Spike **Expo + ubicación en segundo plano**: app mínima que registra la posición cada 15 s con la pantalla apagada y mide el consumo de batería en 30 min. | Spike de GPS en segundo plano + notas de batería |
-| CL | Spike **Expo Push Notifications**: app mínima que obtiene el token, recibe una notificación con botones de acción y responde sin abrir la app. Probar con permiso denegado. | Spike de notificaciones push + notas |
+| BD | Decisión de stack y ADR-001; crear el monorepo (`api/`, `panel/`, `app-inspector/`, `app-cliente/`) con README de arranque; crear proyectos en **Supabase**, **Vercel**, **Firebase (FCM)** y **Google Cloud** (Maps + Directions). | Repos + cuentas + ADR-001 |
+| IN | Spike **Flutter + ubicación en segundo plano**: app mínima que registra la posición cada 15 s con la pantalla apagada y mide el consumo de batería en 30 min. | Spike de GPS en segundo plano + notas de batería |
+| CL | Spike **Notificaciones Push en Flutter (FCM)**: app mínima que obtiene el token, recibe una notificación con botones de acción y responde sin abrir la app. Probar con permiso denegado. | Spike de notificaciones push + notas |
 
 ### E02 — Jueves 10 de septiembre — Análisis (Sprint 1, planning)
 
@@ -93,8 +93,8 @@
 | LP | Plan de pruebas (criterios de aceptación por historia); esqueleto del panel React + Vite con layout y rutas. | Plan de pruebas + panel base |
 | AN | Diagramas UML: casos de uso, clases de dominio y actividades del proceso completo. | Diagramas UML (parte 1) |
 | BD | Migrar el esquema Prisma a Supabase; esqueleto de la API con rutas vacías; CI en GitHub Actions; primer despliegue. | BD migrada + API desplegada + CI |
-| IN | Esqueleto de la app del inspector (Expo + TypeScript) con navegación y `ApiClient` compartido; base de datos SQLite local creada. | App del inspector base |
-| CL | Esqueleto de la app del cliente (Expo + TypeScript) con navegación y `ApiClient`; diagramas de secuencia en Mermaid (apoyo a AN). | App del cliente base + secuencias |
+| IN | Esqueleto de la app del inspector (Flutter + Dart) con navegación y cliente HTTP; base de datos SQLite local creada (sqflite). | App del inspector base |
+| CL | Esqueleto de la app del cliente (Flutter + Dart) con navegación y cliente HTTP; diagramas de secuencia en Mermaid (apoyo a AN). | App del cliente base + secuencias |
 
 ### E05 — Jueves 01 de octubre — Autenticación y roles (Sprint 2, cierre)
 

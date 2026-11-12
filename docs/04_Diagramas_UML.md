@@ -19,7 +19,7 @@ flowchart TB
     CLI(["Cliente<br/>(app movil)"])
     SIS(["Sistema<br/>(temporizador)"])
     MAPS(["Google Directions<br/>(actor externo)"])
-    PUSH(["Expo Push / Twilio<br/>(actor externo)"])
+    PUSH(["FCM / APNs / Twilio<br/>(actor externo)"])
 
     subgraph S["Sistema AgaveAlerta"]
         CU01["CU-01 Iniciar sesion"]
@@ -132,7 +132,7 @@ flowchart LR
 | **Inspector** | Humano primario | Personal de campo que revisa el techo. Trabaja de pie, a la intemperie y a veces sin señal. | App móvil del inspector |
 | **Cliente** | Humano primario | Propietario de la vivienda. Alfabetización digital muy variable: debe poder confirmar con un toque. | App móvil del cliente |
 | **Sistema (temporizador)** | Sistema interno | Tareas programadas de la API: dispara los avisos, marca las citas sin confirmar, purga los puntos GPS y cierra trayectos olvidados. | API |
-| **Expo Push / FCM / APNs** | Sistema externo | Entrega las notificaciones al teléfono. No garantiza la entrega (RES-05). | API |
+| **FCM / APNs (Push)** | Sistema externo | Entrega las notificaciones al teléfono. No garantiza la entrega (RES-05). | API |
 | **Twilio / Resend** | Sistema externo | Canales de respaldo: SMS y correo. | API |
 | **Google Directions / Maps** | Sistema externo | Ruta y tiempo estimado de llegada; mapa en ambas apps. | API y apps |
 | **Supabase Auth / Realtime / Storage** | Sistema externo | Identidad, canal de ubicación en vivo y almacenamiento de fotos y PDF. | Todos |
@@ -347,7 +347,7 @@ classDiagram
     direction TB
 
     class AppCliente {
-        <<React Native / Expo>>
+        <<Flutter / Dart>>
         +PantallaMisCitas
         +PantallaDetalleCita
         +PantallaSeguimientoMapa
@@ -355,7 +355,7 @@ classDiagram
         +PantallaReporte
     }
     class AppInspector {
-        <<React Native / Expo>>
+        <<Flutter / Dart>>
         +PantallaRutaDelDia
         +PantallaNavegacion
         +PantallaCapturaResultado
@@ -485,7 +485,7 @@ sequenceDiagram
     participant T as Temporizador (API)
     participant MN as MotorNotificaciones
     participant BD as PostgreSQL
-    participant EX as Expo Push
+    participant EX as FCM / APNs (Push)
     participant TW as Twilio (SMS)
     participant AC as App Cliente
     participant C as Cliente
@@ -551,7 +551,7 @@ sequenceDiagram
     API->>AC: push "El inspector va en camino, llega en ~18 min"
     AC-->>C: notificacion urgente (ignora horario de silencio)
 
-    AI->>AI: expo-location en segundo plano (cada 15 s)
+    AI->>AI: Geolocalización en segundo plano (cada 15 s)
     loop mientras el trayecto este ACTIVO
         AI->>API: POST /trayectos/:id/punto {lat, lng, capturado_en}
         API->>BD: INSERT punto_ubicacion
@@ -788,13 +788,13 @@ stateDiagram-v2
 ```mermaid
 flowchart TB
     subgraph MOVIL["Dispositivos moviles"]
-        subgraph APPCLI["App del Cliente (Expo)"]
+        subgraph APPCLI["App del Cliente (Flutter)"]
             C1["Pantallas: citas, detalle, mapa, reporte"]
             C2["ServicioNotificaciones"]
             C3["CanalRealtime"]
             C4["ApiClient"]
         end
-        subgraph APPINS["App del Inspector (Expo)"]
+        subgraph APPINS["App del Inspector (Flutter)"]
             I1["Pantallas: ruta, navegacion, captura"]
             I2["ServicioUbicacion (background)"]
             I3["ColaLocal (SQLite)"]
@@ -831,7 +831,7 @@ flowchart TB
         D2["Supabase Auth"]
         D3["Supabase Realtime"]
         D4["Supabase Storage"]
-        D5["Expo Push / FCM / APNs"]
+        D5["FCM / APNs (Push)"]
         D6["Twilio SMS"]
         D7["Resend correo"]
         D8["Google Directions / Maps"]
@@ -870,12 +870,12 @@ flowchart TB
 ```mermaid
 flowchart TB
     subgraph TEL_CLI["Telefono del cliente - Android 10+ / iOS 14+"]
-        N1["App Cliente (build EAS)"]
+        N1["App Cliente (Flutter APK / iOS)"]
         N2["Permiso de notificaciones"]
     end
 
     subgraph TEL_INS["Telefono del inspector - Android 10+"]
-        N3["App Inspector (build EAS)"]
+        N3["App Inspector (Flutter APK / iOS)"]
         N4["GPS + permiso de ubicacion en segundo plano"]
         N5["SQLite local (cola de sincronizacion)"]
     end
@@ -897,8 +897,8 @@ flowchart TB
     end
 
     subgraph TERCEROS["Servicios de terceros"]
-        N13["Expo Push Service"]
-        N14["FCM / APNs"]
+        N13["Firebase Cloud Messaging (FCM)"]
+        N14["Apple Push Notification service (APNs)"]
         N15["Twilio"]
         N16["Resend"]
         N17["Google Maps Platform"]

@@ -35,9 +35,9 @@ agave-alerta/                     UN repositorio = el sistema completo
 │                                 El "cerebro": estados de la cita, notificaciones, ETA.
 ├─ panel/          → Marco (LP)   Panel web de administración (React + Vite).
 │                                 Agenda, catálogos, reprogramaciones y tablero.
-├─ app-inspector/  → Anuar (IN)   App móvil del inspector (React Native + Expo).
+├─ app-inspector/  → Anuar (IN)   App móvil del inspector (Flutter + Dart).
 │                                 Ruta del día, trayecto, GPS en segundo plano, modo sin señal.
-├─ app-cliente/    → Jesús (CL)   App móvil del cliente (React Native + Expo).
+├─ app-cliente/    → Jesús (CL)   App móvil del cliente (Flutter + Dart).
 │                                 Notificaciones, confirmación, mapa con ETA, reporte.
 ├─ shared/         → común        ApiClient + tipos del dominio que usan los tres clientes.
 │  ├─ api-client/                 Cliente HTTP con el JWT ya adjunto.
@@ -62,7 +62,7 @@ agave-alerta/                     UN repositorio = el sistema completo
 |-----------|-------------------|----------------------|
 | Marco (LP) | Acta, Product Backlog, DoD, tablero, ceremonias | `docs/entregas/E01/` + GitHub Projects + Milestones |
 | Mario (AN) | Guion de entrevista, proceso actual por correo y su costo, glosario | `docs/entregas/E01/Mario-Levantamiento-Inicial.md` |
-| Jorge (BD) | ADR-001, monorepo, Supabase, Vercel, Expo, Google Cloud, `main` protegida | Raíz del repo + `docs/adr/ADR-001-stack.md` + `.github/` |
+| Jorge (BD) | ADR-001, monorepo, Supabase, Vercel, Firebase, Google Cloud, `main` protegida | Raíz del repo + `docs/adr/ADR-001-stack.md` + `.github/` |
 | Anuar (IN) | Spike de ubicación en segundo plano y consumo de batería | `app-inspector/` (spike) + `docs/entregas/E01/Anuar-Spike-GPS.md` |
 | Jesús (CL) | Spike de notificaciones push con acciones y permiso denegado | `app-cliente/` (spike) + `docs/entregas/E01/Jesus-Spike-Push.md` |
 
@@ -93,8 +93,8 @@ agave-alerta/                     UN repositorio = el sistema completo
 | Marco | Plan de pruebas; esqueleto del panel con layout y rutas | `docs/` + `panel/src/` |
 | Mario | UML: casos de uso, clases y actividades | `docs/` (UML) |
 | Jorge | Migración Prisma en Supabase, esqueleto de la API, CI, primer despliegue | `api/` + `.github/workflows/ci.yml` |
-| Anuar | Esqueleto Expo + navegación + SQLite local | `app-inspector/` + `shared/api-client/` |
-| Jesús | Esqueleto Expo + navegación; diagramas de secuencia | `app-cliente/` + `docs/` |
+| Anuar | Esqueleto Flutter + navegación + SQLite local (sqflite) | `app-inspector/` |
+| Jesús | Esqueleto Flutter + navegación; diagramas de secuencia | `app-cliente/` + `docs/` |
 
 ### E05 — Autenticación y roles · Milestone `E05`
 
@@ -239,7 +239,7 @@ Ese recorrido completo es exactamente el guion de la **prueba de campo de E12**.
 | 10 | Monorepo con las cuatro carpetas | Jorge | Raíz del repo `agave-alerta` | ⏳ |
 | 11 | Proyecto en Supabase | Jorge | `docs/entregas/E01/Jorge-Infraestructura.md` §2 + `*/.env.example` | ⏳ crear cuenta |
 | 12 | Proyecto en Vercel | Jorge | `docs/entregas/E01/Jorge-Infraestructura.md` §3 | ⏳ crear cuenta |
-| 13 | Cuenta Expo (EAS) | Jorge | `docs/entregas/E01/Jorge-Infraestructura.md` §4 | ⏳ crear cuenta |
+| 13 | Proyecto Firebase (FCM) | Jorge | `docs/entregas/E01/Jorge-Infraestructura.md` §4 | ⏳ crear proyecto |
 | 14 | Google Cloud con Maps + Directions | Jorge | `docs/entregas/E01/Jorge-Infraestructura.md` §5 | ⏳ crear cuenta |
 | 15 | `main` protegida + convención de ramas | Jorge | `.github/` | ⏳ al subir a GitHub |
 | 16 | Spike: ubicación en segundo plano | Anuar | `app-inspector/` (spike) | ⏳ |
@@ -257,8 +257,8 @@ Leyenda: ✅ hecho en el repo · ⏳ pendiente (crear cuentas, escribir el docum
 
 | Herramienta | Qué muestra |
 |-------------|-------------|
-| `pnpm install && pnpm dev` en la raíz | Levanta API + panel; las apps se abren con `npx expo start` |
-| **Expo Go / build EAS** en un teléfono | Las dos apps móviles al día de hoy, en dispositivo real |
+| `pnpm install && pnpm dev` en la raíz | Levanta API + panel; las apps se abren con `flutter run` |
+| **Flutter run / APK de prueba** en un teléfono | Las dos apps móviles al día de hoy, en dispositivo real |
 | **GitHub Projects** (tablero) | Todas las tarjetas de los 5; filtrar por `Milestone: E0X` |
 | **Milestones** `E01…E12` | Barra de % automática (issues cerrados / totales) |
 | **GitHub Actions** (CI) | Check verde = todo integra sin romperse |

@@ -71,15 +71,15 @@ La sección 2 presenta una visión general del producto y sus restricciones. La 
 
 AgaveAlerta es un producto **nuevo**, con arquitectura **cliente–servidor de cuatro partes** (tres clientes + un servidor):
 
-- **App del Cliente (móvil):** React Native + Expo. Recibe notificaciones push, confirma, reprograma, sigue el trayecto en un mapa y consulta el reporte.
-- **App del Inspector (móvil):** React Native + Expo. Ruta del día, inicio de trayecto con ubicación en segundo plano, contacto con el cliente, llegada, resultado con fotos; opera con señal intermitente.
+- **App del Cliente (móvil):** Flutter (Dart). Recibe notificaciones push, confirma, reprograma, sigue el trayecto en un mapa y consulta el reporte.
+- **App del Inspector (móvil):** Flutter (Dart). Ruta del día, inicio de trayecto con ubicación en segundo plano, contacto con el cliente, llegada, resultado con fotos; opera con señal intermitente.
 - **Panel del Administrador (web):** React desplegado en Vercel. Altas, agenda, asignación, aprobación de reprogramaciones y tablero.
 - **API (Node.js + Express):** servicio REST único que concentra la lógica de negocio (máquina de estados de la cita, disparo de notificaciones, cálculo de ETA) y el acceso a la **base de datos central PostgreSQL** (Supabase). La autenticación la provee **Supabase Auth**; el seguimiento en vivo viaja por **Supabase Realtime**.
 
 ```mermaid
 flowchart LR
-    Cli([Cliente]) --> APPC["App Cliente (React Native/Expo)"]
-    Insp([Inspector]) --> APPI["App Inspector (React Native/Expo)"]
+    Cli([Cliente]) --> APPC["App Cliente (Flutter)"]
+    Insp([Inspector]) --> APPI["App Inspector (Flutter)"]
     Adm([Administrador]) --> PANEL["Panel web (React en Vercel)"]
 
     APPC -- HTTPS/REST --> API["API Node.js + Express"]
@@ -88,8 +88,8 @@ flowchart LR
 
     API -- Prisma --> DB[("PostgreSQL - Supabase")]
     API -- verifica JWT --> AUTH["Supabase Auth"]
-    API -- push --> EXPO["Expo Push / FCM / APNs"]
-    EXPO -- notificacion --> APPC
+    API -- push --> FCM["Firebase Cloud Messaging (FCM) / APNs"]
+    FCM -- notificacion --> APPC
     API -- SMS y correo de respaldo --> SMS["Twilio / Resend"]
     APPI -- publica ubicacion --> RT["Supabase Realtime"]
     RT -- ubicacion en vivo --> APPC
@@ -124,11 +124,11 @@ flowchart LR
 
 ### 2.4 Restricciones
 
-- RES-01: Las apps del Cliente y del Inspector son aplicaciones móviles para **Android 10 o superior** e **iOS 14 o superior**, construidas con React Native + Expo.
+- RES-01: Las apps del Cliente y del Inspector son aplicaciones móviles para **Android 10 o superior** e **iOS 14 o superior**, construidas con **Flutter (Dart)**.
 - RES-02: El panel de administración es una aplicación web compatible con las últimas versiones de Chrome y Edge.
 - RES-03: Base de datos relacional **PostgreSQL 15** (gestionada por Supabase). La lógica de negocio reside en la **API Node.js + Express**; el acceso a datos usa **Prisma**.
 - RES-04: La autenticación se realiza con **Supabase Auth** (JWT): correo y contraseña para Administrador e Inspector, teléfono con **código OTP** para el Cliente. La API valida el token en cada petición.
-- RES-05: Las notificaciones push se envían con **Expo Push Notifications** sobre FCM y APNs; el sistema **no puede garantizar** la entrega, por lo que debe registrar el estado de cada envío y contar con **respaldo por SMS y correo**.
+- RES-05: Las notificaciones push se envían con **Firebase Cloud Messaging (FCM)** y APNs; el sistema **no puede garantizar** la entrega, por lo que debe registrar el estado de cada envío y contar con **respaldo por SMS y correo**.
 - RES-06: La **ubicación del inspector solo se comparte mientras el trayecto está activo** y únicamente con el cliente de esa inspección.
 - RES-07: La app del Inspector debe **poder registrar llegada, resultado y fotos sin conexión** y sincronizarlos al reconectar.
 - RES-08: Las coordenadas se almacenan como `NUMERIC(9,6)` (latitud y longitud); las distancias en metros y los tiempos en segundos (`INT`).
@@ -140,7 +140,7 @@ flowchart LR
 
 - El cliente cuenta con un teléfono inteligente con datos móviles y acepta instalar la app y otorgar el permiso de notificaciones.
 - El inspector cuenta con un teléfono de la empresa o propio, con GPS y plan de datos, y acepta compartir su ubicación **durante la jornada y solo en trayectos activos**.
-- Existen cuentas activas y con cuota suficiente en Supabase, Vercel, Expo (EAS), Google Cloud (Maps/Directions) y Twilio.
+- Existen cuentas activas y con cuota suficiente en Supabase, Vercel, Firebase (FCM), Google Cloud (Maps/Directions) y Twilio.
 - Agave Roofing proporcionará la lista inicial de clientes con su domicilio y teléfono, y la lista de inspectores y zonas.
 - Las direcciones de los clientes se pueden georreferenciar (geocodificar) con una precisión aceptable; cuando no, el administrador ajusta el punto en el mapa manualmente.
 - La hora de las operaciones se toma del reloj del servidor (API); las apps envían también su hora local para las operaciones registradas sin conexión.
@@ -156,7 +156,7 @@ flowchart LR
 - **IU-02 Interfaz de usuario (App del Inspector):** interfaz móvil operable con una sola mano y a la intemperie (alto contraste, botones grandes); acceso rápido a la cámara y al teléfono del cliente.
 - **IU-03 Interfaz de usuario (Panel):** interfaz web responsiva con calendario, tablas y tablero de indicadores.
 - **IU-04 Interfaz de hardware:** GPS y cámara del teléfono del inspector; receptor de notificaciones del teléfono del cliente.
-- **IU-05 Interfaz de software:** API REST sobre HTTPS en formato JSON; PostgreSQL vía Prisma; Supabase Auth, Realtime y Storage; Expo Push Notifications; Google Maps SDK y Directions API; Twilio (SMS) y Resend (correo).
+- **IU-05 Interfaz de software:** API REST sobre HTTPS en formato JSON; PostgreSQL vía Prisma; Supabase Auth, Realtime y Storage; Firebase Cloud Messaging (FCM/APNs); Google Maps SDK y Directions API; Twilio (SMS) y Resend (correo).
 - **IU-06 Interfaz de comunicación:** Internet móvil (HTTPS) entre apps y API; canal **Realtime** por inspección para la ubicación en vivo; la app del inspector mantiene una **cola local** de operaciones pendientes.
 
 ### 3.2 Requerimientos funcionales
@@ -322,7 +322,7 @@ Prioridad: **A** = Alta (imprescindible), **M** = Media, **B** = Baja (deseable)
 - RNF-22: Las apps deben mostrar un **aviso de privacidad** en el primer arranque, explicando qué datos de ubicación se recogen, con qué fin y por cuánto tiempo, y solicitar consentimiento.
 - RNF-23: El teléfono del cliente no se expone al inspector en texto plano fuera del contexto de una inspección asignada y activa.
 - RNF-24: La bitácora de auditoría es de solo lectura desde las interfaces.
-- RNF-25: Las claves de servicio (Supabase service key, llaves de Google, Twilio, Expo) se guardan como **variables de entorno**, nunca en el repositorio ni en el cliente móvil.
+- RNF-25: Las claves de servicio (Supabase service key, llaves de Google, Twilio, Firebase) se guardan como **variables de entorno**, nunca en el repositorio ni en el cliente móvil.
 
 #### Mantenibilidad y portabilidad
 - RNF-26: Arquitectura por capas en la API (rutas → servicios → repositorios Prisma → BD); las dos apps y el panel comparten tipos del dominio y un cliente de API común.

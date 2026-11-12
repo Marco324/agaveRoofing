@@ -9,6 +9,8 @@ import type {
 } from '../../../shared/src/types/dtos.ts';
 import { generarFolio } from './folioService.ts';
 import { transicionar } from './maquinaEstadosService.ts';
+import { encolarNotificacion, despacharNotificacionesPendientes } from './notificacionService.ts';
+import { TipoNotificacion } from '../../../shared/src/types/estados.ts';
 
 export class ErrorTraslapeInspector extends Error {
   idInspector: number;
@@ -249,6 +251,18 @@ export function moverInspeccion(idInspeccion: number, dto: MoverInspeccionDTO) {
     dto.idUsuario || null,
     `Cita reprogramada a ${dto.nuevaFecha} (${dto.nuevaVentanaInicio} - ${dto.nuevaVentanaFin}). Motivo: ${dto.motivo || 'Ajuste de agenda'}`
   );
+
+  // E09: Notificar al cliente cuando la oficina reprograma la cita
+  try {
+    encolarNotificacion({
+      idInspeccion,
+      tipo: TipoNotificacion.REPROGRAMADA,
+      reenvioManual: true
+    });
+    despacharNotificacionesPendientes();
+  } catch (_) {
+    // Continuar si no hay plantillas sembradas en pruebas aisladas
+  }
 
   return obtenerInspeccionPorId(idInspeccion);
 }

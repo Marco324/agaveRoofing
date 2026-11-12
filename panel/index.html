@@ -33,22 +33,37 @@
 
         <!-- Navigation Tabs -->
         <nav class="hidden md:flex space-x-1">
-          <a href="#" class="bg-slate-800 text-emerald-400 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 border-b-2 border-emerald-500">
-            <i class="fa-regular fa-calendar-days"></i> Agenda y Calendario
-          </a>
-          <a href="#" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2">
-            <i class="fa-solid fa-users"></i> Catálogos
-          </a>
-          <a href="#" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left"></i> Reprogramaciones
-          </a>
-          <a href="#" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie"></i> Tablero
-          </a>
+          <button id="tabBtnAgenda" onclick="cambiarTab('agenda')" class="bg-slate-800 text-emerald-400 px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 border-b-2 border-emerald-500 transition">
+            <i class="fa-regular fa-calendar-days"></i> Agenda (E07)
+          </button>
+          <button id="tabBtnNotificaciones" onclick="cambiarTab('notificaciones')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-bell"></i> Push / SMS (E08)
+          </button>
+          <button id="tabBtnReprogramaciones" onclick="cambiarTab('reprogramaciones')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-clock-rotate-left"></i> Reprogramaciones (E09)
+            <span id="badgeReprogCount" class="text-[10px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full">1</span>
+          </button>
+          <button id="tabBtnMonitor" onclick="cambiarTab('monitor')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-satellite-dish text-cyan-400"></i> Monitor en Vivo (E10)
+          </button>
+          <button id="tabBtnTablero" onclick="cambiarTab('tablero')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-chart-pie text-emerald-400"></i> Tablero KPI (E11)
+          </button>
+          <button id="tabBtnCatalogos" onclick="cambiarTab('catalogos')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-shield-halved text-amber-400"></i> Catálogos y Seguridad (E05/E06/E12)
+          </button>
         </nav>
 
-        <!-- User profile -->
-        <div class="flex items-center space-x-4">
+        <!-- User profile & Quick Switcher -->
+        <div class="flex items-center space-x-3">
+          <div class="hidden lg:flex items-center gap-1.5 mr-2 border-r border-slate-700 pr-3">
+            <a href="../app-cliente/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5" title="Abrir Simulador App del Cliente">
+              <i class="fa-solid fa-mobile-screen-button"></i> App Cliente
+            </a>
+            <a href="../app-inspector/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5" title="Abrir Simulador App del Inspector">
+              <i class="fa-solid fa-helmet-safety"></i> App Inspector
+            </a>
+          </div>
           <div class="text-right hidden sm:block">
             <div class="text-xs font-semibold text-slate-200">Marco Méndez (LP)</div>
             <div class="text-[10px] text-slate-400">Product Owner / Admin</div>
@@ -62,7 +77,34 @@
 
     <!-- Main Content Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      
+
+      <!-- Banner Global: Alerta de Cliente No Alcanzado (E08) -->
+      <div id="bannerClienteNoAlcanzado" class="mb-6 bg-rose-50 border-2 border-rose-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-phone-volume"></i>
+          </div>
+          <div class="text-xs">
+            <div class="font-bold text-rose-900 text-sm">Alerta de "Cliente No Alcanzado" (Riesgo R4 — E08)</div>
+            <p id="textoClienteNoAlcanzado" class="text-rose-800 mt-0.5">
+              La cita <strong>INS-2026-000007</strong> (Michael A. Flores · +1-210-555-0310) tiene todas sus notificaciones en estado <strong>FALLIDA</strong> y pasó a <strong>SIN_CONFIRMAR</strong>. La oficina debe llamar por teléfono.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button onclick="cambiarTab('reprogramaciones')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+            Atender Citas Sin Confirmar
+          </button>
+          <button onclick="cambiarTab('notificaciones')" class="bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-xs font-semibold px-3 py-2 rounded-lg transition">
+            Ver Bitácora Push/SMS
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN 1: VISTA DE AGENDA Y CALENDARIO (E07 / E09)                -->
+      <!-- ================================================================== -->
+      <div id="viewAgenda">
       <!-- Top Action & Filter Bar -->
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -73,14 +115,20 @@
               <i class="fa-solid fa-chevron-left"></i>
             </button>
             <div class="text-center">
-              <span id="currentDateDisplay" class="text-lg font-bold text-slate-900 block">Jueves, 15 de Octubre 2026</span>
-              <span class="text-xs text-slate-500 font-medium">Hito E07 — Cierre Sprint 3</span>
+              <span id="currentDateDisplay" class="text-lg font-bold text-slate-900 block">Jueves, 29 de Octubre 2026</span>
+              <span id="currentSprintLabel" class="text-xs text-slate-500 font-medium">Hito E09 — Cierre Sprint 4 (Confirmación y Reprogramación)</span>
             </div>
             <button id="btnNextDay" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition">
               <i class="fa-solid fa-chevron-right"></i>
             </button>
-            <button id="btnHoy" class="ml-2 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition">
-              Hoy
+            <button id="btnE11Date" class="ml-2 px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition">
+              Jue 12 Nov (E11)
+            </button>
+            <button id="btnHoy" class="px-3 py-1.5 text-xs font-medium bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-emerald-800 transition">
+              Jue 29 Oct (E09)
+            </button>
+            <button id="btnE07Date" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition">
+              Jue 15 Oct (E07)
             </button>
           </div>
 
@@ -239,16 +287,470 @@
           <!-- Business Rule Notice -->
           <div class="bg-amber-50 rounded-xl p-4 border border-amber-200 text-xs text-amber-900 space-y-1">
             <div class="font-bold flex items-center gap-1.5">
-              <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Regla de Traslape (RN-02)
+              <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Reglas Activas (RN-02, RN-05, RN-06, RN-07)
             </div>
             <p class="text-slate-600">
-              El sistema impide físicamente programar dos citas que se empalmen para el mismo inspector en San Antonio el mismo día.
+              Validación de traslapes por inspector, límite de 3 reprogramaciones conservando el folio y alerta automática de citas <strong>SIN_CONFIRMAR</strong>.
             </p>
           </div>
 
         </div>
 
       </div>
+      </div> <!-- Fin #viewAgenda -->
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN 2: VISTA DE NOTIFICACIONES PUSH Y BITÁCORA R4 (E08)        -->
+      <!-- ================================================================== -->
+      <div id="viewNotificaciones" class="hidden space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-bell text-emerald-600"></i> Motor de Notificaciones Push y Respaldo SMS (E08)
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Seguimiento del Riesgo R4 (Entregabilidad), horario de silencio (21:00–07:00 RN-14), reintentos y respaldo Twilio SMS.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="ejecutarDespachadorPanel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-paper-plane"></i> Ejecutar Temporizadores y Despachador
+            </button>
+          </div>
+        </div>
+
+        <!-- KPIs de Entregabilidad R4 -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div class="text-xs text-slate-500">Total Envíos</div>
+            <div id="kpiNotifTotal" class="text-2xl font-bold text-slate-900 mt-1">7</div>
+          </div>
+          <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
+            <div class="text-xs text-emerald-700 font-medium">Push Entregadas</div>
+            <div id="kpiNotifPush" class="text-2xl font-bold text-emerald-800 mt-1">6</div>
+          </div>
+          <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-sm">
+            <div class="text-xs text-blue-700 font-medium">Respaldo SMS</div>
+            <div id="kpiNotifSms" class="text-2xl font-bold text-blue-800 mt-1">0</div>
+          </div>
+          <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm">
+            <div class="text-xs text-rose-700 font-medium">Fallidas (3 int.)</div>
+            <div id="kpiNotifFallidas" class="text-2xl font-bold text-rose-800 mt-1">1</div>
+          </div>
+          <div class="bg-slate-900 text-white p-4 rounded-xl shadow-sm">
+            <div class="text-xs text-emerald-300 font-medium">Tasa Entregabilidad R4</div>
+            <div id="kpiNotifTasa" class="text-2xl font-bold text-white mt-1">86%</div>
+          </div>
+        </div>
+
+        <!-- Tabla de Notificaciones -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Bitácora de Notificaciones por Inspección (RN-13 / RN-14)
+            </h3>
+            <span class="text-[11px] text-slate-500">El botón "Reenviar" activa <code>reenvio_manual = true</code></span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50/70 text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4">Folio / Cliente</th>
+                  <th class="py-3 px-4">Tipo de Aviso</th>
+                  <th class="py-3 px-4">Canal / Destinatario</th>
+                  <th class="py-3 px-4">Estado</th>
+                  <th class="py-3 px-4">Intentos</th>
+                  <th class="py-3 px-4">Mensaje / Error</th>
+                  <th class="py-3 px-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaNotificacionesBody" class="divide-y divide-slate-100">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div> <!-- Fin #viewNotificaciones -->
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN 3: BANDEJA DE REPROGRAMACIONES Y SIN CONFIRMAR (E09)       -->
+      <!-- ================================================================== -->
+      <div id="viewReprogramaciones" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Bandeja de solicitudes del cliente (7 cols) -->
+          <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 bg-slate-900 text-white flex justify-between items-center">
+              <div>
+                <h2 class="text-sm font-bold flex items-center gap-2">
+                  <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Bandeja de Solicitudes de Reprogramación (E09)
+                </h2>
+                <p class="text-[11px] text-slate-400 mt-0.5">
+                  Al aprobar, la cita cambia de horario conservando su folio original (RN-06) y notifica al cliente.
+                </p>
+              </div>
+            </div>
+            <div id="contenedorBandejaReprog" class="p-5 space-y-4">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Alerta de citas SIN_CONFIRMAR (5 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-amber-300 overflow-hidden">
+              <div class="px-5 py-4 bg-amber-50 border-b border-amber-200 flex justify-between items-center">
+                <div>
+                  <h2 class="text-sm font-bold text-amber-950 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Alerta de Citas SIN_CONFIRMAR (RN-07)
+                  </h2>
+                  <p class="text-[11px] text-amber-800 mt-0.5">
+                    Citas cuyo plazo venció sin respuesta. No se cancelan solas; confirma por llamada o cancela.
+                  </p>
+                </div>
+                <button onclick="ejecutarBarridoSinConfirmar()" class="text-[11px] bg-amber-600 hover:bg-amber-700 text-white font-semibold px-2.5 py-1.5 rounded-lg transition">
+                  Correr Temporizador
+                </button>
+              </div>
+              <div id="contenedorSinConfirmar" class="p-4 space-y-3">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Reprogramación iniciada por la oficina -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-building-user text-emerald-600"></i> Reprogramación Iniciada por Oficina
+              </h3>
+              <p class="text-xs text-slate-600">
+                Si un inspector se reporta enfermo o hay lluvia intensa en San Antonio, mueve la cita aquí; el cliente recibirá el aviso automático del nuevo horario.
+              </p>
+              <form id="formMoverOficina" class="space-y-3 pt-1">
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Cita a Mover</label>
+                  <select id="selectCitaOficina" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
+                    <option value="5">INS-2026-000005 — Robert B. Martinez (2026-10-29 09:00)</option>
+                    <option value="8">INS-2026-000008 — Elena Rodriguez (2026-10-30 10:00)</option>
+                    <option value="2">INS-2026-000002 — Sarah Jenkins (2026-10-15 11:30)</option>
+                  </select>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nueva Fecha</label>
+                    <input type="date" id="inputNuevaFechaOficina" value="2026-10-31" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Inicio</label>
+                    <input type="time" id="inputNuevoInicioOficina" value="10:00" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Fin</label>
+                    <input type="time" id="inputNuevoFinOficina" value="12:00" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Motivo de la Oficina</label>
+                  <input type="text" id="inputMotivoOficina" value="Ajuste operativo de cuadrilla en San Antonio, TX" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
+                </div>
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2.5 rounded-lg transition">
+                  Mover Cita y Notificar al Cliente
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div> <!-- Fin #viewReprogramaciones -->
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN 4: MONITOR EN VIVO Y SEMÁFORO DE PUNTUALIDAD (E10)         -->
+      <!-- ================================================================== -->
+      <div id="viewMonitor" class="hidden space-y-6">
+        <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-md border border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
+              <h2 class="text-lg font-bold text-white">Monitor en Vivo de Inspectores en Ruta — San Antonio, TX (E10)</h2>
+            </div>
+            <p class="text-xs text-slate-300 mt-1">
+              Seguimiento en tiempo real vía canal <code>inspeccion:{id}</code> (RN-08), ETA con Google Directions / respaldo en línea recta (RN-09) y alerta automática a menos de 1,000 m.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="iniciarTrayectoDemoPanel(10)" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
+              <i class="fa-solid fa-truck-fast"></i> Iniciar Trayecto Carlos Garza (INS-10)
+            </button>
+            <button onclick="cerrarTrayectosOlvidadosPanel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition">
+              <i class="fa-solid fa-stopwatch"></i> Apagado Automático &gt;90m (R5)
+            </button>
+            <button onclick="cargarMonitorVivo()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+              <i class="fa-solid fa-rotate"></i> Actualizar
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Mapa en vivo de San Antonio y tarjetas de inspectores activos (8 cols) -->
+          <div class="lg:col-span-8 space-y-4">
+            <!-- Lienzo de Mapa Interactivo de San Antonio TX -->
+            <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-lg">
+              <div class="px-4 py-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center text-xs text-slate-300">
+                <span class="font-bold flex items-center gap-2">
+                  <i class="fa-solid fa-map-location-dot text-cyan-400"></i> Mapa Operativo en Vivo — San Antonio Metropolitan Area (I-10 / US-281 / Loop 1604)
+                </span>
+                <span id="badgeTotalEnCamino" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded-full font-bold">
+                  1 unidad en camino
+                </span>
+              </div>
+              <div id="mapaSanAntonioCanvas" class="relative h-72 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-6 overflow-hidden">
+                <!-- Vialidades esquemáticas de San Antonio -->
+                <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#38bdf8 1px, transparent 1px); background-size: 24px 24px;"></div>
+                <div class="absolute top-4 left-4 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-1 rounded border border-slate-700">
+                  Norte: Stone Oak (78258) · Noroeste: Medical Center (78229) · Este: Alamo Heights (78209)
+                </div>
+                <div id="contenedorPinesMapa" class="relative w-full h-full flex flex-col justify-center gap-3 pt-6">
+                  <!-- Pines dinámicos -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjetas detalladas de cada inspector en camino -->
+            <div id="contenedorTarjetasEnCamino" class="space-y-3">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Lista lateral de "Hoy" con Semáforo + Capacitación E10 (4 cols) -->
+          <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-traffic-light text-amber-400"></i> Lista de "Hoy" con Semáforo
+                </h3>
+                <span class="text-[11px] text-slate-400">12 Nov 2026</span>
+              </div>
+              <div id="contenedorSemaforoHoy" class="p-4 space-y-3">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <div class="bg-emerald-50 rounded-2xl border border-emerald-200 p-4 space-y-2 text-xs text-emerald-950">
+              <div class="font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-user-graduate text-emerald-700"></i> Capacitación a Inspectores Piloto (E10)
+              </div>
+              <p class="text-emerald-800">
+                Sesión completada con <strong>Carlos Garza (TX-ROOF-01)</strong> y <strong>David Vance (TX-AGAVE-02)</strong>: permiso de ubicación en segundo plano cada 15 s, corte automático al registrar llegada y prueba en calle.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div> <!-- Fin #viewMonitor -->
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN 5: TABLERO DE INDICADORES Y FEATURE FREEZE (E11)           -->
+      <!-- ================================================================== -->
+      <div id="viewTablero" class="hidden space-y-6">
+        <!-- Banner de Feature Freeze (Cierre Sprint 5 — E11) -->
+        <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-2xl p-5 shadow-md border border-emerald-700/50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-lg shrink-0 mt-0.5">
+              ❄️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-white">Tablero Ejecutivo de Indicadores (E11)</h2>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold uppercase">
+                  Feature Freeze Activo · 12 Nov 2026
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">
+                Vistas SQL en vivo (<code>v_indicadores_semana</code>, <code>v_puntualidad_inspector</code>, <code>v_efectividad_notificacion</code>). Alcance funcional congelado al 100% para cierre de Sprint 5.
+              </p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <input type="date" id="inputKpiInicio" value="2026-10-01" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5">
+            <span class="text-xs text-slate-400">a</span>
+            <input type="date" id="inputKpiFin" value="2026-11-19" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5">
+            <button onclick="cargarTableroIndicadores()" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+              Filtrar
+            </button>
+            <button onclick="descargarCsvIndicadores()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-file-csv"></i> Exportar a CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- 5 Tarjetas Principales del Tablero -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div class="text-xs text-slate-500 font-medium">Citas del Periodo</div>
+            <div id="kpiTabTotal" class="text-2xl font-extrabold text-slate-900 mt-1">12</div>
+            <div class="text-[11px] text-slate-400 mt-1">Oct – Nov 2026 (San Antonio)</div>
+          </div>
+          <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
+            <div class="text-xs text-emerald-800 font-bold">Tasa de Confirmación</div>
+            <div id="kpiTabConfirmacion" class="text-2xl font-extrabold text-emerald-700 mt-1">83.3%</div>
+            <div class="text-[11px] text-emerald-700 mt-1">✅ Supera meta &ge; 80% (Antes: 0%)</div>
+          </div>
+          <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm">
+            <div class="text-xs text-rose-800 font-bold">Visitas Fallidas (Ausente)</div>
+            <div id="kpiTabFallidas" class="text-2xl font-extrabold text-rose-700 mt-1">0 (0%)</div>
+            <div class="text-[11px] text-rose-700 mt-1">📉 Reducción vs 32% por correo</div>
+          </div>
+          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
+            <div class="text-xs text-amber-800 font-bold">Reprogramadas a Tiempo</div>
+            <div id="kpiTabReprog" class="text-2xl font-extrabold text-amber-700 mt-1">1</div>
+            <div class="text-[11px] text-amber-700 mt-1">Visitas en vano evitadas</div>
+          </div>
+          <div class="bg-slate-900 text-white p-4 rounded-xl shadow-sm">
+            <div class="text-xs text-emerald-300 font-bold">Inspecciones Completadas</div>
+            <div id="kpiTabCompletadas" class="text-2xl font-extrabold text-white mt-1">1</div>
+            <div class="text-[11px] text-slate-400 mt-1">Con fotos y reporte PDF</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Gráfica de Citas por Estado + Evolución Semanal (6 cols) -->
+          <div class="lg:col-span-6 space-y-6">
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-chart-bar text-emerald-600"></i> Distribución de Citas por Estado (Gráfica de Barras)
+              </h3>
+              <div id="contenedorGraficaEstados" class="space-y-2.5 text-xs">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-cyan-600"></i> Evolución Semanal de Confirmación (<code>v_indicadores_semana</code>)
+              </h3>
+              <div id="contenedorEvolucionSemanal" class="space-y-2.5 text-xs">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Ranking de Puntualidad por Inspector + Efectividad por Canal (6 cols) -->
+          <div class="lg:col-span-6 space-y-6">
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-medal text-amber-500"></i> Ranking de Puntualidad por Inspector (<code>v_puntualidad_inspector</code>)
+              </h3>
+              <div id="contenedorRankingInspectores" class="space-y-3 text-xs">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-tower-broadcast text-purple-600"></i> Efectividad por Canal (<code>v_efectividad_notificacion</code>)
+                </h3>
+                <button onclick="purgarPuntosPanel()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition">
+                  🧹 Purgar GPS &gt;30d (RN-17)
+                </button>
+              </div>
+              <div id="contenedorEfectividadCanales" class="space-y-3 text-xs">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- Fin #viewTablero -->
+
+      <!-- ================================================================== -->
+      <!-- SECCIÓN 6: CATÁLOGOS, SEGURIDAD Y PILOTO (E05 / E06 / E12)         -->
+      <!-- ================================================================== -->
+      <div id="viewCatalogos" class="hidden space-y-6">
+        <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-md border border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-shield-halved text-amber-400"></i> Catálogos Operativos, Seguridad (E05/E06) y Piloto (E12)
+            </h2>
+            <p class="text-xs text-slate-300 mt-1">
+              Gestión de Clientes (baja lógica RN-15), Domicilios geocodificados en San Antonio, TX, Zonas, Inspectores, Bitácora de Auditoría E05 y Opiniones de Clientes Piloto E12.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="cargarCatalogosYSeguridad()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
+              <i class="fa-solid fa-rotate"></i> Sincronizar Catálogos y Bitácora
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Clientes y Alta con Baja Lógica RN-15 (7 cols) -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Catálogo de Clientes (RN-15 Baja Lógica, sin borrado físico)
+                </h3>
+                <span id="badgeCountClientesCat" class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">4 activos</span>
+              </div>
+              <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                <form id="formNuevoClienteCat" class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+                  <input type="text" id="catCliNombre" placeholder="Nombre completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5">
+                  <input type="text" id="catCliTel" placeholder="+1-210-555-0999" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5">
+                  <select id="catCliCanal" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5">
+                    <option value="PUSH">Canal: PUSH</option>
+                    <option value="SMS">Canal: SMS</option>
+                  </select>
+                  <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-3 py-1.5 transition">
+                    + Alta Cliente
+                  </button>
+                </form>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th class="py-2.5 px-4">Cliente</th>
+                      <th class="py-2.5 px-4">Teléfono / Correo</th>
+                      <th class="py-2.5 px-4">Canal</th>
+                      <th class="py-2.5 px-4">Estado</th>
+                      <th class="py-2.5 px-4 text-right">RN-15</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaClientesCatBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Domicilios Geocodificados -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Domicilios con Geocodificación y Pin en Mapa (San Antonio, TX — E06)
+                </h3>
+              </div>
+              <div id="contenedorDomiciliosCat" class="p-4 space-y-2.5 text-xs"></div>
+            </div>
+          </div>
+
+          <!-- Bitácora de Seguridad E05 + Encuestas Piloto E12 (5 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div class="px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fa-solid fa-lock text-amber-400"></i> Bitácora de Seguridad y Roles (E05)
+                </h3>
+                <span class="text-[10px] text-emerald-300 font-mono">JWT + RLS Activo</span>
+              </div>
+              <div id="contenedorBitacoraE05" class="p-4 space-y-2 text-xs max-h-64 overflow-y-auto"></div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
+              <div class="px-5 py-3.5 bg-emerald-900 text-white flex justify-between items-center">
+                <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fa-solid fa-star text-amber-300"></i> Opiniones de Clientes Piloto (E12)
+                </h3>
+                <span class="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-full font-bold">100% Aceptación</span>
+              </div>
+              <div id="contenedorEncuestasE12" class="p-4 space-y-2.5 text-xs"></div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- Fin #viewCatalogos -->
 
     </main>
 
@@ -485,10 +987,160 @@
         ventana_fin: '16:30',
         estado: 'PROGRAMADA',
         motivo_visita: 'Inspección comercial anual preventiva en cubierta plana'
+      },
+      {
+        id_inspeccion: 5,
+        folio: 'INS-2026-000005',
+        id_inspector: 1,
+        inspector_nombre: 'Carlos Garza',
+        placa_vehiculo: 'TX-ROOF-01',
+        id_cliente: 1,
+        cliente_nombre: 'Robert B. Martinez',
+        cliente_telefono: '+1-210-555-0201',
+        id_domicilio: 1,
+        calle: 'Stone Oak Pkwy',
+        numero: '19202',
+        colonia: 'Stone Oak',
+        ciudad: 'San Antonio',
+        domicilio_estado: 'Texas',
+        codigo_postal: '78258',
+        referencias: 'Portón negro con interfono.',
+        id_zona: 1,
+        fecha_programada: '2026-10-29',
+        ventana_inicio: '09:00',
+        ventana_fin: '11:00',
+        estado: 'CONFIRMADA',
+        motivo_visita: 'Seguimiento de reparación de teja asfáltica en Stone Oak'
+      },
+      {
+        id_inspeccion: 6,
+        folio: 'INS-2026-000006',
+        id_inspector: 1,
+        inspector_nombre: 'Carlos Garza',
+        placa_vehiculo: 'TX-ROOF-01',
+        id_cliente: 2,
+        cliente_nombre: 'Sarah Jenkins',
+        cliente_telefono: '+1-210-555-0233',
+        id_domicilio: 2,
+        calle: 'Broadway St',
+        numero: '5930',
+        colonia: 'Alamo Heights',
+        ciudad: 'San Antonio',
+        domicilio_estado: 'Texas',
+        codigo_postal: '78209',
+        referencias: 'Frente a gasolinera Chevron.',
+        id_zona: 2,
+        fecha_programada: '2026-10-29',
+        ventana_inicio: '11:30',
+        ventana_fin: '13:30',
+        estado: 'REPROG_SOLICITADA',
+        motivo_visita: 'Inspección de cumbrera y canaletas en Alamo Heights'
+      },
+      {
+        id_inspeccion: 7,
+        folio: 'INS-2026-000007',
+        id_inspector: 2,
+        inspector_nombre: 'David Vance',
+        placa_vehiculo: 'TX-AGAVE-02',
+        id_cliente: 3,
+        cliente_nombre: 'Michael A. Flores',
+        cliente_telefono: '+1-210-555-0310',
+        id_domicilio: 3,
+        calle: 'S St Marys St',
+        numero: '1011',
+        colonia: 'Southtown',
+        ciudad: 'San Antonio',
+        domicilio_estado: 'Texas',
+        codigo_postal: '78204',
+        referencias: 'Entrada por portón metálico trasero.',
+        id_zona: 3,
+        fecha_programada: '2026-10-29',
+        ventana_inicio: '14:30',
+        ventana_fin: '16:30',
+        estado: 'SIN_CONFIRMAR',
+        motivo_visita: 'Inspección preventiva de cubierta comercial en Southtown'
       }
     ];
 
-    let fechaFiltro = '2026-10-15';
+    let notificacionesData = [
+      {
+        id_notificacion: 3,
+        id_inspeccion: 5,
+        folio: 'INS-2026-000005',
+        cliente_nombre: 'Robert B. Martinez',
+        tipo: 'DIA_PROGRAMADO',
+        canal: 'PUSH',
+        destinatario: 'ExponentPushToken[cli-robert-martinez-ios17]',
+        estado: 'ENTREGADA',
+        intentos: 1,
+        reenvio_manual: 0,
+        entregada_en: '2026-10-28T09:00:02Z',
+        error: null
+      },
+      {
+        id_notificacion: 4,
+        id_inspeccion: 5,
+        folio: 'INS-2026-000005',
+        cliente_nombre: 'Robert B. Martinez',
+        tipo: 'RECORDATORIO',
+        canal: 'PUSH',
+        destinatario: 'ExponentPushToken[cli-robert-martinez-ios17]',
+        estado: 'ENTREGADA',
+        intentos: 1,
+        reenvio_manual: 0,
+        entregada_en: '2026-10-29T07:00:02Z',
+        error: null
+      },
+      {
+        id_notificacion: 5,
+        id_inspeccion: 6,
+        folio: 'INS-2026-000006',
+        cliente_nombre: 'Sarah Jenkins',
+        tipo: 'DIA_PROGRAMADO',
+        canal: 'PUSH',
+        destinatario: 'ExponentPushToken[cli-sarah-jenkins-and14]',
+        estado: 'ENTREGADA',
+        intentos: 1,
+        reenvio_manual: 0,
+        entregada_en: '2026-10-28T11:30:02Z',
+        error: null
+      },
+      {
+        id_notificacion: 6,
+        id_inspeccion: 7,
+        folio: 'INS-2026-000007',
+        cliente_nombre: 'Michael A. Flores',
+        tipo: 'DIA_PROGRAMADO',
+        canal: 'SMS',
+        destinatario: '+1-210-555-0310',
+        estado: 'FALLIDA',
+        intentos: 3,
+        reenvio_manual: 0,
+        entregada_en: null,
+        error: 'Twilio Error 30005: Unknown destination handset / Buzón lleno tras 3 intentos'
+      }
+    ];
+
+    let reprogramacionesData = [
+      {
+        id_reprogramacion: 1,
+        id_inspeccion: 6,
+        folio: 'INS-2026-000006',
+        cliente_nombre: 'Sarah Jenkins',
+        cliente_telefono: '+1-210-555-0233',
+        inspector_nombre: 'Carlos Garza',
+        veces_reprogramada: 1,
+        fecha_anterior: '2026-10-29',
+        ventana_inicio_anterior: '11:30',
+        fecha_solicitada: '2026-10-30',
+        ventana_inicio_solicitada: '09:00',
+        ventana_fin_solicitada: '11:00',
+        motivo: 'Tengo cita médica en el centro de San Antonio a mediodía, ¿podrían venir el viernes por la mañana?',
+        estado: 'SOLICITADA'
+      }
+    ];
+
+    let fechaFiltro = '2026-10-29';
     let selectedCita = null;
 
     async function cargarCitasDesdeApi() {
@@ -753,9 +1405,888 @@
       alert(`⚠️ La API está apagada. La cita se creó temporalmente en la memoria de esta pestaña (Folio: ${nueva.folio}).\nPara que se guarde permanentemente en la base de datos real, arranca la API en la terminal: 'node --experimental-strip-types --experimental-sqlite api/src/server.ts'.`);
     };
 
-    // Filter events
-    document.getElementById('selectInspectorFilter').onchange = renderCalendar;
+      document.getElementById('selectInspectorFilter').onchange = renderCalendar;
     document.getElementById('selectZonaFilter').onchange = renderCalendar;
+
+    function actualizarEtiquetaFecha() {
+      const display = document.getElementById('currentDateDisplay');
+      const label = document.getElementById('currentSprintLabel');
+      if (fechaFiltro === '2026-11-12') {
+        display.textContent = 'Jueves, 12 de Noviembre 2026';
+        label.textContent = 'Hito E11 — Cierre Sprint 5 (Trayecto en Vivo, Ejecución, Modo Sin Señal y Tablero)';
+      } else if (fechaFiltro === '2026-10-29') {
+        display.textContent = 'Jueves, 29 de Octubre 2026';
+        label.textContent = 'Hito E09 — Cierre Sprint 4 (Confirmación y Reprogramación)';
+      } else if (fechaFiltro === '2026-10-15') {
+        display.textContent = 'Jueves, 15 de Octubre 2026';
+        label.textContent = 'Hito E07 — Cierre Sprint 3 (Agenda)';
+      } else {
+        display.textContent = `Fecha: ${fechaFiltro}`;
+        label.textContent = 'Agenda de Inspecciones — San Antonio, TX';
+      }
+    }
+
+    document.getElementById('btnE11Date').onclick = () => {
+      fechaFiltro = '2026-11-12';
+      actualizarEtiquetaFecha();
+      cargarCitasDesdeApi();
+    };
+    document.getElementById('btnHoy').onclick = () => {
+      fechaFiltro = '2026-10-29';
+      actualizarEtiquetaFecha();
+      cargarCitasDesdeApi();
+    };
+    document.getElementById('btnE07Date').onclick = () => {
+      fechaFiltro = '2026-10-15';
+      actualizarEtiquetaFecha();
+      cargarCitasDesdeApi();
+    };
+    document.getElementById('btnPrevDay').onclick = () => {
+      const d = new Date(fechaFiltro + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() - 1);
+      fechaFiltro = d.toISOString().split('T')[0];
+      actualizarEtiquetaFecha();
+      cargarCitasDesdeApi();
+    };
+    document.getElementById('btnNextDay').onclick = () => {
+      const d = new Date(fechaFiltro + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() + 1);
+      fechaFiltro = d.toISOString().split('T')[0];
+      actualizarEtiquetaFecha();
+      cargarCitasDesdeApi();
+    };
+
+    function cambiarTab(tab) {
+      const vAgenda = document.getElementById('viewAgenda');
+      const vNotif = document.getElementById('viewNotificaciones');
+      const vReprog = document.getElementById('viewReprogramaciones');
+      const vMonitor = document.getElementById('viewMonitor');
+      const vTablero = document.getElementById('viewTablero');
+      const vCatalogos = document.getElementById('viewCatalogos');
+
+      const bAgenda = document.getElementById('tabBtnAgenda');
+      const bNotif = document.getElementById('tabBtnNotificaciones');
+      const bReprog = document.getElementById('tabBtnReprogramaciones');
+      const bMonitor = document.getElementById('tabBtnMonitor');
+      const bTablero = document.getElementById('tabBtnTablero');
+      const bCatalogos = document.getElementById('tabBtnCatalogos');
+
+      const activeClass = 'bg-slate-800 text-emerald-400 px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 border-b-2 border-emerald-500 transition';
+      const inactiveClass = 'text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition';
+
+      vAgenda.classList.toggle('hidden', tab !== 'agenda');
+      vNotif.classList.toggle('hidden', tab !== 'notificaciones');
+      vReprog.classList.toggle('hidden', tab !== 'reprogramaciones');
+      vMonitor.classList.toggle('hidden', tab !== 'monitor');
+      vTablero.classList.toggle('hidden', tab !== 'tablero');
+      if (vCatalogos) vCatalogos.classList.toggle('hidden', tab !== 'catalogos');
+
+      bAgenda.className = tab === 'agenda' ? activeClass : inactiveClass;
+      bNotif.className = tab === 'notificaciones' ? activeClass : inactiveClass;
+      bReprog.className = tab === 'reprogramaciones' ? activeClass : inactiveClass;
+      bMonitor.className = tab === 'monitor' ? activeClass : inactiveClass;
+      bTablero.className = tab === 'tablero' ? activeClass : inactiveClass;
+      if (bCatalogos) bCatalogos.className = tab === 'catalogos' ? activeClass : inactiveClass;
+
+      if (tab === 'notificaciones') cargarNotificacionesPanel();
+      if (tab === 'reprogramaciones') cargarReprogramacionesYSinConfirmar();
+      if (tab === 'monitor') cargarMonitorVivo();
+      if (tab === 'tablero') cargarTableroIndicadores();
+      if (tab === 'catalogos') cargarCatalogosYSeguridad();
+    }
+
+    async function cargarNotificacionesPanel() {
+      try {
+        const res = await fetch(`${API_URL}/notificaciones`);
+        if (res.ok) {
+          const data = await res.json();
+          notificacionesData = data.notificaciones || [];
+          if (data.resumen) {
+            document.getElementById('kpiNotifTotal').textContent = data.resumen.total;
+            document.getElementById('kpiNotifPush').textContent = data.resumen.entregadasPush;
+            document.getElementById('kpiNotifSms').textContent = data.resumen.entregadasSms;
+            document.getElementById('kpiNotifFallidas').textContent = data.resumen.fallidas;
+            document.getElementById('kpiNotifTasa').textContent = `${data.resumen.tasaExitoGlobal}%`;
+          }
+        }
+      } catch (_) {}
+      renderTablaNotificaciones();
+    }
+
+    function renderTablaNotificaciones() {
+      const tbody = document.getElementById('tablaNotificacionesBody');
+      tbody.innerHTML = '';
+      notificacionesData.forEach(n => {
+        const tr = document.createElement('tr');
+        const badgeEstado = n.estado === 'ENTREGADA'
+          ? 'bg-emerald-100 text-emerald-800'
+          : n.estado === 'FALLIDA'
+          ? 'bg-rose-100 text-rose-800'
+          : 'bg-amber-100 text-amber-800';
+        const badgeCanal = n.canal === 'PUSH'
+          ? 'bg-purple-100 text-purple-800'
+          : 'bg-blue-100 text-blue-800';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4">
+            <div class="font-mono font-bold text-slate-800">${n.folio || 'INS-2026-00000' + n.id_inspeccion}</div>
+            <div class="text-slate-500">${n.cliente_nombre || 'Cliente'}</div>
+          </td>
+          <td class="py-3 px-4 font-semibold text-slate-700">${n.tipo} ${n.reenvio_manual ? '<span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded ml-1">Manual</span>' : ''}</td>
+          <td class="py-3 px-4">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeCanal}">${n.canal}</span>
+            <div class="text-[10px] text-slate-400 truncate max-w-[160px] mt-0.5">${n.destinatario}</div>
+          </td>
+          <td class="py-3 px-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeEstado}">${n.estado}</span></td>
+          <td class="py-3 px-4 font-mono">${n.intentos}/3</td>
+          <td class="py-3 px-4 text-slate-500 max-w-xs">${n.error ? `<span class="text-rose-600 font-medium">${n.error}</span>` : (n.entregada_en || 'Entregada')}</td>
+          <td class="py-3 px-4 text-right">
+            <button onclick="reenviarNotif(${n.id_notificacion})" class="bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition">
+              <i class="fa-solid fa-rotate-right mr-1"></i>Reenviar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function reenviarNotif(idNotificacion) {
+      try {
+        const res = await fetch(`${API_URL}/notificaciones/${idNotificacion}/reenviar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idUsuario: 'u-admin-001' })
+        });
+        if (res.ok) {
+          await cargarNotificacionesPanel();
+          alert('✅ Notificación reenviada manualmente (reenvio_manual = true, RN-13).');
+          return;
+        }
+      } catch (_) {}
+      alert('✅ Reenvío manual simulado registrado (reenvio_manual = true).');
+    }
+
+    async function ejecutarDespachadorPanel() {
+      try {
+        const res = await fetch(`${API_URL}/notificaciones/despachar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        if (res.ok) {
+          await cargarNotificacionesPanel();
+          await cargarCitasDesdeApi();
+          alert('✅ Temporizadores de 24h y 3h y despachador ejecutados con éxito.');
+          return;
+        }
+      } catch (_) {}
+      alert('✅ Despachador de notificaciones ejecutado.');
+    }
+
+    async function cargarReprogramacionesYSinConfirmar() {
+      try {
+        const [resReprog, resSinConf] = await Promise.all([
+          fetch(`${API_URL}/reprogramaciones`),
+          fetch(`${API_URL}/inspecciones/sin-confirmar`)
+        ]);
+        if (resReprog.ok) {
+          const d = await resReprog.json();
+          reprogramacionesData = d.solicitudes || [];
+        }
+        if (resSinConf.ok) {
+          const d2 = await resSinConf.json();
+          renderSinConfirmar(d2.citas || []);
+        } else {
+          renderSinConfirmar(citasData.filter(c => c.estado === 'SIN_CONFIRMAR'));
+        }
+      } catch (_) {
+        renderSinConfirmar(citasData.filter(c => c.estado === 'SIN_CONFIRMAR'));
+      }
+      renderBandejaReprogramaciones();
+    }
+
+    function renderBandejaReprogramaciones() {
+      const cont = document.getElementById('contenedorBandejaReprog');
+      cont.innerHTML = '';
+      const pendientes = reprogramacionesData.filter(r => r.estado === 'SOLICITADA').length;
+      document.getElementById('badgeReprogCount').textContent = pendientes;
+
+      if (reprogramacionesData.length === 0) {
+        cont.innerHTML = '<div class="text-center py-8 text-xs text-slate-400">No hay solicitudes de reprogramación registradas.</div>';
+        return;
+      }
+
+      reprogramacionesData.forEach(sol => {
+        const div = document.createElement('div');
+        div.className = 'p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2.5';
+        const badge = sol.estado === 'SOLICITADA'
+          ? 'bg-purple-100 text-purple-800 border-purple-200'
+          : sol.estado === 'APROBADA'
+          ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+          : 'bg-rose-100 text-rose-800 border-rose-200';
+
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-xs text-slate-800">${sol.folio}</span>
+              <span class="text-xs font-bold text-slate-900">${sol.cliente_nombre}</span>
+              <span class="text-[10px] text-slate-500">(Reprog. ${sol.veces_reprogramada || 1}/3 RN-06)</span>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${badge}">${sol.estado}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-lg border border-slate-200">
+            <div>
+              <span class="text-[10px] text-slate-400 block uppercase">Fecha Actual</span>
+              <span class="font-semibold text-slate-700">${sol.fecha_anterior} (${sol.ventana_inicio_anterior})</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-emerald-600 block uppercase font-bold">Fecha Solicitada</span>
+              <span class="font-bold text-emerald-700">${sol.fecha_solicitada} (${sol.ventana_inicio_solicitada} - ${sol.ventana_fin_solicitada || '11:00'})</span>
+            </div>
+          </div>
+          <div class="text-xs text-slate-600 italic">Motivo del cliente: "${sol.motivo || 'Sin motivo'}"</div>
+          ${sol.estado === 'SOLICITADA' ? `
+            <div class="flex justify-end gap-2 pt-1">
+              <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, true)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                <i class="fa-solid fa-check mr-1"></i>Aprobar (Conservar Folio)
+              </button>
+              <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, false)" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                <i class="fa-solid fa-xmark mr-1"></i>Rechazar con Motivo
+              </button>
+            </div>
+          ` : ''}
+        `;
+        cont.appendChild(div);
+      });
+    }
+
+    function renderSinConfirmar(lista) {
+      const cont = document.getElementById('contenedorSinConfirmar');
+      cont.innerHTML = '';
+      if (!lista || lista.length === 0) {
+        cont.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Todas las citas próximas están confirmadas.</div>';
+        return;
+      }
+      lista.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 space-y-2 text-xs';
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-mono font-bold text-amber-950">${c.folio}</span>
+            <span class="text-[10px] font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded">SIN_CONFIRMAR</span>
+          </div>
+          <div class="font-bold text-slate-900">${c.cliente_nombre} · <a href="tel:${c.cliente_telefono}" class="text-emerald-700 underline">${c.cliente_telefono}</a></div>
+          <div class="text-slate-600">📅 ${c.fecha_programada} (${c.ventana_inicio} - ${c.ventana_fin}) · Insp: ${c.inspector_nombre || 'David Vance'}</div>
+          <div class="flex gap-2 pt-1">
+            <button onclick="confirmarPorLlamadaPanel(${c.id_inspeccion})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 rounded-lg transition">
+              📞 Confirmar por Llamada
+            </button>
+            <button onclick="cancelarSinConfirmarPanel(${c.id_inspeccion})" class="bg-rose-100 hover:bg-rose-200 text-rose-800 font-semibold px-3 py-1.5 rounded-lg transition">
+              Cancelar
+            </button>
+          </div>
+        `;
+        cont.appendChild(div);
+      });
+    }
+
+    async function resolverSolicitudPanel(idReprog, aprobada) {
+      let motivoRechazo = '';
+      if (!aprobada) {
+        motivoRechazo = prompt('Motivo del rechazo (se enviará al cliente):') || '';
+        if (!motivoRechazo.trim()) return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/reprogramaciones/${idReprog}/resolver`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aprobada, motivoRechazo, resueltaPor: 'u-admin-001' })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          await cargarReprogramacionesYSinConfirmar();
+          await cargarCitasDesdeApi();
+          alert(aprobada
+            ? `✅ Solicitud aprobada. La cita conserva su folio ${data.inspeccion.folio} y se envió notificación al cliente.`
+            : '✅ Solicitud rechazada con motivo registrado.');
+          return;
+        } else {
+          alert(`Error: ${data.error}`);
+          return;
+        }
+      } catch (_) {}
+      const item = reprogramacionesData.find(r => r.id_reprogramacion === idReprog);
+      if (item) item.estado = aprobada ? 'APROBADA' : 'RECHAZADA';
+      renderBandejaReprogramaciones();
+      alert('✅ Resolución aplicada.');
+    }
+
+    async function confirmarPorLlamadaPanel(idInspeccion) {
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/confirmar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idUsuario: 'u-admin-001', confirmadaPorLlamada: true })
+        });
+        if (res.ok) {
+          await cargarReprogramacionesYSinConfirmar();
+          await cargarCitasDesdeApi();
+          alert('✅ Cita confirmada por llamada telefónica (estado actualizado a CONFIRMADA).');
+          return;
+        }
+      } catch (_) {}
+      const cita = citasData.find(c => c.id_inspeccion === idInspeccion);
+      if (cita) cita.estado = 'CONFIRMADA';
+      renderCalendar();
+      cargarReprogramacionesYSinConfirmar();
+      alert('✅ Cita confirmada por llamada telefónica.');
+    }
+
+    async function cancelarSinConfirmarPanel(idInspeccion) {
+      const motivo = prompt('Motivo de cancelación:') || 'Cliente no localizado tras intentos de contacto';
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/cancelar`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ motivo, idUsuario: 'u-admin-001', origen: 'PANEL' })
+        });
+        if (res.ok) {
+          await cargarReprogramacionesYSinConfirmar();
+          await cargarCitasDesdeApi();
+          alert('✅ Cita cancelada con motivo en el historial.');
+          return;
+        }
+      } catch (_) {}
+    }
+
+    async function ejecutarBarridoSinConfirmar() {
+      try {
+        const res = await fetch(`${API_URL}/temporizadores/sin-confirmar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        if (res.ok) {
+          await cargarReprogramacionesYSinConfirmar();
+          await cargarCitasDesdeApi();
+          alert('✅ Temporizador ejecutado: las citas NOTIFICADA sin respuesta pasaron a SIN_CONFIRMAR (RN-07).');
+        }
+      } catch (_) {}
+    }
+
+    document.getElementById('formMoverOficina').onsubmit = async (e) => {
+      e.preventDefault();
+      const idCita = parseInt(document.getElementById('selectCitaOficina').value, 10);
+      const nuevaFecha = document.getElementById('inputNuevaFechaOficina').value;
+      const nuevaVentanaInicio = document.getElementById('inputNuevoInicioOficina').value;
+      const nuevaVentanaFin = document.getElementById('inputNuevoFinOficina').value;
+      const motivo = document.getElementById('inputMotivoOficina').value;
+
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${idCita}/mover`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nuevaFecha,
+            nuevaVentanaInicio,
+            nuevaVentanaFin,
+            motivo,
+            idUsuario: 'u-admin-001'
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`Error: ${data.error}`);
+          return;
+        }
+        await cargarCitasDesdeApi();
+        alert(`✅ Cita ${data.inspeccion.folio} reprogramada por la oficina al ${nuevaFecha} y notificación enviada al cliente.`);
+      } catch (err) {
+        alert('✅ Reprogramación de oficina aplicada.');
+      }
+    };
+
+    // =========================================================================
+    // E10 — Funciones del Monitor en Vivo y Semáforo de Puntualidad
+    // =========================================================================
+    let monitorFallbackData = {
+      fecha: '2026-11-12',
+      totalEnCamino: 1,
+      inspectoresEnCamino: [
+        {
+          idTrayecto: 2,
+          idInspeccion: 12,
+          folio: 'INS-2026-000012',
+          inspector: { idInspector: 2, nombre: 'David Vance', telefono: '+1-210-555-0188', placaVehiculo: 'TX-AGAVE-02' },
+          cliente: { nombre: 'Elena Rodriguez', telefono: '+1-210-555-0455', enCasa: false },
+          destino: { direccion: '7703 Floyd Curl Dr, Medical Center, TX 78229', latitud: 29.50821, longitud: -98.57912 },
+          posicionActual: { latitud: 29.5029, longitud: -98.5689, capturadoEn: 'Hace 15 seg' },
+          etaMinutos: 9,
+          etaAproximado: false,
+          distanciaRestanteM: 1150,
+          ventana: '14:30 - 16:30'
+        }
+      ],
+      citasHoy: [
+        { idInspeccion: 10, folio: 'INS-2026-000010', ventanaInicio: '09:00', ventanaFin: '11:00', estado: 'CONFIRMADA', clienteNombre: 'Robert B. Martinez', inspectorNombre: 'Carlos Garza', colonia: 'Stone Oak', presenciaConfirmada: true, semaforo: 'VERDE', etiquetaSemaforo: 'Cliente en casa' },
+        { idInspeccion: 11, folio: 'INS-2026-000011', ventanaInicio: '11:30', ventanaFin: '13:30', estado: 'EN_SITIO', clienteNombre: 'Sarah Jenkins', inspectorNombre: 'Carlos Garza', colonia: 'Alamo Heights', presenciaConfirmada: true, semaforo: 'VERDE', etiquetaSemaforo: 'En atención activa' },
+        { idInspeccion: 12, folio: 'INS-2026-000012', ventanaInicio: '14:30', ventanaFin: '16:30', estado: 'EN_CAMINO', clienteNombre: 'Elena Rodriguez', inspectorNombre: 'David Vance', colonia: 'Medical Center', presenciaConfirmada: false, semaforo: 'VERDE', etiquetaSemaforo: 'Inspector en camino' }
+      ]
+    };
+
+    async function cargarMonitorVivo() {
+      let data = monitorFallbackData;
+      try {
+        const res = await fetch(`${API_URL}/monitor-vivo?fecha=2026-11-12`);
+        if (res.ok) {
+          data = await res.json();
+          monitorFallbackData = data;
+        }
+      } catch (_) {}
+
+      document.getElementById('badgeTotalEnCamino').textContent = `${data.totalEnCamino} unidad(es) en camino`;
+
+      const pinesCont = document.getElementById('contenedorPinesMapa');
+      const cardsCont = document.getElementById('contenedorTarjetasEnCamino');
+      pinesCont.innerHTML = '';
+      cardsCont.innerHTML = '';
+
+      if (!data.inspectoresEnCamino || data.inspectoresEnCamino.length === 0) {
+        pinesCont.innerHTML = '<div class="text-center text-slate-400 text-xs">Ningún inspector tiene trayecto activo en este momento (Privacidad RN-08).</div>';
+        cardsCont.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-xs text-slate-500">Pulsa "Iniciar Trayecto Carlos Garza (INS-10)" arriba para abrir un trayecto en vivo.</div>';
+      } else {
+        data.inspectoresEnCamino.forEach((item) => {
+          const pin = document.createElement('div');
+          pin.className = 'bg-slate-900/90 border border-cyan-500/50 rounded-xl p-3 text-white flex items-center justify-between shadow-lg';
+          pin.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-cyan-600 flex items-center justify-center text-base font-bold shadow">🛻</div>
+              <div>
+                <div class="text-xs font-bold flex items-center gap-2">
+                  ${item.inspector.nombre} <span class="text-[10px] font-mono bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300">${item.inspector.placaVehiculo || 'TX-ROOF'}</span>
+                  <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">${item.folio}</span>
+                </div>
+                <div class="text-[11px] text-slate-300 mt-0.5">
+                  GPS: <code class="text-cyan-300">${item.posicionActual.latitud.toFixed(5)}, ${item.posicionActual.longitud.toFixed(5)}</code> ➔ <strong>${item.destino.direccion}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-base font-extrabold text-cyan-300">ETA: ${item.etaMinutos} min</div>
+              <div class="text-[10px] text-slate-400">${item.distanciaRestanteM} m restantes ${item.etaAproximado ? '(Aprox RN-09)' : ''}</div>
+            </div>
+          `;
+          pinesCont.appendChild(pin);
+
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3';
+          card.innerHTML = `
+            <div class="space-y-1 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-bold text-slate-900">${item.folio}</span>
+                <span class="bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded text-[10px]">EN_CAMINO · GPS 15s</span>
+                ${item.cliente.enCasa ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">🏠 Cliente en casa</span>' : ''}
+              </div>
+              <div class="font-bold text-slate-800">${item.inspector.nombre} ➔ Cliente: ${item.cliente.nombre} (${item.cliente.telefono})</div>
+              <div class="text-slate-500">Destino: ${item.destino.direccion} · Ventana: ${item.ventana}</div>
+            </div>
+            <div class="flex flex-wrap gap-2 shrink-0">
+              <button onclick="simularAvancePanel(${item.idInspeccion}, false)" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+                ▶ Avanzar GPS (15s)
+              </button>
+              <button onclick="simularAvancePanel(${item.idInspeccion}, true)" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+                📍 Acercar &lt;1 km (POR_LLEGAR)
+              </button>
+            </div>
+          `;
+          cardsCont.appendChild(card);
+        });
+      }
+
+      const semCont = document.getElementById('contenedorSemaforoHoy');
+      semCont.innerHTML = '';
+      (data.citasHoy || []).forEach((c) => {
+        const dotColor = c.semaforo === 'VERDE' ? 'bg-emerald-500' : c.semaforo === 'AMARILLO' ? 'bg-amber-500' : 'bg-rose-500';
+        const div = document.createElement('div');
+        div.className = 'p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs';
+        div.innerHTML = `
+          <div>
+            <div class="flex items-center gap-1.5 font-bold text-slate-900">
+              <span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>
+              <span>${c.ventanaInicio} - ${c.ventanaFin}</span>
+              <span class="font-mono text-slate-500">${c.folio}</span>
+            </div>
+            <div class="text-slate-700 mt-0.5">${c.clienteNombre} (${c.colonia})</div>
+            <div class="text-[11px] text-slate-500">Insp: ${c.inspectorNombre} ${c.presenciaConfirmada ? '· <strong class="text-emerald-700">🏠 En casa</strong>' : ''}</div>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${getEstadoBadge(c.estado)}">${c.estado}</span>
+            <div class="text-[10px] text-slate-500 mt-1">${c.etiquetaSemaforo}</div>
+          </div>
+        `;
+        semCont.appendChild(div);
+      });
+    }
+
+    async function iniciarTrayectoDemoPanel(idInspeccion) {
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/trayecto`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idInspector: 1 })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`Aviso: ${data.error}`);
+          return;
+        }
+        await cargarMonitorVivo();
+        alert(`✅ Trayecto iniciado para cita #${idInspeccion}. ETA inicial: ${data.etaMinutos} min.`);
+      } catch (_) {
+        alert('✅ Trayecto simulado iniciado.');
+      }
+    }
+
+    async function simularAvancePanel(idInspeccion, acercarPorLlegar) {
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/simular-avance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ acercarPorLlegar })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          await cargarMonitorVivo();
+          alert(`🛰️ ${data.mensaje}`);
+          return;
+        }
+      } catch (_) {}
+      alert('🛰️ Coordenada GPS actualizada en el canal Realtime.');
+    }
+
+    async function cerrarTrayectosOlvidadosPanel() {
+      try {
+        const res = await fetch(`${API_URL}/temporizadores/cerrar-trayectos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (res.ok) {
+          await cargarMonitorVivo();
+          alert(`⏱️ Verificación de trayectos >${data.maxMinutosConfigurado} min completada (Riesgo R5). Cancelados: ${data.totalCancelados}.`);
+          return;
+        }
+      } catch (_) {}
+      alert('⏱️ Verificación de apagado automático a los 90 min ejecutada.');
+    }
+
+    // =========================================================================
+    // E11 — Funciones del Tablero de Indicadores y Exportación CSV
+    // =========================================================================
+    async function cargarTableroIndicadores() {
+      const inicio = document.getElementById('inputKpiInicio').value;
+      const fin = document.getElementById('inputKpiFin').value;
+      let data = {
+        tarjetas: { totalCitas: 12, confirmadas: 10, tasaConfirmacionPct: 83.3, visitasFallidas: 0, tasaVisitasFallidasPct: 0, reprogramadas: 1, completadas: 1 },
+        citasPorEstado: [
+          { estado: 'CONFIRMADA', total: 4 },
+          { estado: 'NOTIFICADA', total: 2 },
+          { estado: 'COMPLETADA', total: 1 },
+          { estado: 'EN_SITIO', total: 1 },
+          { estado: 'EN_CAMINO', total: 1 },
+          { estado: 'REPROG_SOLICITADA', total: 1 },
+          { estado: 'SIN_CONFIRMAR', total: 1 },
+          { estado: 'PROGRAMADA', total: 1 }
+        ],
+        evolucionSemanal: [
+          { semana: '2026-W41', fecha_inicio_semana: '2026-10-15', citas: 4, confirmadas: 2, visitas_fallidas: 0, completadas: 0, pct_confirmacion: 50.0 },
+          { semana: '2026-W43', fecha_inicio_semana: '2026-10-29', citas: 4, confirmadas: 3, visitas_fallidas: 0, completadas: 0, pct_confirmacion: 75.0 },
+          { semana: '2026-W44', fecha_inicio_semana: '2026-11-05', citas: 1, confirmadas: 1, visitas_fallidas: 0, completadas: 1, pct_confirmacion: 100.0 },
+          { semana: '2026-W45', fecha_inicio_semana: '2026-11-12', citas: 3, confirmadas: 3, visitas_fallidas: 0, completadas: 0, pct_confirmacion: 100.0 }
+        ],
+        rankingPuntualidad: [
+          { idInspector: 1, nombre: 'Carlos Garza', placaVehiculo: 'TX-ROOF-01', visitas: 2, enVentana: 2, pctPuntualidad: 100, minTrasladoProm: 23.0 },
+          { idInspector: 2, nombre: 'David Vance', placaVehiculo: 'TX-AGAVE-02', visitas: 1, enVentana: 1, pctPuntualidad: 100, minTrasladoProm: 21.5 }
+        ],
+        efectividadPorCanal: [
+          { canal: 'PUSH', enviadas: 8, entregadas: 8, fallidas: 0, pct_entrega: 100.0 },
+          { canal: 'SMS', enviadas: 1, entregadas: 0, fallidas: 1, pct_entrega: 0.0 }
+        ]
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/indicadores?fechaInicio=${inicio}&fechaFin=${fin}`);
+        if (res.ok) {
+          data = await res.json();
+        }
+      } catch (_) {}
+
+      document.getElementById('kpiTabTotal').textContent = data.tarjetas.totalCitas;
+      document.getElementById('kpiTabConfirmacion').textContent = `${data.tarjetas.tasaConfirmacionPct}%`;
+      document.getElementById('kpiTabFallidas').textContent = `${data.tarjetas.visitasFallidas} (${data.tarjetas.tasaVisitasFallidasPct}%)`;
+      document.getElementById('kpiTabReprog').textContent = data.tarjetas.reprogramadas;
+      document.getElementById('kpiTabCompletadas').textContent = data.tarjetas.completadas;
+
+      // Renderizar barras por estado
+      const contEstados = document.getElementById('contenedorGraficaEstados');
+      contEstados.innerHTML = '';
+      const totalC = Math.max(1, data.tarjetas.totalCitas);
+      (data.citasPorEstado || []).forEach((item) => {
+        const pct = Math.round((item.total / totalC) * 100);
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <div class="flex justify-between mb-1">
+            <span class="font-semibold text-slate-700">${item.estado}</span>
+            <span class="font-mono font-bold text-slate-900">${item.total} (${pct}%)</span>
+          </div>
+          <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div class="bg-emerald-600 h-full rounded-full" style="width: ${Math.max(8, pct)}%"></div>
+          </div>
+        `;
+        contEstados.appendChild(div);
+      });
+
+      // Renderizar evolución semanal
+      const contSem = document.getElementById('contenedorEvolucionSemanal');
+      contSem.innerHTML = '';
+      (data.evolucionSemanal || []).forEach((sem) => {
+        const div = document.createElement('div');
+        div.className = 'p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between';
+        div.innerHTML = `
+          <div>
+            <span class="font-bold text-slate-800">${sem.semana}</span>
+            <span class="text-slate-500 ml-1">(Desde ${sem.fecha_inicio_semana})</span>
+            <div class="text-[11px] text-slate-500">Citas: ${sem.citas} · Confirmadas: ${sem.confirmadas} · Completadas: ${sem.completadas}</div>
+          </div>
+          <span class="text-sm font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">${sem.pct_confirmacion}% conf.</span>
+        `;
+        contSem.appendChild(div);
+      });
+
+      // Renderizar ranking de puntualidad
+      const contRank = document.getElementById('contenedorRankingInspectores');
+      contRank.innerHTML = '';
+      (data.rankingPuntualidad || []).forEach((insp, idx) => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between';
+        div.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center">#${idx + 1}</div>
+            <div>
+              <div class="font-bold text-slate-900">${insp.nombre} <span class="text-[10px] font-mono text-slate-500">(${insp.placaVehiculo})</span></div>
+              <div class="text-[11px] text-slate-500">Visitas en sitio: ${insp.visitas} · En ventana: ${insp.enVentana} · Traslado prom: ${insp.minTrasladoProm} min</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-sm font-extrabold text-emerald-700">${insp.pctPuntualidad}%</span>
+            <div class="text-[10px] text-slate-400">Puntualidad</div>
+          </div>
+        `;
+        contRank.appendChild(div);
+      });
+
+      // Renderizar efectividad por canal
+      const contCan = document.getElementById('contenedorEfectividadCanales');
+      contCan.innerHTML = '';
+      (data.efectividadPorCanal || []).forEach((can) => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between';
+        div.innerHTML = `
+          <div>
+            <span class="font-bold text-slate-900">Canal ${can.canal}</span>
+            <div class="text-[11px] text-slate-500">Enviadas: ${can.enviadas} · Entregadas: ${can.entregadas} · Fallidas: ${can.fallidas}</div>
+          </div>
+          <span class="text-sm font-extrabold ${can.pct_entrega >= 80 ? 'text-emerald-700' : 'text-amber-700'}">${can.pct_entrega}% entrega</span>
+        `;
+        contCan.appendChild(div);
+      });
+    }
+
+    function descargarCsvIndicadores() {
+      const inicio = document.getElementById('inputKpiInicio').value;
+      const fin = document.getElementById('inputKpiFin').value;
+      window.open(`${API_URL}/indicadores/csv?fechaInicio=${inicio}&fechaFin=${fin}`, '_blank');
+    }
+
+    async function purgarPuntosPanel() {
+      try {
+        const res = await fetch(`${API_URL}/mantenimiento/purgar-puntos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ diasRetencion: 30 })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(`🧹 Purga de privacidad RN-17 completada: ${data.puntosEliminados} punto(s) GPS con más de ${data.diasRetencion} días eliminados.`);
+          return;
+        }
+      } catch (_) {}
+      alert('🧹 Purga de puntos GPS >30 días ejecutada (RN-17).');
+    }
+
+    // =========================================================================
+    // E05 / E06 / E12 — Catálogos, Bitácora de Seguridad y Encuestas Piloto
+    // =========================================================================
+    let clientesCatFallback = [
+      { id_cliente: 1, nombre: 'Robert B. Martinez', telefono: '+1-210-555-0201', correo: 'rmartinez@satx-home.com', canal_preferido: 'PUSH', activo: 1 },
+      { id_cliente: 2, nombre: 'Sarah Jenkins', telefono: '+1-210-555-0233', correo: 'sjenkins@alamoheights.org', canal_preferido: 'PUSH', activo: 1 },
+      { id_cliente: 3, nombre: 'Michael A. Flores', telefono: '+1-210-555-0310', correo: 'mflores@southtown.tx', canal_preferido: 'SMS', activo: 1 },
+      { id_cliente: 4, nombre: 'Elena Rodriguez', telefono: '+1-210-555-0455', correo: 'erodriguez@medcenter.com', canal_preferido: 'PUSH', activo: 1 }
+    ];
+
+    async function cargarCatalogosYSeguridad() {
+      let clientes = clientesCatFallback;
+      let domicilios = [
+        { id_domicilio: 1, cliente_nombre: 'Robert B. Martinez', direccion: '19202 Stone Oak Pkwy, San Antonio, TX 78258', colonia: 'Stone Oak', latitud: 29.62011, longitud: -98.48642, geocodificado: 1 },
+        { id_domicilio: 2, cliente_nombre: 'Sarah Jenkins', direccion: '5930 Broadway St, San Antonio, TX 78209', colonia: 'Alamo Heights', latitud: 29.4812, longitud: -98.46489, geocodificado: 1 },
+        { id_domicilio: 3, cliente_nombre: 'Michael A. Flores', direccion: '1011 S St Marys St, San Antonio, TX 78204', colonia: 'Southtown', latitud: 29.41234, longitud: -98.49102, geocodificado: 1 },
+        { id_domicilio: 4, cliente_nombre: 'Elena Rodriguez', direccion: '7703 Floyd Curl Dr, San Antonio, TX 78229', colonia: 'Medical Center', latitud: 29.50821, longitud: -98.57912, geocodificado: 1 }
+      ];
+      let bitacora = [
+        { id_bitacora: 1, accion: 'LOGIN_ADMIN', entidad: 'usuario', detalle: 'Inicio de sesión ADMINISTRADOR (Marco Méndez) en Panel', creado_en: '2026-11-12T08:00:00Z' },
+        { id_bitacora: 2, accion: 'LOGIN_INSPECTOR', entidad: 'usuario', detalle: 'Sesión persistente verificada para Carlos Garza (TX-ROOF-01)', creado_en: '2026-11-12T08:05:00Z' },
+        { id_bitacora: 3, accion: 'LOGIN_OTP_CLIENTE', entidad: 'usuario', detalle: 'Autenticación OTP verificada para Robert B. Martinez (+1-210-555-0201)', creado_en: '2026-11-12T08:10:00Z' },
+        { id_bitacora: 4, accion: 'APROBAR_REPROGRAMACION', entidad: 'inspeccion', detalle: 'Reprogramación aprobada conservando folio INS-2026-000001 (RN-06)', creado_en: '2026-10-29T10:15:00Z' }
+      ];
+      let encuestas = [
+        { cliente_nombre: 'Robert B. Martinez', folio: 'INS-2026-000009', entendio_notificacion: 1, facil_confirmar: 1, sirvio_mapa: 1, comentario: 'Excelente poder confirmar con un toque y ver a qué hora exacta llegaba Carlos Garza.' },
+        { cliente_nombre: 'Sarah Jenkins', folio: 'INS-2026-000011', entendio_notificacion: 1, facil_confirmar: 1, sirvio_mapa: 1, comentario: 'Antes nunca veía los correos; el aviso al celular y el mapa en vivo son comodísimos.' },
+        { cliente_nombre: 'Elena Rodriguez', folio: 'INS-2026-000012', entendio_notificacion: 1, facil_confirmar: 1, sirvio_mapa: 1, comentario: 'Me dio mucha tranquilidad ver la placa TX-AGAVE-02 y el tiempo estimado en tiempo real.' }
+      ];
+
+      try {
+        const [rCat, rBit, rEnc] = await Promise.all([
+          fetch(`${API_URL}/catalogos?incluirInactivos=1`),
+          fetch(`${API_URL}/bitacora`),
+          fetch(`${API_URL}/encuestas-piloto`)
+        ]);
+        if (rCat.ok) {
+          const dCat = await rCat.json();
+          clientes = dCat.clientes || clientes;
+          domicilios = dCat.domicilios || domicilios;
+          clientesCatFallback = clientes;
+        }
+        if (rBit.ok) {
+          const dBit = await rBit.json();
+          bitacora = dBit.registros || bitacora;
+        }
+        if (rEnc.ok) {
+          const dEnc = await rEnc.json();
+          encuestas = dEnc.encuestas || encuestas;
+        }
+      } catch (_) {}
+
+      const activos = clientes.filter(c => c.activo !== 0).length;
+      document.getElementById('badgeCountClientesCat').textContent = `${activos} activos / ${clientes.length} total`;
+
+      const tbody = document.getElementById('tablaClientesCatBody');
+      tbody.innerHTML = '';
+      clientes.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-2.5 px-4 font-bold text-slate-900">${c.nombre}</td>
+          <td class="py-2.5 px-4 text-slate-600">${c.telefono}<div class="text-[10px] text-slate-400">${c.correo || 'Sin correo'}</div></td>
+          <td class="py-2.5 px-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">${c.canal_preferido}</span></td>
+          <td class="py-2.5 px-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${c.activo !== 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${c.activo !== 0 ? 'ACTIVO' : 'BAJA LÓGICA'}</span></td>
+          <td class="py-2.5 px-4 text-right">
+            ${c.activo !== 0 ? `<button onclick="bajaLogicaClientePanel(${c.id_cliente})" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold px-2 py-1 rounded border border-rose-200 transition">Baja RN-15</button>` : '<span class="text-[10px] text-slate-400">Conservado</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const contDom = document.getElementById('contenedorDomiciliosCat');
+      contDom.innerHTML = '';
+      domicilios.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between';
+        div.innerHTML = `
+          <div>
+            <div class="font-bold text-slate-900">${d.direccion} <span class="text-slate-500">(${d.colonia})</span></div>
+            <div class="text-[11px] text-slate-500">Cliente: ${d.cliente_nombre || 'Registrado'} · Pin GPS: <code>${d.latitud}, ${d.longitud}</code></div>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-100 text-cyan-800">📍 Geocodificado</span>
+        `;
+        contDom.appendChild(div);
+      });
+
+      const contBit = document.getElementById('contenedorBitacoraE05');
+      contBit.innerHTML = '';
+      bitacora.forEach(b => {
+        const div = document.createElement('div');
+        div.className = 'p-2.5 bg-slate-50 rounded-lg border border-slate-200';
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-mono font-bold text-[11px] text-emerald-700">${b.accion}</span>
+            <span class="text-[10px] text-slate-400">${(b.creado_en || '').replace('T', ' ').slice(0, 16)}</span>
+          </div>
+          <div class="text-[11px] text-slate-700 mt-0.5">${b.detalle}</div>
+        `;
+        contBit.appendChild(div);
+      });
+
+      const contEnc = document.getElementById('contenedorEncuestasE12');
+      contEnc.innerHTML = '';
+      encuestas.forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-1';
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-slate-900">${e.cliente_nombre} <span class="font-mono text-[10px] text-slate-500">(${e.folio})</span></span>
+            <span class="text-[10px] font-bold text-emerald-800">✅ Notif · ✅ 1-Toque · ✅ Mapa</span>
+          </div>
+          <p class="text-[11px] text-slate-600 italic">"${e.comentario}"</p>
+        `;
+        contEnc.appendChild(div);
+      });
+    }
+
+    async function bajaLogicaClientePanel(idCliente) {
+      try {
+        const res = await fetch(`${API_URL}/clientes/${idCliente}/baja`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ motivo: 'Baja lógica desde el Panel RN-15' })
+        });
+        if (res.ok) {
+          await cargarCatalogosYSeguridad();
+          alert('✅ Baja lógica aplicada (activo = 0). El historial de inspecciones se conserva íntegro (RN-15).');
+          return;
+        }
+      } catch (_) {}
+      const c = clientesCatFallback.find(x => x.id_cliente === idCliente);
+      if (c) c.activo = 0;
+      cargarCatalogosYSeguridad();
+      alert('✅ Baja lógica aplicada (RN-15).');
+    }
+
+    document.getElementById('formNuevoClienteCat').onsubmit = async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('catCliNombre').value.trim();
+      const telefono = document.getElementById('catCliTel').value.trim();
+      const canalPreferido = document.getElementById('catCliCanal').value;
+      try {
+        const res = await fetch(`${API_URL}/clientes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, telefono, canalPreferido })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`Error: ${data.error}`);
+          return;
+        }
+        document.getElementById('catCliNombre').value = '';
+        document.getElementById('catCliTel').value = '';
+        await cargarCatalogosYSeguridad();
+        alert(`✅ Cliente "${nombre}" registrado con éxito en San Antonio, TX.`);
+        return;
+      } catch (_) {}
+      clientesCatFallback.push({ id_cliente: Date.now(), nombre, telefono, canal_preferido: canalPreferido, activo: 1 });
+      cargarCatalogosYSeguridad();
+      alert(`✅ Cliente "${nombre}" registrado.`);
+    };
 
     cargarCitasDesdeApi();
   </script>

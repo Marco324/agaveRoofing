@@ -19,34 +19,34 @@ tags: [agavealerta, checklist, rol/lider, rol/panel]
 ## E01 — Arranque y planeación
 `#agave/E01` · jue 03 sep · Sprint 0
 
-- [ ] **Acta de constitución del equipo**
+- [x] **Acta de constitución del equipo**
   → Documento con: integrantes y matrículas, rol de cada quien, horario de trabajo, canal de comunicación y acuerdos de convivencia. Terminada cuando los cinco la firman.
-- [ ] **Product Backlog inicial**
+- [x] **Product Backlog inicial**
   → Convertir la propuesta de Agave Roofing en épicas e historias de usuario ("Como cliente quiero confirmar mi cita desde la notificación para no tener que abrir la app"). Mínimo las épicas de los 10 módulos del SRS.
-- [ ] **Tablero en GitHub Projects**
+- [x] **Tablero en GitHub Projects**
   → Columnas: Backlog → Por hacer → En curso → En revisión → Hecho. Crear los Milestones `E01` a `E12`.
-- [ ] **Definición de Terminado (DoD)**
+- [x] **Definición de Terminado (DoD)**
   → Escribir qué significa "terminado" en este proyecto: criterios cumplidos, PR revisado y fusionado, **probado en teléfono real**, sin errores de severidad alta, documentación y tablero actualizados.
-- [ ] **Agendar las ceremonias Scrum**
+- [x] **Agendar las ceremonias Scrum**
   → Fijar día y hora de Planning, Daily (lun-mié-vie, 10 min), Review y Retro para los 6 sprints. Terminado cuando está en el calendario compartido de los cinco.
-- [ ] **Primer contacto con Agave Roofing**
+- [x] **Primer contacto con Agave Roofing**
   → Confirmar quién será el interlocutor (responsable de operaciones) y agendar la entrevista de E02 con Mario.
-- [ ] 📦 **Entregable:** Acta + Product Backlog + tablero + DoD + calendario de ceremonias.
+- [x] 📦 **Entregable:** Acta + Product Backlog + tablero + DoD + calendario de ceremonias.
 
 ## E02 — Análisis
 `#agave/E02` · jue 10 sep · Sprint 1
 
-- [ ] **Sprint Planning 1**
+- [x] **Sprint Planning 1**
   → Elegir del backlog lo que entra al Sprint 1 y desglosarlo en tareas. Terminado cuando el Sprint Backlog está en el tablero con responsable.
-- [ ] **Estimación del backlog en puntos**
+- [x] **Estimación del backlog en puntos**
   → Con todo el equipo, estimar las historias en escala Fibonacci (1, 2, 3, 5, 8, 13). Terminado cuando todas las historias del Sprint 1 y 2 tienen puntos.
-- [ ] **Reunión con el responsable de operaciones (con Mario)**
+- [x] **Reunión con el responsable de operaciones (con Mario)**
   → Acompañar la entrevista. Lo que necesitas sacar tú: **cuántas visitas fallidas hay al mes y cuánto cuesta cada una**; ese número es la justificación del proyecto.
-- [ ] **Minuta de la reunión**
+- [x] **Minuta de la reunión**
   → Acuerdos, decisiones y pendientes con responsable y fecha.
-- [ ] **Riesgos v2**
+- [x] **Riesgos v2**
   → Actualizar la tabla de riesgos del [[01_Plan_de_Proyecto]] §9 con lo que salió de la entrevista. Poner especial atención a R4 (la push no se entrega) y R11 (clientes que no instalan la app).
-- [ ] 📦 **Entregable:** Sprint Backlog 1 + minuta + riesgos v2.
+- [x] 📦 **Entregable:** Sprint Backlog 1 + minuta + riesgos v2.
 
 ## E03 — Requerimientos cerrados + diseño de interfaz
 `#agave/E03` · jue 17 sep · Sprint 1 (cierre)
@@ -73,44 +73,44 @@ tags: [agavealerta, checklist, rol/lider, rol/panel]
 ## E04 — Diseño técnico + infraestructura
 `#agave/E04` · jue 24 sep · Sprint 2
 
-- [ ] **Plan de pruebas**
+- [x] **Plan de pruebas**
   → Documento con: qué se prueba, quién, con qué datos y cuál es el criterio de aceptación de cada historia. Incluir que las apps se prueban **en teléfono real** y que desde E10 hay pruebas de campo.
-- [ ] **Estructura del proyecto `panel/`**
+- [x] **Estructura del proyecto `panel/`**
   → Crear la carpeta con React + Vite + TypeScript, compilando. Carpetas `pages/`, `components/`, `services/`.
-- [ ] **Layout y rutas + `ApiClient` compartido**
+- [x] **Layout y rutas + `ApiClient` compartido**
   → Menú lateral, encabezado y páginas vacías. Usar el mismo `ApiClient` de `shared/api-client` que usan las dos apps móviles.
   ⛔ **Requiere:** Jorge · BD migrada en Supabase + esqueleto de la API (BD E04). *Coordina con Anuar y Jesús para que el `ApiClient` sea uno solo.*
-- [ ] 📦 **Entregable:** Plan de pruebas + panel base compilando.
+- [x] 📦 **Entregable:** Plan de pruebas + panel base compilando.
 
 ## E05 — Autenticación y roles
 `#agave/E05` · jue 01 oct · Sprint 2 (cierre)
 
-- [ ] **Login del panel**
+- [x] **Login del panel**
   → Formulario correo + contraseña con Supabase Auth; guardar el token para las llamadas a la API.
   ⛔ **Requiere:** tu layout + `ApiClient` (E04) + Jorge · middleware de auth (BD E05).
-- [ ] **Guardas de ruta (solo ADMINISTRADOR)**
+- [x] **Guardas de ruta (solo ADMINISTRADOR)**
   → El panel es exclusivo del rol Administrador. Si entra un inspector o un cliente, mostrar "sin permiso" y no dejar pasar.
   ⛔ **Requiere:** Jorge · autorización por rol (BD E05).
-- [ ] **Layout autenticado**
+- [x] **Layout autenticado**
   → Una vez dentro: nombre del usuario, botón de cerrar sesión y el menú completo del panel.
-- [ ] **Sprint Review 2 + Retrospectiva + Planning 3**
+- [x] **Sprint Review 2 + Retrospectiva + Planning 3**
   → Demostrar el incremento del Sprint 2 y planear el 3.
-- [ ] 📦 **Entregable:** Módulo de seguridad del panel + minuta del Review.
+- [x] 📦 **Entregable:** Módulo de seguridad del panel + minuta del Review.
 
 ## E06 — Clientes, domicilios, inspectores y zonas
 `#agave/E06` · jue 08 oct · Sprint 3
 
 > [!warning] Toda esta entrega ⛔ **Requiere:** Jorge · endpoints de clientes, domicilios, inspectores y zonas (BD E06), y tu módulo de seguridad del panel (E05).
 
-- [ ] **Pantalla de clientes**
+- [x] **Pantalla de clientes**
   → Tabla con búsqueda, alta, edición y baja lógica. Campos: nombre, teléfono, correo y **canal preferido** (push / SMS / correo).
-- [ ] **Pantalla de domicilios con mapa**
+- [x] **Pantalla de domicilios con mapa**
   → Alta del domicilio de un cliente con su dirección completa y referencias. Al guardar, la API lo geocodifica y tú **muestras el pin en un mapa para poder moverlo a mano** si quedó mal (campo `geocodificado`).
-- [ ] **Pantalla de zonas de servicio**
+- [x] **Pantalla de zonas de servicio**
   → Alta y edición de zonas, con la lista de colonias o municipios que cubre cada una.
-- [ ] **Pantalla de inspectores**
+- [x] **Pantalla de inspectores**
   → Alta con nombre, teléfono, placa del vehículo y foto (el cliente ve estos datos para identificarlo). Asignación de **una o varias zonas** por inspector.
-- [ ] 📦 **Entregable:** Módulo de catálogos del panel.
+- [x] 📦 **Entregable:** Módulo de catálogos del panel.
 
 ## E07 — Agenda de inspecciones y asignación
 `#agave/E07` · jue 15 oct · Sprint 3 (cierre)
@@ -135,76 +135,76 @@ tags: [agavealerta, checklist, rol/lider, rol/panel]
 
 > [!info] Esta semana tu papel de PO pesa más que el de desarrollador: el riesgo R4 (la notificación no se entrega) es el riesgo más grande del proyecto y te toca medirlo.
 
-- [ ] **Vista de notificaciones en el panel**
+- [x] **Vista de notificaciones en el panel**
   → Tabla con todas las notificaciones de las citas próximas: tipo, canal, estado (pendiente / enviada / entregada / fallida), intentos y error. Botón **Reenviar** manual.
   ⛔ **Requiere:** Jorge · tablas y despachador de notificaciones (BD E08).
-- [ ] **Alerta de "cliente no alcanzado"**
+- [x] **Alerta de "cliente no alcanzado"**
   → Si todas las notificaciones de una cita fallaron, resaltarla en la agenda para que la oficina llame por teléfono.
-- [ ] **Bitácora de entregabilidad (riesgo R4)**
+- [x] **Bitácora de entregabilidad (riesgo R4)**
   → Tabla de resultados: con qué teléfonos se probó, cuántas push llegaron, cuántas requirieron SMS, en cuánto tiempo. Terminada cuando hay al menos **20 envíos medidos** en teléfonos distintos.
-- [ ] **Sprint Planning 4**
-- [ ] 📦 **Entregable:** Vista de notificaciones + bitácora de entregabilidad.
+- [x] **Sprint Planning 4**
+- [x] 📦 **Entregable:** Vista de notificaciones + bitácora de entregabilidad.
 
 ## E09 — Confirmación y reprogramación
 `#agave/E09` · jue 29 oct · Sprint 4 (cierre)
 
 > [!warning] Toda esta entrega ⛔ **Requiere:** Jorge · endpoints de reprogramación y temporizador de `SIN_CONFIRMAR` (BD E09).
 
-- [ ] **Bandeja de reprogramaciones**
+- [x] **Bandeja de reprogramaciones**
   → Lista de las solicitudes del cliente (`SOLICITADA`) con la fecha actual, la fecha pedida y el motivo. Botones **Aprobar** y **Rechazar** (el rechazo pide motivo). Al aprobar, la cita se mueve conservando el folio.
-- [ ] **Alerta de citas sin confirmar**
+- [x] **Alerta de citas sin confirmar**
   → Panel con las citas de mañana que pasaron a `SIN_CONFIRMAR` (nadie respondió en el plazo). Desde ahí, el administrador puede **registrar una confirmación por llamada** o cancelar la cita.
-- [ ] **Reprogramación iniciada por la oficina**
+- [x] **Reprogramación iniciada por la oficina**
   → El administrador también puede mover una cita él mismo (cuando el inspector se enferma, por ejemplo) y el cliente recibe la notificación del cambio.
-- [ ] **Sprint Review 4 + Retrospectiva + Planning 5**
-- [ ] 📦 **Entregable:** Bandeja de reprogramaciones + alerta de sin confirmar + minuta.
+- [x] **Sprint Review 4 + Retrospectiva + Planning 5**
+- [x] 📦 **Entregable:** Bandeja de reprogramaciones + alerta de sin confirmar + minuta.
 
 ## E10 — Trayecto y seguimiento en vivo
 `#agave/E10` · jue 05 nov · Sprint 5
 
-- [ ] **Monitor en vivo**
+- [x] **Monitor en vivo**
   → Mapa del panel con **todos los inspectores que van en camino** ahora mismo, su cita destino y su ETA. Es la vista que la oficina deja abierta todo el día.
   ⛔ **Requiere:** Jorge · canal Realtime y ETA (BD E10) + Anuar · publicación de ubicación (IN E10).
-- [ ] **Lista de "hoy" con semáforo**
+- [x] **Lista de "hoy" con semáforo**
   → Panel lateral con las citas del día ordenadas por ventana, marcando en rojo las que ya se pasaron de su hora comprometida.
-- [ ] **Capacitación a los inspectores piloto**
+- [x] **Capacitación a los inspectores piloto**
   → Sesión de 1 hora con los inspectores que participarán en la prueba: instalar la app, explicar el permiso de ubicación en segundo plano y por qué se pide. Terminada cuando cada uno completó un trayecto de prueba.
-- [ ] **Sprint Planning 5**
-- [ ] 📦 **Entregable:** Monitor en vivo + evidencia de la capacitación.
+- [x] **Sprint Planning 5**
+- [x] 📦 **Entregable:** Monitor en vivo + evidencia de la capacitación.
 
 ## E11 — Llegada, resultado, tablero y modo sin señal
 `#agave/E11` · jue 12 nov · Sprint 5 (cierre)
 
 > [!warning] Esta entrega ⛔ **Requiere:** Jorge · vistas de indicadores `v_indicadores_semana`, `v_puntualidad_inspector` y `v_efectividad_notificacion` (BD E11).
 
-- [ ] **Tablero — tarjetas principales**
+- [x] **Tablero — tarjetas principales**
   → Citas del periodo, **tasa de confirmación**, **visitas fallidas**, reprogramaciones y completadas. Con selector de rango de fechas.
-- [ ] **Tablero — gráficas**
+- [x] **Tablero — gráficas**
   → Citas por estado (barras), evolución semanal de la tasa de confirmación (línea) y ranking de puntualidad por inspector.
-- [ ] **Tablero — efectividad por canal**
+- [x] **Tablero — efectividad por canal**
   → Cuántas push se entregaron, cuántas necesitaron SMS y cuántas fallaron. Es el dato que demuestra si el sistema resolvió el problema del correo.
-- [ ] **Exportar a CSV**
+- [x] **Exportar a CSV**
   → Botón para descargar los indicadores del rango seleccionado.
-- [ ] **Feature freeze**
+- [x] **Feature freeze**
   → Anunciar el congelamiento: a partir de aquí solo se corrigen errores, no se agregan funciones. Lo que quede pendiente pasa a "trabajo futuro".
-- [ ] **Sprint Review 5 + Retrospectiva + Planning 6**
-- [ ] 📦 **Entregable:** Tablero de indicadores + anuncio de feature freeze + minuta.
+- [x] **Sprint Review 5 + Retrospectiva + Planning 6**
+- [x] 📦 **Entregable:** Tablero de indicadores + anuncio de feature freeze + minuta.
 
 ## E12 — Pruebas integrales, implantación y entrega final
 `#agave/E12` · jue 19 nov · Sprint 6
 
-- [ ] **Pruebas de aceptación con Agave Roofing**
+- [x] **Pruebas de aceptación con Agave Roofing**
   → Acompañar al responsable de operaciones mientras él mismo programa una cita, ve llegar la notificación al teléfono del cliente y sigue al inspector en el mapa. Terminadas cuando firma los criterios de éxito del [[01_Plan_de_Proyecto]] §11.
   ⛔ **Requiere:** Anuar · prueba de campo (IN E12) y Jesús · pruebas integrales (CL E12).
-- [ ] **Acta de aceptación**
+- [x] **Acta de aceptación**
   → Documento firmado por el cliente: qué se entregó, qué quedó fuera y qué observaciones hay.
-- [ ] **Presentación final**
+- [x] **Presentación final**
   → Diapositivas: problema (el correo y las visitas fallidas), solución, arquitectura de los tres servicios, demostración en vivo, indicadores obtenidos y trabajo futuro. Ensayar el tiempo.
-- [ ] **Demostración en vivo**
+- [x] **Demostración en vivo**
   → El recorrido completo delante del grupo: programar → notificar → confirmar → ir en camino → mapa → llegada → reporte. Tener un plan B grabado en video por si falla la red del salón.
-- [ ] **Cierre del proyecto**
+- [x] **Cierre del proyecto**
   → Retrospectiva final, entrega de documentación consolidada y cierre del tablero.
-- [ ] 📦 **Entregable:** Acta de aceptación + presentación final + proyecto cerrado.
+- [x] 📦 **Entregable:** Acta de aceptación + presentación final + proyecto cerrado.
 
 ---
 

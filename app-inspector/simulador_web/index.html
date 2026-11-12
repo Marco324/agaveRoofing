@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgaveAlerta — App del Inspector (San Antonio, TX)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #020617; }
+    .phone-frame {
+      width: 100%;
+      max-width: 440px;
+      min-height: 860px;
+      border-radius: 40px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 10px #1e293b, 0 0 0 12px #334155;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white py-6 px-4 flex flex-col items-center">
+
+  <!-- Barra de Control del Simulador (Arriba del Teléfono) -->
+  <div class="w-full max-w-5xl bg-slate-900 border border-slate-700 rounded-2xl p-4 mb-6 text-white shadow-lg space-y-3">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-xl shadow">
+          🛻
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white flex items-center gap-2">
+            Simulador App del Inspector — AgaveAlerta
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-extrabold">E07 · E08 · E09 · E10 · E11</span>
+          </h1>
+          <div class="flex items-center gap-2 mt-0.5">
+            <span id="apiDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse"></span>
+            <span id="apiText" class="text-[11px] text-rose-300 font-medium">Conectando con API...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selector de Inspector y Controles E10/E11 -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Inspector en Campo</label>
+          <select id="selectInspectorActivo" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-lg px-3 py-2">
+            <option value="1">Carlos Garza (TX-ROOF-01 · Zonas Norte y Este)</option>
+            <option value="2">David Vance (TX-AGAVE-02 · Zonas Centro y Noroeste)</option>
+          </select>
+        </div>
+
+        <!-- E11: Modo Sin Señal y Cola SQLite Offline (RN-12) -->
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Modo Sin Señal y Sincronización (E11 · RN-12)</label>
+          <div class="flex gap-1.5">
+            <button id="btnToggleOffline" onclick="alternarModoSinSenal()" class="bg-slate-800 hover:bg-slate-700 text-[11px] font-bold px-3 py-2 rounded-lg border border-slate-600 transition">
+              📶 Señal 5G Activa (Simular Sin Señal)
+            </button>
+            <button id="btnSincronizarCola" onclick="sincronizarColaOffline()" class="bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-extrabold px-3 py-2 rounded-lg transition flex items-center gap-1">
+              🔄 Sincronizar (<span id="countColaTop">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Simular Push E08/E11</label>
+          <div class="flex gap-1.5">
+            <button onclick="simularPushInspector('CITA_ASIGNADA')" class="bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold px-2.5 py-2 rounded-lg border border-slate-600 transition">
+              📋 Nueva Cita
+            </button>
+            <button onclick="simularPushInspector('CLIENTE_EN_CASA')" class="bg-emerald-700 hover:bg-emerald-600 text-[11px] font-semibold px-2.5 py-2 rounded-lg transition">
+              🏠 Cliente en Casa
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Marco del Teléfono Móvil (Modo Oscuro Operativo) -->
+  <div class="phone-frame bg-slate-900 overflow-hidden flex flex-col relative border border-slate-800">
+
+    <!-- Barra de Estado Móvil -->
+    <div class="bg-slate-950 text-slate-300 px-6 pt-3 pb-2 flex justify-between items-center text-[11px] font-semibold">
+      <span>9:15 AM</span>
+      <div class="w-24 h-4 bg-black rounded-full"></div>
+      <div class="flex items-center gap-1.5">
+        <i id="iconGpsPhone" class="fa-solid fa-location-arrow text-emerald-400 text-[10px]"></i>
+        <i id="iconSignalPhone" class="fa-solid fa-signal text-[10px]"></i>
+        <i class="fa-solid fa-battery-full text-emerald-400"></i>
+      </div>
+    </div>
+
+    <!-- Header de la App del Inspector -->
+    <header class="p-4 bg-slate-800/90 backdrop-blur border-b border-slate-700 sticky top-0 z-20 space-y-2.5">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🌵</span>
+          <div>
+            <h2 class="font-bold text-sm text-white leading-tight">AgaveAlerta — Inspector</h2>
+            <p id="headerNombreInspector" class="text-[11px] text-slate-400">Carlos Garza · Placas TX-ROOF-01</p>
+          </div>
+        </div>
+        <span id="badgeCacheStatus" class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full font-semibold">
+          ● Sincronizado + SQLite
+        </span>
+      </div>
+
+      <!-- E11 Banner de Cola Offline SQLite cuando hay elementos pendientes o modo sin señal -->
+      <div id="bannerColaOffline" class="hidden bg-amber-500/20 border border-amber-500/50 rounded-xl px-3 py-2 flex justify-between items-center text-[11px]">
+        <div class="text-amber-200 font-semibold">
+          📦 <span id="textoColaPendiente">0 registros en cola SQLite por enviar</span>
+        </div>
+        <button onclick="sincronizarColaOffline()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-2.5 py-1 rounded-lg text-[10px]">
+          Enviar ahora
+        </button>
+      </div>
+
+      <!-- Selector de Fecha de la Ruta -->
+      <div class="flex items-center justify-between bg-slate-900 rounded-xl p-1.5 border border-slate-700">
+        <button onclick="cambiarFechaRuta(-1)" class="p-1.5 text-slate-400 hover:text-white rounded-lg transition">
+          ◀
+        </button>
+        <div class="text-center">
+          <span id="labelFechaRuta" class="text-xs font-bold text-white block">2026-11-12</span>
+          <span class="text-[10px] text-emerald-400">Ruta del día ordenada por ventana</span>
+        </div>
+        <button onclick="cambiarFechaRuta(1)" class="p-1.5 text-slate-400 hover:text-white rounded-lg transition">
+          ▶
+        </button>
+      </div>
+
+      <!-- Atajos rápidos de fecha -->
+      <div class="flex flex-wrap justify-center gap-1.5 text-[10px]">
+        <button onclick="fijarFechaRuta('2026-11-12')" class="bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-extrabold">
+          Jue 12 Nov (E10/E11)
+        </button>
+        <button onclick="fijarFechaRuta('2026-11-05')" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-lg font-semibold">
+          Jue 05 Nov (E10)
+        </button>
+        <button onclick="fijarFechaRuta('2026-10-29')" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-lg font-semibold">
+          Jue 29 Oct (E09)
+        </button>
+        <button onclick="fijarFechaRuta('2026-10-15')" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-lg font-semibold">
+          Jue 15 Oct (E07)
+        </button>
+      </div>
+    </header>
+
+    <!-- Banner de Notificación Push Recibida en el Inspector -->
+    <div id="bannerPushInspector" class="hidden mx-4 mt-3 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-xs text-emerald-200 flex justify-between items-start gap-2 shadow">
+      <div>
+        <div id="bannerPushTitulo" class="font-bold text-white">🔔 Notificación Push Recibida</div>
+        <div id="bannerPushCuerpo" class="text-[11px] text-emerald-200 mt-0.5"></div>
+      </div>
+      <button onclick="document.getElementById('bannerPushInspector').classList.add('hidden')" class="text-emerald-300 font-bold">✕</button>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- PANTALLA 1: RUTA DEL DÍA (Lista Ordenada de Paradas)                 -->
+    <!-- ==================================================================== -->
+    <div id="screenRutaDelDia" class="flex-1 p-4 space-y-3 overflow-y-auto">
+      <div class="flex justify-between items-center text-xs text-slate-400 pb-1">
+        <span id="contadorParadasTexto">0 paradas asignadas</span>
+        <button onclick="cargarRutaDelDia()" class="text-emerald-400 hover:text-emerald-300 text-[11px] font-semibold">
+          ↻ Jalar para actualizar ruta
+        </button>
+      </div>
+
+      <div id="contenedorParadas" class="space-y-3">
+        <!-- Tarjetas de parada -->
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- PANTALLA 2: DETALLE DE PARADA, TRAYECTO VIVO E10 Y RESULTADO E11     -->
+    <!-- ==================================================================== -->
+    <div id="screenDetalleParada" class="hidden flex-1 p-4 space-y-4 overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <button onclick="volverARuta()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-700 font-semibold transition">
+          ← Volver a Ruta
+        </button>
+        <div class="flex items-center gap-2">
+          <span id="detParadaEstadoBadge" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">CONFIRMADA</span>
+          <span id="detParadaFolio" class="font-mono text-xs font-bold text-emerald-400">INS-2026-000010</span>
+        </div>
+      </div>
+
+      <!-- E11 Banner de Confirmación de Presencia "Ya estoy en mi casa" -->
+      <div id="detParadaBannerEnCasa" class="hidden bg-emerald-500/20 border-2 border-emerald-400 rounded-2xl p-3 text-xs text-emerald-200 flex items-center gap-2.5 shadow">
+        <span class="text-lg">🏠</span>
+        <div>
+          <div class="font-extrabold text-white">¡El cliente confirmó que ya está en su casa!</div>
+          <div class="text-[11px] text-emerald-300">Está listo para recibirte en el domicilio.</div>
+        </div>
+      </div>
+
+      <!-- Encabezado y Estado de Confirmación del Cliente -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-slate-400">Ventana Comprometida</span>
+          <span id="detParadaVentana" class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+            09:00 - 11:00
+          </span>
+        </div>
+
+        <div id="detParadaCliente" class="text-lg font-bold text-white">Robert B. Martinez</div>
+
+        <!-- Caja de estado de confirmación (E09) -->
+        <div id="detParadaConfirmacionBox"></div>
+
+        <div class="pt-1 flex gap-2">
+          <a id="detParadaBtnLlamar" href="tel:+12105550201" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-2.5 rounded-xl text-center transition border border-slate-600">
+            📞 Llamar al Cliente
+          </a>
+          <button onclick="abrirNavegacionGoogleMaps()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-xl text-center transition">
+            🗺️ Google Maps
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- PANEL OPERATIVO E10 y E11: TRAYECTO GPS, LLEGADA Y RESULTADO       -->
+      <!-- ================================================================== -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-emerald-500/40 space-y-3 shadow-lg">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] font-extrabold text-emerald-400 uppercase tracking-wider">
+            ⚡ Flujo Operativo en Campo (E10 · E11)
+          </span>
+          <span id="labelModoOperacion" class="text-[10px] text-slate-400 font-semibold">En línea</span>
+        </div>
+
+        <!-- 1. Botón "Voy en camino" (E10) -->
+        <div id="boxIniciarTrayecto" class="hidden space-y-2">
+          <p class="text-[11px] text-slate-300">
+            Al tocar <strong>"Voy en camino"</strong> se activa la transmisión GPS cada 15 s (RN-08) y se envía aviso urgente al cliente. Valida 1 solo trayecto activo por inspector (RN-03).
+          </p>
+          <button onclick="accionVoyEnCamino()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs py-3 rounded-xl shadow flex items-center justify-center gap-2 transition">
+            🛻 Voy en camino (Activar GPS + Avisar al Cliente)
+          </button>
+        </div>
+
+        <!-- 2. Panel de Trayecto Activo y Telemetría GPS en Segundo Plano (E10) -->
+        <div id="boxTrayectoActivo" class="hidden space-y-3">
+          <div class="bg-indigo-950/90 border border-indigo-500/50 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-extrabold text-emerald-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                Compartiendo ubicación con el cliente
+              </span>
+              <span class="text-[10px] bg-indigo-800 text-indigo-200 px-2 py-0.5 rounded font-mono">Cada 15 s</span>
+            </div>
+            <div id="infoTelemetriaInspector" class="text-[11px] text-indigo-200 font-mono">
+              GPS activo en segundo plano · Calculando ETA...
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button onclick="simularAvanceGpsInspector(false)" class="bg-indigo-700 hover:bg-indigo-600 text-white text-[11px] font-bold py-2 rounded-lg transition">
+                🛰️ +1 Paso GPS (15s)
+              </button>
+              <button onclick="simularAvanceGpsInspector(true)" class="bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold py-2 rounded-lg transition">
+                📍 Acercar &lt; 1 km (RN-02)
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="accionRegistrarLlegada()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-3 rounded-xl shadow transition">
+              📍 Llegué (EN_SITIO)
+            </button>
+            <button onclick="mostrarFormularioAusente()" class="bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs py-3 rounded-xl shadow transition">
+              🚫 Cliente Ausente
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Panel EN_SITIO: Captura de Resultado (RN-11) o Cliente Ausente (RN-10) -->
+        <div id="boxEnSitioAcciones" class="hidden space-y-3">
+          <div class="bg-purple-950/70 border border-purple-500/40 rounded-xl p-2.5 text-[11px] text-purple-200 flex items-center justify-between">
+            <span>📍 <strong>En Sitio:</strong> GPS detenido por privacidad (RN-08).</span>
+            <button onclick="mostrarFormularioAusente()" class="text-[10px] bg-rose-700 hover:bg-rose-600 text-white px-2 py-1 rounded font-bold">
+              🚫 Ausente
+            </button>
+          </div>
+
+          <!-- Formulario de Captura de Resultado (RN-11) -->
+          <div class="bg-slate-900 rounded-xl p-3.5 border border-slate-700 space-y-3">
+            <div class="text-xs font-extrabold text-white flex items-center justify-between">
+              <span>📋 Captura de Resultado de Inspección</span>
+              <span class="text-[10px] text-emerald-400 font-semibold">RN-11 (&ge; 1 foto)</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-bold mb-1">Estado del Techo</label>
+                <select id="formEstadoTecho" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                  <option value="BUENO">BUENO</option>
+                  <option value="REGULAR" selected>REGULAR</option>
+                  <option value="MALO">MALO</option>
+                  <option value="CRITICO">CRITICO</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 font-bold mb-1">Urgencia Reparación</label>
+                <select id="formUrgencia" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                  <option value="BAJA">BAJA</option>
+                  <option value="MEDIA" selected>MEDIA</option>
+                  <option value="ALTA">ALTA</option>
+                  <option value="INMEDIATA">INMEDIATA</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] text-slate-400 font-bold mb-1">Hallazgos Técnicos en Cubierta</label>
+              <textarea id="formHallazgos" rows="2" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-xs text-white" placeholder="Describe el estado de tejas asfálticas, cumbrera y tapajuntas...">Desprendimiento de 6 tejas asfálticas en vertiente norte y desgaste de sellador en cumbrera por granizo.</textarea>
+            </div>
+
+            <div>
+              <label class="block text-[10px] text-slate-400 font-bold mb-1">Recomendaciones al Cliente</label>
+              <input id="formRecomendaciones" type="text" value="Reemplazo de faldón norte (35 sq ft) y resellado elastomérico." class="w-full bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            </div>
+
+            <!-- Evidencias Fotográficas (RN-11) -->
+            <div class="space-y-2 pt-1 border-t border-slate-800">
+              <div class="flex justify-between items-center">
+                <label class="text-[10px] text-slate-300 font-bold uppercase">📸 Evidencias Fotográficas (<span id="countFotosCapturadas">0</span>)</label>
+                <div class="flex gap-1">
+                  <button type="button" onclick="agregarFotoDemo('TECHO')" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[10px] font-bold px-2 py-1 rounded text-emerald-300">
+                    + Foto Cumbrera
+                  </button>
+                  <button type="button" onclick="agregarFotoDemo('CANALETA')" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[10px] font-bold px-2 py-1 rounded text-sky-300">
+                    + Foto Canaleta
+                  </button>
+                </div>
+              </div>
+              <div id="listaFotosPrevia" class="space-y-1.5 text-[11px]"></div>
+            </div>
+
+            <button onclick="guardarResultadoInspeccion()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-3 rounded-xl shadow transition">
+              ✅ Finalizar Inspección y Enviar Reporte
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal / Caja de Cliente Ausente (RN-10) -->
+        <div id="boxFormularioAusente" class="hidden bg-rose-950/60 border border-rose-500/50 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-extrabold text-rose-200">🚫 Registrar Cliente Ausente (RN-10)</span>
+            <button onclick="document.getElementById('boxFormularioAusente').classList.add('hidden')" class="text-xs text-rose-300 font-bold">✕</button>
+          </div>
+          <p class="text-[11px] text-rose-200">
+            RN-10 exige <strong>foto obligatoria de la fachada</strong> y nota explicativa antes de marcar la visita como fallida.
+          </p>
+          <div>
+            <label class="block text-[10px] text-rose-200 font-bold mb-1">URL Foto de Fachada / Puerta (Obligatoria)</label>
+            <input id="inputFotoFachadaAusente" type="text" value="https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80" class="w-full bg-slate-900 border border-rose-500/40 rounded-lg px-2.5 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label class="block text-[10px] text-rose-200 font-bold mb-1">Nota Explicativa (Obligatoria)</label>
+            <input id="inputNotaAusente" type="text" value="Se tocó el timbre 3 veces y se esperó 15 minutos sin respuesta en puerta." class="w-full bg-slate-900 border border-rose-500/40 rounded-lg px-2.5 py-1.5 text-xs text-white">
+          </div>
+          <button onclick="confirmarRegistroAusente()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs py-2.5 rounded-xl">
+            Confirmar Visita Fallida con Evidencia (RN-10)
+          </button>
+        </div>
+
+        <!-- 4. Resumen cuando la cita ya está COMPLETADA o CLIENTE_AUSENTE -->
+        <div id="boxInspeccionCerrada" class="hidden bg-slate-900 rounded-xl p-3 border border-slate-700 text-xs space-y-1.5">
+          <div id="textoInspeccionCerrada" class="font-bold text-emerald-400"></div>
+          <a id="linkReportePdfInspector" href="#" target="_blank" class="inline-block text-[11px] text-sky-400 hover:underline font-bold">
+            📄 Ver Reporte PDF Generado ➔
+          </a>
+        </div>
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- PANEL DE MENSAJERÍA / CHAT CON EL CLIENTE (E11)                    -->
+      <!-- ================================================================== -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+            💬 Mensajes con el Cliente (E11)
+          </span>
+          <button onclick="cargarMensajesParada()" class="text-[10px] text-emerald-400 hover:underline font-semibold">↻ Actualizar</button>
+        </div>
+        <div id="contenedorMensajesInspector" class="space-y-2 max-h-40 overflow-y-auto bg-slate-900/80 p-2.5 rounded-xl border border-slate-700/80 text-xs">
+          <!-- Mensajes -->
+        </div>
+        <div class="flex gap-2">
+          <input id="inputMensajeInspector" type="text" placeholder="Escribe un mensaje al cliente..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+          <button onclick="enviarMensajeDesdeInspector()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl">
+            Enviar
+          </button>
+        </div>
+      </div>
+
+      <!-- Ubicación y Referencias -->
+      <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 space-y-2">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          Domicilio en San Antonio, TX
+        </div>
+        <div id="detParadaDireccion" class="font-bold text-sm text-white">Stone Oak Pkwy #19202</div>
+        <div id="detParadaColonia" class="text-xs text-slate-400">Colonia Stone Oak, San Antonio, Texas 78258</div>
+        <div id="detParadaCoords" class="text-[10px] font-mono text-slate-500"></div>
+        <div id="detParadaReferencias" class="text-xs text-amber-300 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20"></div>
+        <div class="text-xs text-slate-300 pt-2 border-t border-slate-700">
+          <span class="text-slate-400 font-semibold block">Motivo / Notas:</span>
+          <span id="detParadaMotivo"></span> — <span id="detParadaNotas" class="text-slate-400"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Navegación Inferior del Inspector -->
+    <nav class="bg-slate-950 border-t border-slate-800 px-6 py-2.5 flex justify-around items-center text-[11px] font-semibold text-slate-400">
+      <button onclick="volverARuta()" class="text-emerald-400 flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-route text-base"></i>
+        <span>Mi Ruta</span>
+      </button>
+      <a href="../../app-cliente/simulador_web/index.html" target="_blank" class="hover:text-white flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-mobile-screen text-base"></i>
+        <span>App Cliente</span>
+      </a>
+      <a href="../../panel/index.html" target="_blank" class="hover:text-white flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-desktop text-base"></i>
+        <span>Panel Admin</span>
+      </a>
+    </nav>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:4000/api';
+    const OFFLINE_QUEUE_KEY = 'agave_inspector_cola_sqlite_e11';
+
+    let idInspectorActual = 1;
+    let fechaRuta = '2026-11-12';
+    let paradasActuales = [];
+    let paradaSeleccionada = null;
+    let modoSinSenal = false;
+    let fotosCapturadas = [];
+
+    function obtenerColaOffline() {
+      try {
+        return JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function guardarColaOffline(cola) {
+      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(cola));
+      actualizarIndicadoresCola();
+    }
+
+    function encolarOperacionOffline(op) {
+      const cola = obtenerColaOffline();
+      cola.push(op);
+      guardarColaOffline(cola);
+    }
+
+    function actualizarIndicadoresCola() {
+      const cola = obtenerColaOffline();
+      document.getElementById('countColaTop').textContent = cola.length;
+      const banner = document.getElementById('bannerColaOffline');
+      const texto = document.getElementById('textoColaPendiente');
+      if (cola.length > 0 || modoSinSenal) {
+        banner.classList.remove('hidden');
+        texto.textContent = `${cola.length} registro(s) en cola SQLite por enviar${modoSinSenal ? ' (Sin Señal)' : ''}`;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function alternarModoSinSenal() {
+      modoSinSenal = !modoSinSenal;
+      const btn = document.getElementById('btnToggleOffline');
+      const badge = document.getElementById('badgeCacheStatus');
+      const labelOp = document.getElementById('labelModoOperacion');
+      const signalIcon = document.getElementById('iconSignalPhone');
+
+      if (modoSinSenal) {
+        btn.textContent = '✈️ Modo Sin Señal ACTIVO (Caché SQLite)';
+        btn.className = 'bg-amber-600 hover:bg-amber-500 text-slate-950 text-[11px] font-extrabold px-3 py-2 rounded-lg border border-amber-400 transition';
+        badge.textContent = '✈️ Sin Señal · Cola SQLite';
+        badge.className = 'text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-extrabold';
+        labelOp.textContent = '✈️ Guardando en SQLite local (RN-12)';
+        labelOp.className = 'text-[10px] text-amber-400 font-bold';
+        signalIcon.className = 'fa-solid fa-plane text-amber-400 text-[10px]';
+      } else {
+        btn.textContent = '📶 Señal 5G Activa (Simular Sin Señal)';
+        btn.className = 'bg-slate-800 hover:bg-slate-700 text-[11px] font-bold px-3 py-2 rounded-lg border border-slate-600 transition';
+        badge.textContent = '● Sincronizado + SQLite';
+        badge.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full font-semibold';
+        labelOp.textContent = '🟢 En línea con API';
+        labelOp.className = 'text-[10px] text-emerald-400 font-semibold';
+        signalIcon.className = 'fa-solid fa-signal text-[10px]';
+      }
+      actualizarIndicadoresCola();
+    }
+
+    async function sincronizarColaOffline() {
+      const cola = obtenerColaOffline();
+      if (cola.length === 0) {
+        alert('La cola SQLite local está vacía (0 operaciones pendientes).');
+        return;
+      }
+      if (modoSinSenal) {
+        modoSinSenal = false;
+        alternarModoSinSenal(); // Reactivar señal
+        modoSinSenal = false;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/sincronizar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idInspector: idInspectorActual,
+            operaciones: cola
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`Error al sincronizar cola: ${data.error}`);
+          return;
+        }
+        guardarColaOffline([]);
+        await cargarRutaDelDia();
+        if (paradaSeleccionada) {
+          const act = paradasActuales.find((p) => p.idInspeccion === paradaSeleccionada.idInspeccion);
+          if (act) abrirDetalleParada(act);
+        }
+        alert(`✅ Sincronización idempotente completada (RN-12): ${data.procesadas} operación(es) aplicadas sin duplicados.`);
+      } catch (err) {
+        alert(`Error de red al sincronizar: ${err.message}`);
+      }
+    }
+
+    function obtenerEtiquetaConfirmacionHTML(parada) {
+      if (parada.clienteEnCasa) {
+        return `
+          <div class="text-[11px] bg-emerald-500/25 text-emerald-200 border border-emerald-400 rounded-xl px-3 py-2 font-bold flex items-center gap-1.5">
+            <span>🏠</span>
+            <span><strong>¡Cliente en casa!</strong> Confirmó presencia inmediata.</span>
+          </div>
+        `;
+      }
+      if (parada.estado === 'COMPLETADA') {
+        return `
+          <div class="text-[11px] bg-teal-500/20 text-teal-200 border border-teal-500/40 rounded-xl px-3 py-2 font-semibold flex items-center gap-1.5">
+            <span>✅</span>
+            <span>Inspección completada (${parada.resultado ? parada.resultado.estadoTecho : 'Reporte listo'}).</span>
+          </div>
+        `;
+      }
+      if (parada.estado === 'EN_CAMINO') {
+        return `
+          <div class="text-[11px] bg-indigo-500/25 text-indigo-200 border border-indigo-400/50 rounded-xl px-3 py-2 font-bold flex items-center gap-1.5">
+            <span>🛻</span>
+            <span>Trayecto en curso · Compartiendo GPS cada 15 s.</span>
+          </div>
+        `;
+      }
+      if (parada.estado === 'EN_SITIO') {
+        return `
+          <div class="text-[11px] bg-purple-500/25 text-purple-200 border border-purple-400/50 rounded-xl px-3 py-2 font-bold flex items-center gap-1.5">
+            <span>📍</span>
+            <span>Inspector en sitio · Capturando evidencias y resultado.</span>
+          </div>
+        `;
+      }
+      if (parada.estado === 'CONFIRMADA') {
+        return `
+          <div class="text-[11px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-xl px-3 py-2 font-medium flex items-center gap-1.5">
+            <span>✅</span>
+            <span><strong>Cliente confirmó asistencia</strong> — Sí estará en casa.</span>
+          </div>
+        `;
+      }
+      if (parada.estado === 'SIN_CONFIRMAR') {
+        return `
+          <div class="text-[11px] bg-rose-500/20 text-rose-200 border border-rose-500/50 rounded-xl px-3 py-2 font-bold flex items-start gap-1.5">
+            <span>⚠️</span>
+            <span>El cliente no ha respondido: confirma con la oficina antes de ir.</span>
+          </div>
+        `;
+      }
+      return `
+        <div class="text-[11px] bg-amber-500/15 text-amber-200 border border-amber-500/30 rounded-xl px-3 py-2 font-medium flex items-center gap-1.5">
+          <span>📩</span>
+          <span>Estado: ${parada.estado}</span>
+        </div>
+      `;
+    }
+
+    async function cargarRutaDelDia() {
+      idInspectorActual = parseInt(document.getElementById('selectInspectorActivo').value, 10);
+      document.getElementById('headerNombreInspector').textContent =
+        idInspectorActual === 1
+          ? 'Carlos Garza · Placas TX-ROOF-01'
+          : 'David Vance · Placas TX-AGAVE-02';
+      document.getElementById('labelFechaRuta').textContent = fechaRuta;
+      actualizarIndicadoresCola();
+
+      const dot = document.getElementById('apiDot');
+      const txt = document.getElementById('apiText');
+      const cacheKey = `agave_ruta_${idInspectorActual}_${fechaRuta}`;
+
+      if (!modoSinSenal) {
+        try {
+          const res = await fetch(`${API_URL}/inspecciones/mi-ruta?idInspector=${idInspectorActual}&fecha=${fechaRuta}`);
+          if (res.ok) {
+            const data = await res.json();
+            paradasActuales = data.paradas || [];
+            localStorage.setItem(cacheKey, JSON.stringify(paradasActuales));
+            dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block';
+            txt.className = 'text-[11px] text-emerald-300 font-medium';
+            txt.textContent = '🟢 Conectada en Vivo a la API (Puerto 4000)';
+            renderListaParadas();
+            return;
+          }
+        } catch (_) {}
+      }
+
+      const guardado = localStorage.getItem(cacheKey);
+      paradasActuales = guardado ? JSON.parse(guardado) : [];
+      dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block';
+      txt.className = 'text-[11px] text-amber-300 font-medium';
+      txt.textContent = '🟡 Operando desde Caché SQLite Local (Modo Sin Señal)';
+      renderListaParadas();
+    }
+
+    function renderListaParadas() {
+      const cont = document.getElementById('contenedorParadas');
+      cont.innerHTML = '';
+      document.getElementById('contadorParadasTexto').textContent = `${paradasActuales.length} paradas asignadas`;
+
+      if (paradasActuales.length === 0) {
+        cont.innerHTML = `
+          <div class="text-center py-14 bg-slate-800/40 rounded-2xl border border-slate-800 text-xs text-slate-400">
+            No tienes inspecciones programadas para el ${fechaRuta} en San Antonio, TX.
+          </div>
+        `;
+        return;
+      }
+
+      paradasActuales.forEach((p, idx) => {
+        const badgeColors = {
+          CONFIRMADA: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+          EN_CAMINO: 'bg-indigo-500/30 text-indigo-200 border-indigo-400',
+          EN_SITIO: 'bg-purple-500/30 text-purple-200 border-purple-400',
+          COMPLETADA: 'bg-teal-500/25 text-teal-200 border-teal-400/50',
+          CLIENTE_AUSENTE: 'bg-rose-500/30 text-rose-200 border-rose-400',
+          NOTIFICADA: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+          SIN_CONFIRMAR: 'bg-rose-500/20 text-rose-300 border-rose-500/50'
+        };
+
+        const div = document.createElement('div');
+        div.className = `bg-slate-800/90 hover:bg-slate-800 border rounded-2xl p-4 cursor-pointer transition space-y-2.5 shadow-sm ${
+          p.estado === 'EN_CAMINO' ? 'border-indigo-400 ring-1 ring-indigo-400/40' : 'border-slate-700'
+        }`;
+        div.onclick = () => abrirDetalleParada(p);
+
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-slate-700 text-slate-200 font-bold text-[11px] flex items-center justify-center">${idx + 1}</span>
+              <span class="font-mono text-xs font-bold text-slate-200">${p.folio}</span>
+            </div>
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${badgeColors[p.estado] || 'bg-slate-700 text-slate-300'}">${p.estado}</span>
+          </div>
+
+          <div>
+            <div class="font-bold text-sm text-white">${p.cliente.nombre}</div>
+            <div class="text-xs text-slate-400 mt-0.5">📍 ${p.domicilio.direccionCompleta}, ${p.domicilio.colonia}</div>
+          </div>
+
+          ${obtenerEtiquetaConfirmacionHTML(p)}
+
+          <div class="pt-2 border-t border-slate-700/60 flex justify-between items-center text-xs">
+            <span class="text-emerald-400 font-bold">⏰ ${p.ventanaInicio} - ${p.ventanaFin}</span>
+            <span class="text-slate-300 font-semibold text-[11px]">Gestionar parada ➔</span>
+          </div>
+        `;
+        cont.appendChild(div);
+      });
+    }
+
+    function abrirDetalleParada(parada) {
+      paradaSeleccionada = parada;
+      document.getElementById('screenRutaDelDia').classList.add('hidden');
+      document.getElementById('screenDetalleParada').classList.remove('hidden');
+
+      document.getElementById('detParadaFolio').textContent = parada.folio;
+      document.getElementById('detParadaEstadoBadge').textContent = parada.estado;
+      document.getElementById('detParadaVentana').textContent = `${parada.ventanaInicio} - ${parada.ventanaFin}`;
+      document.getElementById('detParadaCliente').textContent = parada.cliente.nombre;
+      document.getElementById('detParadaBtnLlamar').href = `tel:${parada.cliente.telefono}`;
+      document.getElementById('detParadaBtnLlamar').textContent = `📞 Llamar (${parada.cliente.telefono})`;
+      document.getElementById('detParadaConfirmacionBox').innerHTML = obtenerEtiquetaConfirmacionHTML(parada);
+
+      const bannerCasa = document.getElementById('detParadaBannerEnCasa');
+      if (parada.clienteEnCasa) {
+        bannerCasa.classList.remove('hidden');
+      } else {
+        bannerCasa.classList.add('hidden');
+      }
+
+      document.getElementById('detParadaDireccion').textContent = parada.domicilio.direccionCompleta;
+      document.getElementById('detParadaColonia').textContent = `Colonia ${parada.domicilio.colonia}, ${parada.domicilio.ciudad}, ${parada.domicilio.estado} ${parada.domicilio.codigoPostal}`;
+      document.getElementById('detParadaCoords').textContent =
+        parada.domicilio.latitud ? `GPS Destino: ${parada.domicilio.latitud}, ${parada.domicilio.longitud}` : '';
+      document.getElementById('detParadaReferencias').innerHTML =
+        `<span class="font-bold block text-[11px]">Referencias de acceso:</span>${parada.domicilio.referencias || 'Sin referencias adicionales'}`;
+      document.getElementById('detParadaMotivo').textContent = parada.motivoVisita || 'Inspección técnica de techo';
+      document.getElementById('detParadaNotas').textContent = parada.notas || '';
+
+      // Configurar paneles según el estado actual de la parada
+      const boxIniciar = document.getElementById('boxIniciarTrayecto');
+      const boxTrayecto = document.getElementById('boxTrayectoActivo');
+      const boxEnSitio = document.getElementById('boxEnSitioAcciones');
+      const boxCerrada = document.getElementById('boxInspeccionCerrada');
+      document.getElementById('boxFormularioAusente').classList.add('hidden');
+
+      boxIniciar.classList.add('hidden');
+      boxTrayecto.classList.add('hidden');
+      boxEnSitio.classList.add('hidden');
+      boxCerrada.classList.add('hidden');
+
+      if (['CONFIRMADA', 'NOTIFICADA', 'PROGRAMADA', 'REPROGRAMADA'].includes(parada.estado)) {
+        boxIniciar.classList.remove('hidden');
+      } else if (parada.estado === 'EN_CAMINO') {
+        boxTrayecto.classList.remove('hidden');
+        actualizarTelemetriaParada();
+      } else if (parada.estado === 'EN_SITIO') {
+        boxEnSitio.classList.remove('hidden');
+        fotosCapturadas = (parada.evidencias || []).map((ev) => ({
+          tipo: ev.tipo,
+          rutaArchivo: ev.rutaArchivo,
+          descripcion: ev.descripcion
+        }));
+        if (fotosCapturadas.length === 0) {
+          agregarFotoDemo('TECHO');
+        } else {
+          renderizarFotosCapturadas();
+        }
+      } else if (parada.estado === 'COMPLETADA' || parada.estado === 'CLIENTE_AUSENTE') {
+        boxCerrada.classList.remove('hidden');
+        document.getElementById('textoInspeccionCerrada').textContent =
+          parada.estado === 'COMPLETADA'
+            ? `✅ Inspección Completada · Estado del techo: ${parada.resultado?.estadoTecho || 'REGULAR'}`
+            : '🚫 Visita cerrada como CLIENTE_AUSENTE con evidencia en expediente.';
+        const linkPdf = document.getElementById('linkReportePdfInspector');
+        linkPdf.href = `${API_URL}/inspecciones/${parada.idInspeccion}/reporte-html`;
+      }
+
+      cargarMensajesParada();
+    }
+
+    async function actualizarTelemetriaParada() {
+      if (!paradaSeleccionada) return;
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/seguimiento`);
+        if (res.ok) {
+          const seg = await res.json();
+          if (seg.posicionInspector) {
+            document.getElementById('infoTelemetriaInspector').textContent =
+              `GPS: (${seg.posicionInspector.latitud.toFixed(4)}, ${seg.posicionInspector.longitud.toFixed(4)}) · Dist: ${seg.distanciaMetros} m · ETA: ${seg.etaMinutos} min`;
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function accionVoyEnCamino() {
+      if (!paradaSeleccionada) return;
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/trayecto`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idInspector: idInspectorActual,
+            latitudInicial: 29.555,
+            longitudInicial: -98.485
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`⚠️ Regla de Negocio RN-03: ${data.error}`);
+          return;
+        }
+        await cargarRutaDelDia();
+        const act = paradasActuales.find((p) => p.idInspeccion === paradaSeleccionada.idInspeccion);
+        if (act) abrirDetalleParada(act);
+      } catch (err) {
+        alert(`Error al iniciar trayecto: ${err.message}`);
+      }
+    }
+
+    async function simularAvanceGpsInspector(acercar) {
+      if (!paradaSeleccionada) return;
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/simular-avance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ acercarAlDomicilio: acercar })
+        });
+        if (res.ok) {
+          await actualizarTelemetriaParada();
+          if (acercar) {
+            alert('📍 Inspector a menos de 1 km (RN-02): Se disparó la notificación urgente POR_LLEGAR al cliente.');
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function accionRegistrarLlegada() {
+      if (!paradaSeleccionada) return;
+      const idLocal = `loc-llegada-${paradaSeleccionada.idInspeccion}-${Date.now()}`;
+
+      if (modoSinSenal) {
+        encolarOperacionOffline({
+          idLocal,
+          tipoOperacion: 'LLEGADA',
+          idInspeccion: paradaSeleccionada.idInspeccion,
+          ocurridoEn: new Date().toISOString(),
+          datos: {
+            latitud: paradaSeleccionada.domicilio.latitud,
+            longitud: paradaSeleccionada.domicilio.longitud
+          }
+        });
+        paradaSeleccionada.estado = 'EN_SITIO';
+        abrirDetalleParada(paradaSeleccionada);
+        alert('✈️ Llegada guardada en cola SQLite local (RN-12). Se sincronizará al recuperar señal.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/llegada`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idInspector: idInspectorActual,
+            idLocal,
+            latitud: paradaSeleccionada.domicilio.latitud,
+            longitud: paradaSeleccionada.domicilio.longitud
+          })
+        });
+        if (res.ok) {
+          await cargarRutaDelDia();
+          const act = paradasActuales.find((p) => p.idInspeccion === paradaSeleccionada.idInspeccion);
+          if (act) abrirDetalleParada(act);
+        }
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      }
+    }
+
+    function agregarFotoDemo(tipo) {
+      const url =
+        tipo === 'TECHO'
+          ? 'https://images.unsplash.com/photo-1632759145351-1d592919f522?auto=format&fit=crop&w=800&q=80'
+          : 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80';
+      const desc =
+        tipo === 'TECHO'
+          ? 'Vista de tejas asfálticas y cumbrera principal'
+          : 'Detalle de canaleta pluvial y tapajuntas perimetral';
+      fotosCapturadas.push({
+        idLocal: `loc-foto-${Date.now()}-${fotosCapturadas.length}`,
+        tipo,
+        rutaArchivo: url,
+        descripcion: desc
+      });
+      renderizarFotosCapturadas();
+    }
+
+    function renderizarFotosCapturadas() {
+      document.getElementById('countFotosCapturadas').textContent = fotosCapturadas.length;
+      const cont = document.getElementById('listaFotosPrevia');
+      cont.innerHTML = fotosCapturadas
+        .map(
+          (f, i) => `
+          <div class="flex items-center justify-between bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700">
+            <span class="truncate text-slate-200">📷 [${f.tipo}] ${f.descripcion}</span>
+            <button onclick="eliminarFotoCapturada(${i})" class="text-rose-400 font-bold ml-2">✕</button>
+          </div>
+        `
+        )
+        .join('');
+    }
+
+    function eliminarFotoCapturada(idx) {
+      fotosCapturadas.splice(idx, 1);
+      renderizarFotosCapturadas();
+    }
+
+    async function guardarResultadoInspeccion() {
+      if (!paradaSeleccionada) return;
+      if (fotosCapturadas.length === 0) {
+        alert('⚠️ RN-11: Debes adjuntar al menos 1 fotografía de evidencia antes de finalizar la inspección.');
+        return;
+      }
+
+      const estadoTecho = document.getElementById('formEstadoTecho').value;
+      const urgencia = document.getElementById('formUrgencia').value;
+      const hallazgos = document.getElementById('formHallazgos').value;
+      const recomendaciones = document.getElementById('formRecomendaciones').value;
+      const ahoraIso = new Date().toISOString();
+
+      if (modoSinSenal) {
+        fotosCapturadas.forEach((f, idx) => {
+          encolarOperacionOffline({
+            idLocal: f.idLocal || `loc-ev-${paradaSeleccionada.idInspeccion}-${idx}-${Date.now()}`,
+            tipoOperacion: 'EVIDENCIA',
+            idInspeccion: paradaSeleccionada.idInspeccion,
+            ocurridoEn: ahoraIso,
+            datos: {
+              tipo: f.tipo,
+              rutaArchivo: f.rutaArchivo,
+              descripcion: f.descripcion
+            }
+          });
+        });
+
+        encolarOperacionOffline({
+          idLocal: `loc-res-${paradaSeleccionada.idInspeccion}-${Date.now()}`,
+          tipoOperacion: 'RESULTADO',
+          idInspeccion: paradaSeleccionada.idInspeccion,
+          ocurridoEn: ahoraIso,
+          datos: {
+            estadoTecho,
+            hallazgos,
+            requiereReparacion: estadoTecho !== 'BUENO',
+            urgencia,
+            recomendaciones
+          }
+        });
+
+        paradaSeleccionada.estado = 'COMPLETADA';
+        paradaSeleccionada.resultado = { estadoTecho, hallazgos };
+        abrirDetalleParada(paradaSeleccionada);
+        alert('✈️ Resultado y evidencias guardados en SQLite local (RN-12). Presiona "Sincronizar" cuando recuperes señal.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/resultado`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idInspector: idInspectorActual,
+            estadoTecho,
+            hallazgos,
+            requiereReparacion: estadoTecho !== 'BUENO',
+            urgencia,
+            recomendaciones,
+            idLocal: `loc-res-${paradaSeleccionada.idInspeccion}-${Date.now()}`,
+            evidencias: fotosCapturadas
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`Error: ${data.error}`);
+          return;
+        }
+        await cargarRutaDelDia();
+        const act = paradasActuales.find((p) => p.idInspeccion === paradaSeleccionada.idInspeccion);
+        if (act) abrirDetalleParada(act);
+        alert('✅ Inspección completada. Reporte PDF generado y cliente notificado.');
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      }
+    }
+
+    function mostrarFormularioAusente() {
+      document.getElementById('boxFormularioAusente').classList.remove('hidden');
+    }
+
+    async function confirmarRegistroAusente() {
+      if (!paradaSeleccionada) return;
+      const fotoFachadaRuta = document.getElementById('inputFotoFachadaAusente').value.trim();
+      const nota = document.getElementById('inputNotaAusente').value.trim();
+
+      if (!fotoFachadaRuta || !nota) {
+        alert('⚠️ RN-10: La foto de la fachada y la nota explicativa son obligatorias.');
+        return;
+      }
+
+      const idLocal = `loc-aus-${paradaSeleccionada.idInspeccion}-${Date.now()}`;
+      if (modoSinSenal) {
+        encolarOperacionOffline({
+          idLocal,
+          tipoOperacion: 'CLIENTE_AUSENTE',
+          idInspeccion: paradaSeleccionada.idInspeccion,
+          ocurridoEn: new Date().toISOString(),
+          datos: { fotoFachadaRuta, nota }
+        });
+        paradaSeleccionada.estado = 'CLIENTE_AUSENTE';
+        abrirDetalleParada(paradaSeleccionada);
+        alert('✈️ Registro de Cliente Ausente guardado en cola SQLite local (RN-12).');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/ausente`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idInspector: idInspectorActual,
+            fotoFachadaRuta,
+            nota,
+            idLocal
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`Error RN-10: ${data.error}`);
+          return;
+        }
+        await cargarRutaDelDia();
+        const act = paradasActuales.find((p) => p.idInspeccion === paradaSeleccionada.idInspeccion);
+        if (act) abrirDetalleParada(act);
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      }
+    }
+
+    async function cargarMensajesParada() {
+      if (!paradaSeleccionada) return;
+      const cont = document.getElementById('contenedorMensajesInspector');
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/mensajes`);
+        if (res.ok) {
+          const data = await res.json();
+          const msgs = data.mensajes || [];
+          if (msgs.length === 0) {
+            cont.innerHTML = `<div class="text-slate-500 text-center py-2">Sin mensajes aún con ${paradaSeleccionada.cliente.nombre}.</div>`;
+            return;
+          }
+          cont.innerHTML = msgs
+            .map(
+              (m) => `
+              <div class="p-2 rounded-lg ${
+                m.remitente_rol === 'INSPECTOR'
+                  ? 'bg-emerald-900/50 border border-emerald-700/50 text-emerald-100 ml-6'
+                  : 'bg-slate-800 border border-slate-700 text-slate-200 mr-6'
+              }">
+                <div class="text-[10px] font-bold text-slate-400">${m.remitente_rol} · ${m.enviado_en}</div>
+                <div class="mt-0.5">${m.texto}</div>
+              </div>
+            `
+            )
+            .join('');
+        }
+      } catch (_) {}
+    }
+
+    async function enviarMensajeDesdeInspector() {
+      if (!paradaSeleccionada) return;
+      const input = document.getElementById('inputMensajeInspector');
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      try {
+        const res = await fetch(`${API_URL}/inspecciones/${paradaSeleccionada.idInspeccion}/mensajes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            deUsuario: idInspectorActual === 1 ? 'u-insp-001' : 'u-insp-002',
+            remitenteRol: 'INSPECTOR',
+            texto
+          })
+        });
+        if (res.ok) {
+          input.value = '';
+          await cargarMensajesParada();
+        }
+      } catch (_) {}
+    }
+
+    function volverARuta() {
+      paradaSeleccionada = null;
+      document.getElementById('screenDetalleParada').classList.add('hidden');
+      document.getElementById('screenRutaDelDia').classList.remove('hidden');
+      cargarRutaDelDia();
+    }
+
+    function abrirNavegacionGoogleMaps() {
+      if (!paradaSeleccionada) return;
+      const d = paradaSeleccionada.domicilio;
+      const url = d.latitud && d.longitud
+        ? `https://www.google.com/maps/dir/?api=1&destination=${d.latitud},${d.longitud}`
+        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.direccionCompleta + ', San Antonio, TX')}`;
+      window.open(url, '_blank');
+    }
+
+    function cambiarFechaRuta(delta) {
+      const d = new Date(fechaRuta + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() + delta);
+      fechaRuta = d.toISOString().split('T')[0];
+      volverARuta();
+    }
+
+    function fijarFechaRuta(nuevaFecha) {
+      fechaRuta = nuevaFecha;
+      volverARuta();
+    }
+
+    function simularPushInspector(tipo) {
+      const banner = document.getElementById('bannerPushInspector');
+      const titulo = document.getElementById('bannerPushTitulo');
+      const cuerpo = document.getElementById('bannerPushCuerpo');
+      banner.classList.remove('hidden');
+
+      if (tipo === 'CITA_ASIGNADA') {
+        titulo.textContent = '📋 Nueva Cita Asignada (Toque abre el detalle)';
+        cuerpo.textContent = 'La oficina te asignó una inspección en San Antonio. Abriendo detalle de la primera parada...';
+        if (paradasActuales.length > 0) abrirDetalleParada(paradasActuales[0]);
+      } else if (tipo === 'CLIENTE_EN_CASA') {
+        titulo.textContent = '🏠 ¡El cliente ya está en su casa! (Aviso E11)';
+        cuerpo.textContent = 'El cliente presionó "Ya estoy en mi casa" y te espera en el domicilio.';
+        if (paradasActuales.length > 0) {
+          paradasActuales[0].clienteEnCasa = true;
+          abrirDetalleParada(paradasActuales[0]);
+        }
+      }
+    }
+
+    document.getElementById('selectInspectorActivo').onchange = () => {
+      volverARuta();
+    };
+
+    cargarRutaDelDia();
+  </script>
+</body>
+</html>
