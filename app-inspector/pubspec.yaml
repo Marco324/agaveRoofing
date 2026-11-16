@@ -37,6 +37,8 @@ dependencies:
   http: ^1.6.0
   intl: ^0.20.3
   url_launcher: ^6.3.2
+  geolocator: ^14.0.2
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:

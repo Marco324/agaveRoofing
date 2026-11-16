@@ -45,6 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Mientras vas en camino, AgaveAlerta comparte tu ubicación con el cliente para que vea en el mapa cuánto falta para que llegues. Se deja de compartir al registrar la llegada.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>AgaveAlerta usa la cámara para tomar las fotos de evidencia del techo y de la fachada.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AgaveAlerta necesita acceso a tus fotos para adjuntar evidencia del techo y de la fachada.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- Solo desarrollo: permite HTTP hacia la API en localhost / red local. -->

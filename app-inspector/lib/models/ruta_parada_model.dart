@@ -49,8 +49,12 @@ class DomicilioParada {
       ciudad: json['ciudad'] ?? '',
       estado: json['estado'] ?? '',
       codigoPostal: json['codigoPostal'] ?? '',
-      latitud: json['latitud'] != null ? (json['latitud'] as num).toDouble() : null,
-      longitud: json['longitud'] != null ? (json['longitud'] as num).toDouble() : null,
+      latitud: json['latitud'] != null
+          ? (json['latitud'] as num).toDouble()
+          : null,
+      longitud: json['longitud'] != null
+          ? (json['longitud'] as num).toDouble()
+          : null,
       referencias: json['referencias'],
     );
   }
@@ -58,18 +62,18 @@ class DomicilioParada {
 
 class TrayectoActivoParada {
   final int idTrayecto;
-  final int etaMinutos;
+  final int? etaMinutos;
   final bool etaAproximado;
-  final int distanciaRestanteM;
+  final int? distanciaRestanteM;
   final double? latitudActual;
   final double? longitudActual;
   final String? capturadoEn;
 
   TrayectoActivoParada({
     required this.idTrayecto,
-    required this.etaMinutos,
+    this.etaMinutos,
     this.etaAproximado = false,
-    this.distanciaRestanteM = 0,
+    this.distanciaRestanteM,
     this.latitudActual,
     this.longitudActual,
     this.capturadoEn,
@@ -79,11 +83,15 @@ class TrayectoActivoParada {
     final ultimoPunto = json['ultimoPunto'] as Map<String, dynamic>?;
     return TrayectoActivoParada(
       idTrayecto: json['idTrayecto'] ?? 0,
-      etaMinutos: json['etaMinutos'] ?? 10,
+      etaMinutos: (json['etaMinutos'] as num?)?.toInt(),
       etaAproximado: json['etaAproximado'] == true,
-      distanciaRestanteM: (json['distanciaRestanteM'] as num?)?.round() ?? 0,
-      latitudActual: ultimoPunto?['latitud'] != null ? (ultimoPunto!['latitud'] as num).toDouble() : null,
-      longitudActual: ultimoPunto?['longitud'] != null ? (ultimoPunto!['longitud'] as num).toDouble() : null,
+      distanciaRestanteM: (json['distanciaRestanteM'] as num?)?.round(),
+      latitudActual: ultimoPunto?['latitud'] != null
+          ? (ultimoPunto!['latitud'] as num).toDouble()
+          : null,
+      longitudActual: ultimoPunto?['longitud'] != null
+          ? (ultimoPunto!['longitud'] as num).toDouble()
+          : null,
       capturadoEn: ultimoPunto?['capturadoEn'],
     );
   }
@@ -136,6 +144,36 @@ class RutaParada {
   bool get estaEnSitio => estado == 'EN_SITIO';
   bool get estaCompletada => estado == 'COMPLETADA';
 
+  /// Texto legible del estado; nunca se muestra el código interno.
+  String get etiquetaEstado {
+    switch (estado) {
+      case 'PROGRAMADA':
+        return 'Programada';
+      case 'NOTIFICADA':
+        return 'Avisada al cliente';
+      case 'SIN_CONFIRMAR':
+        return 'Sin confirmar';
+      case 'CONFIRMADA':
+        return 'Confirmada';
+      case 'REPROGRAMADA':
+        return 'Cambio de horario';
+      case 'REPROG_SOLICITADA':
+        return 'Cambio solicitado';
+      case 'EN_CAMINO':
+        return 'En camino';
+      case 'EN_SITIO':
+        return 'Llegó';
+      case 'COMPLETADA':
+        return 'Completada';
+      case 'CLIENTE_AUSENTE':
+        return 'Cliente ausente';
+      case 'CANCELADA':
+        return 'Cancelada';
+      default:
+        return '—';
+    }
+  }
+
   factory RutaParada.fromJson(Map<String, dynamic> json) {
     final resultado = json['resultado'] as Map<String, dynamic>?;
     final trayectoJson = json['trayectoActivo'] as Map<String, dynamic>?;
@@ -145,17 +183,37 @@ class RutaParada {
       fechaProgramada: json['fechaProgramada'] ?? '',
       ventanaInicio: json['ventanaInicio'] ?? '',
       ventanaFin: json['ventanaFin'] ?? '',
-      estado: json['estado'] ?? 'PROGRAMADA',
+      estado: json['estado'] ?? '',
       cliente: ClienteParada.fromJson(json['cliente'] ?? {}),
       domicilio: DomicilioParada.fromJson(json['domicilio'] ?? {}),
       motivoVisita: json['motivoVisita'],
       notas: json['notas'],
       confirmadoEn: json['confirmadoEn'],
       vecesReprogramada: json['vecesReprogramada'] ?? 0,
-      clienteEnCasa: json['clienteEnCasa'] == true || json['presenciaConfirmadaEn'] != null,
-      trayectoActivo: trayectoJson != null ? TrayectoActivoParada.fromJson(trayectoJson) : null,
+      clienteEnCasa:
+          json['clienteEnCasa'] == true ||
+          json['presenciaConfirmadaEn'] != null,
+      trayectoActivo: trayectoJson != null
+          ? TrayectoActivoParada.fromJson(trayectoJson)
+          : null,
       estadoTechoResultado: resultado?['estadoTecho'],
       urlReportePdf: resultado?['urlReportePdf'],
     );
+  }
+}
+
+/// Texto legible del estado del techo.
+String etiquetaEstadoTecho(String? estadoTecho) {
+  switch (estadoTecho) {
+    case 'BUENO':
+      return 'Bueno';
+    case 'REGULAR':
+      return 'Regular';
+    case 'MALO':
+      return 'Malo';
+    case 'CRITICO':
+      return 'Crítico';
+    default:
+      return '—';
   }
 }

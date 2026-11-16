@@ -13,6 +13,9 @@ class ParadaCardWidget extends StatelessWidget {
   final VoidCallback? onCapturarResultado;
   final VoidCallback onMarcarAusente;
 
+  /// Este teléfono está enviando la ubicación de esta cita al cliente.
+  final bool compartiendoUbicacion;
+
   static const Color agaveEmerald = Color(0xFF059669);
 
   const ParadaCardWidget({
@@ -27,7 +30,20 @@ class ParadaCardWidget extends StatelessWidget {
     required this.onRegistrarLlegada,
     this.onCapturarResultado,
     required this.onMarcarAusente,
+    this.compartiendoUbicacion = false,
   });
+
+  static String _distancia(int? metros) {
+    if (metros == null) return '—';
+    return metros < 1000
+        ? '$metros m'
+        : '${(metros / 1000).toStringAsFixed(1)} km';
+  }
+
+  static String _coordenadas(double? lat, double? lng) =>
+      lat == null || lng == null
+      ? '—'
+      : '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
 
   Color _colorPorEstado(String estado) {
     switch (estado) {
@@ -72,14 +88,21 @@ class ParadaCardWidget extends StatelessWidget {
                         backgroundColor: Colors.blueGrey.shade800,
                         child: Text(
                           '$orden',
-                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           parada.folio,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -88,11 +111,16 @@ class ParadaCardWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: estadoColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: estadoColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: estadoColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -102,8 +130,12 @@ class ParadaCardWidget extends StatelessWidget {
                         const SizedBox(width: 3),
                       ],
                       Text(
-                        parada.estado,
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: estadoColor),
+                        parada.etiquetaEstado,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: estadoColor,
+                        ),
                       ),
                     ],
                   ),
@@ -113,7 +145,10 @@ class ParadaCardWidget extends StatelessWidget {
             if (parada.clienteEnCasa) ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFECFDF5),
                   borderRadius: BorderRadius.circular(8),
@@ -126,7 +161,11 @@ class ParadaCardWidget extends StatelessWidget {
                     Expanded(
                       child: Text(
                         '¡El cliente confirmó que ya está en su casa esperándote!',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: agaveEmerald),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: agaveEmerald,
+                        ),
                       ),
                     ),
                   ],
@@ -140,19 +179,29 @@ class ParadaCardWidget extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '${parada.ventanaInicio} - ${parada.ventanaFin}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.person_outline, size: 16, color: Colors.blueGrey),
+                const Icon(
+                  Icons.person_outline,
+                  size: 16,
+                  color: Colors.blueGrey,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     '${parada.cliente.nombre} (${parada.cliente.telefono})',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -161,7 +210,11 @@ class ParadaCardWidget extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on_outlined, size: 16, color: Colors.redAccent),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 16,
+                  color: Colors.redAccent,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -182,7 +235,10 @@ class ParadaCardWidget extends StatelessWidget {
                       onTap: onVerMapaRuta,
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.shade50,
                           borderRadius: BorderRadius.circular(8),
@@ -191,11 +247,19 @@ class ParadaCardWidget extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.map_outlined, size: 14, color: Colors.blue.shade800),
+                            Icon(
+                              Icons.map_outlined,
+                              size: 14,
+                              color: Colors.blue.shade800,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Ver Mapa Interno',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade800,
+                              ),
                             ),
                           ],
                         ),
@@ -206,20 +270,33 @@ class ParadaCardWidget extends StatelessWidget {
                       onTap: onAbrirAppMapas,
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFECFDF5),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: agaveEmerald.withValues(alpha: 0.4)),
+                          border: Border.all(
+                            color: agaveEmerald.withValues(alpha: 0.4),
+                          ),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.open_in_new, size: 14, color: agaveEmerald),
+                            Icon(
+                              Icons.open_in_new,
+                              size: 14,
+                              color: agaveEmerald,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'Abrir en App de Mapas',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: agaveEmerald),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: agaveEmerald,
+                              ),
                             ),
                           ],
                         ),
@@ -236,14 +313,16 @@ class ParadaCardWidget extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo.shade700,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: onIniciarTrayecto,
-                  icon: const Icon(Icons.navigation, size: 18),
+                  icon: const Icon(Icons.navigation, size: 20),
                   label: const Text(
-                    'Voy en camino (Activar GPS 15s + Avisar al cliente)',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    'Voy en camino',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -263,20 +342,31 @@ class ParadaCardWidget extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Row(
                             children: [
-                              Icon(Icons.satellite_alt, size: 15, color: Colors.cyanAccent),
-                              SizedBox(width: 6),
+                              Icon(
+                                compartiendoUbicacion
+                                    ? Icons.share_location
+                                    : Icons.location_disabled,
+                                size: 18,
+                                color: compartiendoUbicacion
+                                    ? Colors.cyanAccent
+                                    : Colors.orangeAccent,
+                              ),
+                              const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  'RUTA ACTIVA • COMPARTIENDO GPS (15s)',
+                                  compartiendoUbicacion
+                                      ? 'Compartiendo ubicación con el cliente'
+                                      : 'Ubicación sin enviar desde este teléfono',
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.cyanAccent,
+                                    color: compartiendoUbicacion
+                                        ? Colors.cyanAccent
+                                        : Colors.orangeAccent,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -284,13 +374,18 @@ class ParadaCardWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.cyan.shade900,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            'ETA: ${parada.trayectoActivo?.etaMinutos ?? 12} min',
+                            parada.trayectoActivo?.etaMinutos != null
+                                ? 'Llegas en ${parada.trayectoActivo!.etaMinutos} min'
+                                : 'Llegas en —',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -303,7 +398,10 @@ class ParadaCardWidget extends StatelessWidget {
                     const SizedBox(height: 10),
                     // Representación visual de la ruta Inspector -> Domicilio
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(8),
@@ -318,16 +416,25 @@ class ParadaCardWidget extends StatelessWidget {
                                   color: Colors.cyan.shade600,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Icon(Icons.local_shipping, size: 16, color: Colors.white),
+                                child: const Icon(
+                                  Icons.local_shipping,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                               const Expanded(
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: Divider(color: Colors.cyanAccent, thickness: 2),
+                                  child: Divider(
+                                    color: Colors.cyanAccent,
+                                    thickness: 2,
+                                  ),
                                 ),
                               ),
                               Text(
-                                '${parada.trayectoActivo?.distanciaRestanteM ?? 1150} m',
+                                _distancia(
+                                  parada.trayectoActivo?.distanciaRestanteM,
+                                ),
                                 style: const TextStyle(
                                   color: Colors.cyanAccent,
                                   fontWeight: FontWeight.bold,
@@ -337,7 +444,10 @@ class ParadaCardWidget extends StatelessWidget {
                               const Expanded(
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: Divider(color: agaveEmerald, thickness: 2),
+                                  child: Divider(
+                                    color: agaveEmerald,
+                                    thickness: 2,
+                                  ),
                                 ),
                               ),
                               Container(
@@ -346,7 +456,11 @@ class ParadaCardWidget extends StatelessWidget {
                                   color: agaveEmerald,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Icon(Icons.home_work, size: 16, color: Colors.white),
+                                child: const Icon(
+                                  Icons.home_work,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                             ],
                           ),
@@ -356,8 +470,11 @@ class ParadaCardWidget extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  'Mi GPS: (${(parada.trayectoActivo?.latitudActual ?? 29.5029).toStringAsFixed(4)}, ${(parada.trayectoActivo?.longitudActual ?? -98.5689).toStringAsFixed(4)})',
-                                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  'Mi posición: ${_coordenadas(parada.trayectoActivo?.latitudActual, parada.trayectoActivo?.longitudActual)}',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 10,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -366,7 +483,11 @@ class ParadaCardWidget extends StatelessWidget {
                                 child: Text(
                                   'Destino: ${parada.domicilio.colonia}',
                                   textAlign: TextAlign.right,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -375,45 +496,64 @@ class ParadaCardWidget extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if (onSimularAvanceGps != null)
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.cyanAccent,
-                                side: const BorderSide(color: Colors.cyanAccent),
-                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                              ),
-                              onPressed: onSimularAvanceGps,
-                              icon: const Icon(Icons.my_location, size: 14),
-                              label: const Text(
-                                '+1 Paso GPS (15s)',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                        if (onAcercarUnKm != null) ...[
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.amberAccent,
-                                side: const BorderSide(color: Colors.amberAccent),
-                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                              ),
-                              onPressed: onAcercarUnKm,
-                              icon: const Icon(Icons.near_me, size: 14),
-                              label: const Text(
-                                'Acercar < 1 km',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    if (onSimularAvanceGps != null ||
+                        onAcercarUnKm != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          if (onSimularAvanceGps != null)
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.cyanAccent,
+                                  side: const BorderSide(
+                                    color: Colors.cyanAccent,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 8,
+                                  ),
+                                ),
+                                onPressed: onSimularAvanceGps,
+                                icon: const Icon(Icons.my_location, size: 14),
+                                label: const Text(
+                                  'Demo: avanzar',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          if (onAcercarUnKm != null) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.amberAccent,
+                                  side: const BorderSide(
+                                    color: Colors.amberAccent,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 8,
+                                  ),
+                                ),
+                                onPressed: onAcercarUnKm,
+                                icon: const Icon(Icons.near_me, size: 14),
+                                label: const Text(
+                                  'Demo: a menos de 1 km',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -424,12 +564,20 @@ class ParadaCardWidget extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: agaveEmerald,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: onRegistrarLlegada,
-                      icon: const Icon(Icons.place, size: 18),
-                      label: const Text('Llegué (EN_SITIO)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      icon: const Icon(Icons.place, size: 20),
+                      label: const Text(
+                        'Llegué',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -437,12 +585,17 @@ class ParadaCardWidget extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red.shade700,
                       side: BorderSide(color: Colors.red.shade400),
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: onMarcarAusente,
-                    icon: const Icon(Icons.person_off, size: 16),
-                    label: const Text('Ausente', style: TextStyle(fontSize: 12)),
+                    icon: const Icon(Icons.person_off, size: 18),
+                    label: const Text(
+                      'Ausente',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ],
               ),
@@ -454,21 +607,32 @@ class ParadaCardWidget extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.purple.shade700,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: onCapturarResultado,
-                      icon: const Icon(Icons.assignment_turned_in, size: 18),
+                      icon: const Icon(Icons.assignment_turned_in, size: 20),
                       label: const Text(
-                        'Capturar Resultado y Fotos (RN-11)',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        'Capturar resultado',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                    ),
                     onPressed: onMarcarAusente,
-                    child: const Text('Ausente', style: TextStyle(fontSize: 12)),
+                    child: const Text(
+                      'Ausente',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ],
               ),
@@ -481,8 +645,12 @@ class ParadaCardWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '✅ Inspección Completada • Estado del techo: ${parada.estadoTechoResultado ?? "REGULAR"}',
-                  style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 12),
+                  'Inspección completada • Estado del techo: ${etiquetaEstadoTecho(parada.estadoTechoResultado)}',
+                  style: const TextStyle(
+                    color: Colors.teal,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],

@@ -21,10 +21,7 @@ class AgaveInspectorApp extends StatelessWidget {
           secondary: const Color(0xFF059669), // Emerald
         ),
         scaffoldBackgroundColor: const Color(0xFFF1F5F9),
-        appBarTheme: const AppBarTheme(
-          centerTitle: false,
-          elevation: 0,
-        ),
+        appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
       ),
       home: const RutaDelDiaScreen(
         idInspector: 1,

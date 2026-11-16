@@ -83,11 +83,40 @@ function json(res: http.ServerResponse, statusCode: number, data: any) {
   res.end(JSON.stringify(data));
 }
 
+// Las fotos de evidencia llegan como data URI en base64 (hasta 5 fotos de
+// ~1280 px), así que el cuerpo puede pesar varios MB.
+export const LIMITE_CUERPO_BYTES = 15 * 1024 * 1024;
+
+export class ErrorCuerpoDemasiadoGrande extends Error {
+  constructor() {
+    super(
+      `La petición supera el límite de ${LIMITE_CUERPO_BYTES / (1024 * 1024)} MB. Envía menos fotos o fotos más pequeñas.`
+    );
+    this.name = 'ErrorCuerpoDemasiadoGrande';
+  }
+}
+
 function parseBody(req: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (chunk) => { body += chunk; });
+    // Se juntan los bytes y se decodifican al final: decodificar cada fragmento
+    // por separado puede romper caracteres UTF-8 (acentos) partidos entre fragmentos.
+    const chunks: Buffer[] = [];
+    let total = 0;
+    let excedido = false;
+    req.on('data', (chunk: Buffer) => {
+      if (excedido) return;
+      total += chunk.length;
+      if (total > LIMITE_CUERPO_BYTES) {
+        excedido = true;
+        chunks.length = 0;
+        reject(new ErrorCuerpoDemasiadoGrande());
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
+      if (excedido) return;
+      const body = Buffer.concat(chunks).toString('utf8');
       if (!body) return resolve({});
       try {
         resolve(JSON.parse(body));
@@ -709,6 +738,16 @@ const server = http.createServer(async (req, res) => {
     // 404
     return json(res, 404, { ok: false, error: `Ruta no encontrada: ${method} ${pathname}` });
   } catch (err: any) {
+    if (err instanceof ErrorCuerpoDemasiadoGrande) {
+      // Se responde y se cierra la conexión para no seguir recibiendo el cuerpo.
+      res.setHeader('Connection', 'close');
+      return json(res, 413, {
+        ok: false,
+        codigo: 'CUERPO_DEMASIADO_GRANDE',
+        error: err.message
+      });
+    }
+
     if (err instanceof ErrorTraslapeInspector) {
       return json(res, 409, {
         ok: false,
