@@ -2,6 +2,7 @@
 ## Sistema de Alerta y Seguimiento de Inspecciones de Techo — Agave Roofing (AgaveAlerta)
 
 **Basado en la estructura del estándar IEEE 830.**
+**Versión 1.1 — 13 de noviembre de 2026** (ver §5, Control de cambios)
 **Universidad Autónoma de Nuevo León — FIME**
 **Proyecto Integrador I — Equipo 01 — Agosto–Diciembre 2026**
 
@@ -437,7 +438,58 @@ Ver detalle y diagramas en `04_Diagramas_UML.md`.
 
 ---
 
-## 5. Aprobación
+## 5. Control de cambios y estado de implementación (Release 1.0)
+
+### 5.1 Historial de versiones
+
+| Versión | Fecha | Autor | Cambio |
+|---------|-------|-------|--------|
+| 1.0 | 17/sep/2026 | Mario (AN) / Marco (LP) | SRS validado y alcance congelado (ver `06_Acta_Congelacion_Alcance.md`). |
+| 1.1 | 13/nov/2026 | Marco (LP) | Se agrega esta sección para documentar las diferencias entre lo especificado y lo construido en la versión de demostración. **No se elimina ningún requerimiento**: los no implementados pasan al Product Backlog como trabajo futuro, según la condición 2 del acta de congelación. |
+
+### 5.2 Cambios de arquitectura y restricciones
+
+La sección 2.1 describe la **arquitectura objetivo**. La versión entregada (Release 1.0) difiere en lo siguiente; la decisión y sus motivos están en `entregas/E12/ADR-001-Arquitectura-Final-y-Despliegue.md`.
+
+| Referencia | Especificado | Construido en Release 1.0 |
+|------------|--------------|---------------------------|
+| RES-03, RNF-26, RNF-27 | Node.js + Express, Prisma con migraciones, PostgreSQL 15 en Supabase | Node.js 22 con el módulo `http` nativo (sin Express); SQLite en modo WAL vía `node:sqlite`. `schema.prisma` y `setup_rls.sql` quedan como diseño para la migración |
+| RES-04, RF-01, RNF-19 | Supabase Auth (correo / OTP) y JWT validado en cada petición | Inicio de sesión de demostración sin contraseña ni OTP; el token no se valida en las rutas |
+| RES-05, IU-05 | FCM / APNs para push; Twilio y Resend de respaldo | Envíos simulados: se registran estados, reintentos y respaldo, sin entrega real al teléfono |
+| IU-05, RN-09 | Google Directions para el ETA | Estimación propia con distancia y velocidad promedio, con respaldo en línea recta |
+| IU-06 | Supabase Realtime para la ubicación en vivo | Consulta al endpoint de seguimiento cuando la app se refresca |
+| RES-02, IU-03 | Panel en React desplegado en Vercel | Página única HTML + JavaScript + Tailwind (`panel/index.html`), ejecutada localmente |
+| RNF-30 | Distribución mediante EAS Build | No aplica: EAS es de Expo y las apps son Flutter. Se sustituye por `flutter build apk` |
+| — | — | Cada app móvil tiene un **simulador web** que se usa en la demostración para los flujos aún no portados a Flutter |
+
+### 5.3 Estado de implementación de requerimientos de prioridad Alta
+
+Leyenda: **Completo** = implementado en la API y en el cliente correspondiente · **Parcial** = implementado en la API o solo en el simulador web · **Simulado** = el flujo existe pero la integración externa no es real · **Pendiente** = no implementado.
+
+| Módulo | Requerimientos | Estado | Notas |
+|--------|----------------|--------|-------|
+| 1. Seguridad | RF-01, RF-02, RF-03 | Parcial | Inicio de sesión y verificación de rol de demostración; no hay contraseña, OTP ni sesión persistente en las apps |
+| 1. Seguridad | RF-07 | Pendiente | Las rutas aceptan `idCliente` / `idInspector` por parámetro sin validar token |
+| 1. Seguridad | RF-08 | Pendiente | Las apps Flutter no solicitan permisos de notificaciones ni de ubicación |
+| 2. Catálogos | RF-09, RF-10, RF-12 | Parcial | Alta y baja lógica de clientes en el panel; domicilios e inspectores por API |
+| 2. Catálogos | RF-11 (prioridad M) | Simulado | Las coordenadas se asignan aleatoriamente cerca del centro de San Antonio; no hay geocodificación ni ajuste del pin |
+| 3. Agenda | RF-16 a RF-20, RF-22 | Completo | Folio, traslapes, reasignación, cambio de fecha y cancelación con motivo obligatorio, desde el detalle de la cita en el panel (corregido el 13 nov 2026) |
+| 3. Agenda | RF-21 | Parcial | Agenda por día con filtros por inspector y zona; no hay vista por semana |
+| 4. Notificaciones | RF-25 a RF-28, RF-31, RF-32 | Simulado | Motor completo en la API, sin envío real |
+| 5. Confirmación | RF-36 a RF-38, RF-40 a RF-43 | Completo | Confirmar desde la notificación solo se demuestra en el simulador web (RF-36); el paso a `SIN_CONFIRMAR` (RF-43) se ejecuta bajo demanda desde el panel, sin programador automático |
+| 6. Trayecto | RF-44, RF-49, RF-50, RF-51 | Completo | Bloqueo de doble trayecto y privacidad en la API; el cierre por tiempo máximo (RF-49) se ejecuta bajo demanda desde el panel |
+| 6. Trayecto | RF-45, RF-46, RF-47 | Simulado | GPS con avance simulado; el mapa del panel y del simulador es esquemático; la app Flutter del cliente muestra distancia y ETA sin mapa |
+| 7. Ejecución | RF-53, RF-55, RF-56 | Completo | Validaciones RN-10 y RN-11 en la API |
+| 7. Ejecución | RF-54 | Parcial | Las fotos son URLs de ejemplo; las apps no usan la cámara |
+| 7. Ejecución | RF-57 | Parcial | Cola sin conexión e idempotencia en la API y el simulador web; no en la app Flutter |
+| 8. Comunicación | RF-61 | Parcial | Mensajería en la API y los simuladores web; no en las apps Flutter |
+| 9. Tablero | RF-65, RF-66, RF-70 | Completo | Indicadores con exportación CSV y monitor del día (mapa esquemático) |
+
+Los requerimientos de prioridad Media y Baja no listados quedan como trabajo futuro y se registran en el Product Backlog.
+
+---
+
+## 6. Aprobación
 
 | Rol | Nombre | Fecha | Firma |
 |-----|--------|-------|-------|

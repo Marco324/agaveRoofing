@@ -56,6 +56,39 @@ class DomicilioParada {
   }
 }
 
+class TrayectoActivoParada {
+  final int idTrayecto;
+  final int etaMinutos;
+  final bool etaAproximado;
+  final int distanciaRestanteM;
+  final double? latitudActual;
+  final double? longitudActual;
+  final String? capturadoEn;
+
+  TrayectoActivoParada({
+    required this.idTrayecto,
+    required this.etaMinutos,
+    this.etaAproximado = false,
+    this.distanciaRestanteM = 0,
+    this.latitudActual,
+    this.longitudActual,
+    this.capturadoEn,
+  });
+
+  factory TrayectoActivoParada.fromJson(Map<String, dynamic> json) {
+    final ultimoPunto = json['ultimoPunto'] as Map<String, dynamic>?;
+    return TrayectoActivoParada(
+      idTrayecto: json['idTrayecto'] ?? 0,
+      etaMinutos: json['etaMinutos'] ?? 10,
+      etaAproximado: json['etaAproximado'] == true,
+      distanciaRestanteM: (json['distanciaRestanteM'] as num?)?.round() ?? 0,
+      latitudActual: ultimoPunto?['latitud'] != null ? (ultimoPunto!['latitud'] as num).toDouble() : null,
+      longitudActual: ultimoPunto?['longitud'] != null ? (ultimoPunto!['longitud'] as num).toDouble() : null,
+      capturadoEn: ultimoPunto?['capturadoEn'],
+    );
+  }
+}
+
 class RutaParada {
   final int idInspeccion;
   final String folio;
@@ -70,6 +103,7 @@ class RutaParada {
   final String? confirmadoEn;
   final int vecesReprogramada;
   final bool clienteEnCasa;
+  final TrayectoActivoParada? trayectoActivo;
   final String? estadoTechoResultado;
   final String? urlReportePdf;
 
@@ -87,6 +121,7 @@ class RutaParada {
     this.confirmadoEn,
     this.vecesReprogramada = 0,
     this.clienteEnCasa = false,
+    this.trayectoActivo,
     this.estadoTechoResultado,
     this.urlReportePdf,
   });
@@ -103,6 +138,7 @@ class RutaParada {
 
   factory RutaParada.fromJson(Map<String, dynamic> json) {
     final resultado = json['resultado'] as Map<String, dynamic>?;
+    final trayectoJson = json['trayectoActivo'] as Map<String, dynamic>?;
     return RutaParada(
       idInspeccion: json['idInspeccion'] ?? 0,
       folio: json['folio'] ?? '',
@@ -116,7 +152,8 @@ class RutaParada {
       notas: json['notas'],
       confirmadoEn: json['confirmadoEn'],
       vecesReprogramada: json['vecesReprogramada'] ?? 0,
-      clienteEnCasa: json['clienteEnCasa'] == true,
+      clienteEnCasa: json['clienteEnCasa'] == true || json['presenciaConfirmadaEn'] != null,
+      trayectoActivo: trayectoJson != null ? TrayectoActivoParada.fromJson(trayectoJson) : null,
       estadoTechoResultado: resultado?['estadoTecho'],
       urlReportePdf: resultado?['urlReportePdf'],
     );

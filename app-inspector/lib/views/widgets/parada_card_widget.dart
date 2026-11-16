@@ -6,6 +6,9 @@ class ParadaCardWidget extends StatelessWidget {
   final int orden;
   final VoidCallback onIniciarTrayecto;
   final VoidCallback? onSimularAvanceGps;
+  final VoidCallback? onAcercarUnKm;
+  final VoidCallback? onVerMapaRuta;
+  final VoidCallback? onAbrirAppMapas;
   final VoidCallback onRegistrarLlegada;
   final VoidCallback? onCapturarResultado;
   final VoidCallback onMarcarAusente;
@@ -18,6 +21,9 @@ class ParadaCardWidget extends StatelessWidget {
     required this.orden,
     required this.onIniciarTrayecto,
     this.onSimularAvanceGps,
+    this.onAcercarUnKm,
+    this.onVerMapaRuta,
+    this.onAbrirAppMapas,
     required this.onRegistrarLlegada,
     this.onCapturarResultado,
     required this.onMarcarAusente,
@@ -165,6 +171,63 @@ class ParadaCardWidget extends StatelessWidget {
                 ),
               ],
             ),
+            if (onVerMapaRuta != null || onAbrirAppMapas != null) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  if (onVerMapaRuta != null)
+                    InkWell(
+                      onTap: onVerMapaRuta,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.map_outlined, size: 14, color: Colors.blue.shade800),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Ver Mapa Interno',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (onAbrirAppMapas != null)
+                    InkWell(
+                      onTap: onAbrirAppMapas,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: agaveEmerald.withValues(alpha: 0.4)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.open_in_new, size: 14, color: agaveEmerald),
+                            SizedBox(width: 4),
+                            Text(
+                              'Abrir en App de Mapas',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: agaveEmerald),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 14),
             if (parada.puedeIniciarTrayecto) ...[
               SizedBox(
@@ -185,28 +248,172 @@ class ParadaCardWidget extends StatelessWidget {
                 ),
               ),
             ] else if (parada.estaEnCamino) ...[
+              // Mapa de Ruta del Trayecto Activo (E10)
               Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.cyan.shade600, width: 1.5),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
-                      child: Text(
-                        '🟢 Compartiendo ubicación cada 15 s',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.indigo),
-                        overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Row(
+                            children: [
+                              Icon(Icons.satellite_alt, size: 15, color: Colors.cyanAccent),
+                              SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'RUTA ACTIVA • COMPARTIENDO GPS (15s)',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.cyanAccent,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.cyan.shade900,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'ETA: ${parada.trayectoActivo?.etaMinutos ?? 12} min',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Representación visual de la ruta Inspector -> Domicilio
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.cyan.shade600,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.local_shipping, size: 16, color: Colors.white),
+                              ),
+                              const Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                  child: Divider(color: Colors.cyanAccent, thickness: 2),
+                                ),
+                              ),
+                              Text(
+                                '${parada.trayectoActivo?.distanciaRestanteM ?? 1150} m',
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              const Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                  child: Divider(color: agaveEmerald, thickness: 2),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: agaveEmerald,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.home_work, size: 16, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Mi GPS: (${(parada.trayectoActivo?.latitudActual ?? 29.5029).toStringAsFixed(4)}, ${(parada.trayectoActivo?.longitudActual ?? -98.5689).toStringAsFixed(4)})',
+                                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Destino: ${parada.domicilio.colonia}',
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    if (onSimularAvanceGps != null)
-                      TextButton(
-                        onPressed: onSimularAvanceGps,
-                        child: const Text('+1 Paso GPS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        if (onSimularAvanceGps != null)
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.cyanAccent,
+                                side: const BorderSide(color: Colors.cyanAccent),
+                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                              ),
+                              onPressed: onSimularAvanceGps,
+                              icon: const Icon(Icons.my_location, size: 14),
+                              label: const Text(
+                                '+1 Paso GPS (15s)',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        if (onAcercarUnKm != null) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.amberAccent,
+                                side: const BorderSide(color: Colors.amberAccent),
+                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                              ),
+                              onPressed: onAcercarUnKm,
+                              icon: const Icon(Icons.near_me, size: 14),
+                              label: const Text(
+                                'Acercar < 1 km',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),

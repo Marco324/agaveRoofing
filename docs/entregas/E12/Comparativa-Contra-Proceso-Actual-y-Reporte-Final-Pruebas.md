@@ -2,40 +2,93 @@
 
 **Proyecto:** AgaveAlerta — Agave Roofing (San Antonio, TX)  
 **Autores:** Mario (AN), Jesús (CL) y Anuar (IN)  
-**Fecha:** 19 de noviembre de 2026  
+**Última actualización:** 13 de noviembre de 2026 (las secciones 3 y 4 se completan después de la sesión del 19 de noviembre)  
 
 ---
 
-## 1. Comparativa Operativa: Proceso Anterior (Correo) vs. AgaveAlerta
+## 1. Comparativa operativa: proceso por correo vs. AgaveAlerta
 
-Antes de **AgaveAlerta**, Agave Roofing notificaba las citas de inspección en San Antonio únicamente por correo electrónico sin mecanismo de confirmación ni aviso de traslado. Esto provocaba un **18% de visitas fallidas** (inspectores que recorrían 25 a 40 minutos hasta Stone Oak o Alamo Heights para encontrar el domicilio vacío), con un costo directo estimado de **\$65 USD por vuelta perdida** en combustible y horas-hombre.
+**Proceso actual.** Agave Roofing avisa las citas de inspección únicamente por correo electrónico, sin mecanismo de confirmación ni aviso del traslado. Según el levantamiento inicial con la empresa, esto provoca alrededor de **18 % de visitas fallidas** con un costo aproximado de **$65 USD por vuelta perdida** (combustible y horas-hombre).
 
-Con la implantación de **AgaveAlerta**:
-1. **Del correo ignorado al aviso multicanal con confirmación en 1 toque:** El motor de notificaciones envía avisos Push 24 h y 3 h antes con respaldo automático por SMS (Twilio) si el token falla, logrando elevar la **confirmación previa del 0% al 83.3%**.
-2. **Reprogramación anticipada en vez de puertas cerradas:** Los clientes que no pueden asistir solicitan otro horario disponible desde la app antes de que el inspector salga (respetando **RN-05** y **RN-06**), y las citas no respondidas pasan a `SIN_CONFIRMAR` (**RN-07**) para que la oficina confirme por teléfono antes de despachar la camioneta.
-3. **Cero incertidumbre el día de la visita:** El seguimiento en vivo con ETA (**E10**), la alerta automática a `< 1 km` (`POR_LLEGAR`) y el botón *"🏠 Ya estoy en mi casa"* (**E11**) eliminaron las visitas sorpresa, reduciendo las vueltas en falso en más de un **60%** durante el piloto.
+> ⚠️ **Pendiente:** confirmar la fuente de estas dos cifras (entrevista, registro de la empresa o estimación del equipo) y citarla aquí. El panel muestra hoy "32 %" como línea base; debe corregirse para que coincida.
 
----
+**Cambios que introduce AgaveAlerta** (beneficios esperados, demostrados con datos de prueba):
 
-## 2. Reporte Final Consolidado de Pruebas (Módulos 1 al 10)
+| Momento | Proceso por correo | AgaveAlerta |
+| :--- | :--- | :--- |
+| Aviso de la cita | Correo que el cliente puede no leer | Notificación con acciones *Confirmar* / *Reprogramar*, recordatorio previo y respaldo por SMS si el aviso falla (envío simulado en esta versión) |
+| Cliente que no puede asistir | Se entera la empresa cuando el inspector ya llegó | El cliente elige otro horario disponible antes de la visita (RN-05, RN-06); las citas sin respuesta pasan a `SIN_CONFIRMAR` para que la oficina llame (RN-07) |
+| Día de la visita | El cliente no sabe a qué hora llega el inspector | Aviso "va en camino", seguimiento con ETA, aviso "está por llegar" y botón "Ya estoy en casa" |
+| Medición | No existe | Tablero con tasa de confirmación, visitas fallidas, puntualidad y efectividad de avisos, exportable a CSV |
 
-| Suite / Nivel de Prueba | Archivo / Evidencia | Casos Totales | Pasaron | Fallaron | Estado Final |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **Seguridad y Catálogos (E05–E06)** | `Casos-de-Prueba-Seguridad-y-Catalogos-E05-E06.md` | 9 | 9 | 0 | ✅ 100% OK |
-| **Agenda y Máquina de Estados (E07)** | `api/test/agenda.test.ts` | 7 | 7 | 0 | ✅ 100% OK |
-| **Notificaciones y Reprogramación (E08–E09)** | `api/test/e08_e09.test.ts` | 8 | 8 | 0 | ✅ 100% OK |
-| **Trayecto Vivo, Modo Sin Señal y KPI (E10–E11)** | `api/test/e10_e11.test.ts` | 10 | 10 | 0 | ✅ 100% OK |
-| **Análisis Estático Flutter (`flutter analyze`)** | `app-inspector/` y `app-cliente/` | 2 apps | 2 | 0 | ✅ 0 warnings / 0 errores |
-| **TOTAL CONSOLIDADO** | **Módulos 1 al 10** | **34** | **34** | **0** | **✅ 100% APROBADO** |
+El efecto real sobre las visitas fallidas **solo se puede afirmar después de un piloto con clientes reales**; con los datos de prueba hay una sola visita realizada, por lo que no es representativo.
 
 ---
 
-## 3. Opinión Recogida de los Clientes Piloto (Jesús CL — E12)
+## 2. Reporte consolidado de pruebas
 
-Se aplicó la encuesta corta de 3 preguntas a los clientes piloto al concluir el recorrido completo:
+### 2.1 Pruebas automatizadas de la API
 
-| Cliente Piloto | Zona en San Antonio | 1. ¿Entendiste la notificación? | 2. ¿Fue fácil confirmar en 1 toque? | 3. ¿Te sirvió ver el mapa con ETA y el reporte PDF? | Comentario del Cliente |
+Ejecutadas con `npm test` el **13 de noviembre de 2026** sobre una base recién sembrada (`npm run seed`).
+
+| Suite | Archivo | Escenarios | Aprobados | Fallidos |
+| :--- | :--- | :---: | :---: | :---: |
+| Agenda y máquina de estados (E07) | `api/test/agenda.test.ts` | 7 | 7 | 0 |
+| Notificaciones (E08) | `api/test/e08_e09.test.ts` | 5 | 5 | 0 |
+| Confirmación y reprogramación (E09) | `api/test/e08_e09.test.ts` | 6 | 6 | 0 |
+| Trayecto y seguimiento en vivo (E10) | `api/test/e10_e11.test.ts` | 5 | 5 | 0 |
+| Llegada, resultado, modo sin señal y tablero (E11) | `api/test/e10_e11.test.ts` | 5 | 5 | 0 |
+| **Total automatizado** | | **28** | **28** | **0** |
+
+### 2.2 Pruebas manuales
+
+| Suite | Evidencia | Casos | Estado |
+| :--- | :--- | :---: | :--- |
+| Seguridad y catálogos (E05–E06) | `docs/pruebas/Casos-de-Prueba-Seguridad-y-Catalogos-E05-E06.md` | 9 | Documentados como aprobados (ver observaciones) |
+| Agenda, notificaciones, trayecto y ejecución (E07–E11) | `docs/pruebas/resultados/` | — | Bitácoras de ejecución de Jesús (CL) |
+
+**Observaciones sobre la suite E05–E06:**
+
+- **CP-E05-03 (OTP del cliente):** la API de demostración no envía ni valida un código OTP; el caso valida el flujo simulado, no la autenticación real.
+- **CP-E05-04 (aislamiento entre clientes):** el aislamiento depende del `idCliente` que envía la app. Si se cambia ese parámetro se pueden consultar citas de otro cliente, porque la API no valida un token. Debe reportarse como **pendiente** (RF-07, RN-16).
+
+### 2.3 Análisis estático de Flutter
+
+| App | Comando | Resultado |
+| :--- | :--- | :--- |
+| `app-inspector` | `flutter analyze` | _Por ejecutar y registrar (fecha y número de avisos)_ |
+| `app-cliente` | `flutter analyze` | _Por ejecutar y registrar (fecha y número de avisos)_ |
+
+### 2.4 Pruebas en teléfono real y de campo
+
+El calendario (§1) pide pruebas en teléfono real y al menos una prueba de campo por entrega desde E10. Registrar aquí cuáles se hicieron:
+
+| Fecha | Dispositivo | Escenario | Resultado |
+| :--- | :--- | :--- | :--- |
+| | | | |
+
+---
+
+## 3. Encuesta a clientes piloto (llenar después de aplicarla)
+
+Preguntas: (1) ¿Entendiste la notificación? (2) ¿Fue fácil confirmar? (3) ¿Te sirvió ver el mapa con el ETA y el reporte?
+
+| Cliente piloto | Zona | P1 | P2 | P3 | Comentario textual |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Robert B. Martinez** | Stone Oak | Sí | Sí | Sí | *"Confirmé desde la pantalla bloqueada en 2 segundos y el PDF con fotos del techo quedó clarísimo."* |
-| **Sarah Jenkins** | Alamo Heights | Sí | Sí | Sí | *"Pude pedir cambio de horario cuando tuve cita médica sin tener que llamar a la oficina."* |
-| **Elena Rodriguez** | Medical Center | Sí | Sí | Sí | *"El aviso cuando el inspector estaba a menos de 1 km me dio tiempo exacto de abrir el portón."* |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+
+Si no se logra aplicar con clientes reales, indicar aquí que la encuesta queda **pendiente** y no usar respuestas de ejemplo.
+
+---
+
+## 4. Defectos y pendientes conocidos al cierre
+
+| ID | Descripción | Severidad | Estado |
+| :--- | :--- | :--- | :--- |
+| PEND-01 | La API no valida token ni rol; las rutas aceptan `idCliente` / `idInspector` por parámetro | Alta | Trabajo futuro |
+| PEND-02 | Push, SMS y ETA con Google Directions simulados | Media | Trabajo futuro |
+| PEND-03 | Apps Flutter sin GPS real, cámara ni cola sin conexión (sí están en el simulador web) | Alta | Trabajo futuro |
+| PEND-04 | Panel: botones Reasignar / Mover / Cancelar del detalle de cita sin acción; catálogos y fechas fijas en el código | Media | Corregido (13 nov 2026) |
+| PEND-05 | Reporte generado en HTML, no en PDF | Baja | Trabajo futuro |

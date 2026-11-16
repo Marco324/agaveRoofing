@@ -7,95 +7,116 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    html, body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="text-slate-800 antialiased">
   <div id="app" class="min-h-screen flex flex-col">
-    <!-- Navbar -->
-    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-xl text-white shadow">
-            🌵
-          </div>
-          <div>
-            <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-              AgaveAlerta <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">San Antonio, TX</span>
-            </h1>
-            <div class="flex items-center gap-2 mt-0.5">
-              <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse"></span>
-              <span id="apiStatusText" class="text-[11px] text-rose-300 font-medium">API Desconectada (Modo Offline)</span>
+    <!-- Navbar Responsivo de 2 Niveles -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 border-b border-slate-800">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <!-- Nivel 1: Marca, Estado API, Accesos Rápidos y Perfil -->
+        <div class="min-h-[3.75rem] py-2 flex items-center justify-between gap-2">
+          <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-lg sm:text-xl text-white shadow shrink-0">
+              🌵
             </div>
+            <div class="min-w-0">
+              <h1 class="text-sm sm:text-lg font-bold tracking-tight text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span>AgaveAlerta</span>
+                <span class="text-[10px] sm:text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30 whitespace-nowrap">San Antonio, TX</span>
+              </h1>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse shrink-0"></span>
+                <span id="apiStatusText" class="text-[10px] sm:text-[11px] text-rose-300 font-medium truncate">API Desconectada (Modo Offline)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- User profile, Quick Switcher & Mobile Menu Toggle -->
+          <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+            <div class="hidden md:flex items-center gap-1.5 mr-1 border-r border-slate-700 pr-3">
+              <a href="../app-cliente/simulador_web/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap" title="Abrir Simulador App del Cliente">
+                <i class="fa-solid fa-mobile-screen-button"></i> <span>App Cliente</span>
+              </a>
+              <a href="../app-inspector/simulador_web/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap" title="Abrir Simulador App del Inspector">
+                <i class="fa-solid fa-helmet-safety"></i> <span>App Inspector</span>
+              </a>
+            </div>
+            <div class="text-right hidden sm:block">
+              <div class="text-xs font-semibold text-slate-200 leading-tight">Marco Méndez (LP)</div>
+              <div class="text-[10px] text-slate-400">Product Owner / Admin</div>
+            </div>
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-700 flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-emerald-500 shrink-0">
+              MM
+            </div>
+            <button id="btnMobileMenu" onclick="toggleMobileNav()" class="md:hidden p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" aria-label="Abrir menú rápido">
+              <i id="iconMobileMenu" class="fa-solid fa-bars text-sm"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="hidden md:flex space-x-1">
-          <button id="tabBtnAgenda" onclick="cambiarTab('agenda')" class="bg-slate-800 text-emerald-400 px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 border-b-2 border-emerald-500 transition">
-            <i class="fa-regular fa-calendar-days"></i> Agenda (E07)
+        <!-- Nivel 2: Barra de Pestañas (Scrollable en móvil/tablet y completa en escritorio) -->
+        <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 border-t border-slate-800/90 -mx-3 px-3 sm:mx-0 sm:px-0">
+          <button id="tabBtnAgenda" onclick="cambiarTab('agenda')" class="shrink-0 whitespace-nowrap bg-slate-800 text-emerald-400 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 border-b-2 border-emerald-500 transition">
+            <i class="fa-regular fa-calendar-days"></i> <span>Agenda (E07)</span>
           </button>
-          <button id="tabBtnNotificaciones" onclick="cambiarTab('notificaciones')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-bell"></i> Push / SMS (E08)
+          <button id="tabBtnNotificaciones" onclick="cambiarTab('notificaciones')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-bell"></i> <span>Push / SMS (E08)</span>
           </button>
-          <button id="tabBtnReprogramaciones" onclick="cambiarTab('reprogramaciones')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-clock-rotate-left"></i> Reprogramaciones (E09)
+          <button id="tabBtnReprogramaciones" onclick="cambiarTab('reprogramaciones')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-clock-rotate-left"></i> <span>Reprogramaciones (E09)</span>
             <span id="badgeReprogCount" class="text-[10px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full">1</span>
           </button>
-          <button id="tabBtnMonitor" onclick="cambiarTab('monitor')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-satellite-dish text-cyan-400"></i> Monitor en Vivo (E10)
+          <button id="tabBtnMonitor" onclick="cambiarTab('monitor')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-satellite-dish text-cyan-400"></i> <span>Monitor en Vivo (E10)</span>
           </button>
-          <button id="tabBtnTablero" onclick="cambiarTab('tablero')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-chart-pie text-emerald-400"></i> Tablero KPI (E11)
+          <button id="tabBtnTablero" onclick="cambiarTab('tablero')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-chart-pie text-emerald-400"></i> <span>Tablero KPI (E11)</span>
           </button>
-          <button id="tabBtnCatalogos" onclick="cambiarTab('catalogos')" class="text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-shield-halved text-amber-400"></i> Catálogos y Seguridad (E05/E06/E12)
+          <button id="tabBtnCatalogos" onclick="cambiarTab('catalogos')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-shield-halved text-amber-400"></i> <span>Catálogos y Seguridad (E05–E12)</span>
           </button>
         </nav>
 
-        <!-- User profile & Quick Switcher -->
-        <div class="flex items-center space-x-3">
-          <div class="hidden lg:flex items-center gap-1.5 mr-2 border-r border-slate-700 pr-3">
-            <a href="../app-cliente/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5" title="Abrir Simulador App del Cliente">
+        <!-- Gaveta desplegable para Móvil (Accesos rápidos a simuladores y pestañas) -->
+        <div id="mobileQuickDrawer" class="hidden md:hidden py-3 border-t border-slate-800 space-y-2.5">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Accesos directos a Simuladores Móviles</div>
+          <div class="grid grid-cols-2 gap-2">
+            <a href="../app-cliente/simulador_web/index.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-mobile-screen-button"></i> App Cliente
             </a>
-            <a href="../app-inspector/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5" title="Abrir Simulador App del Inspector">
+            <a href="../app-inspector/simulador_web/index.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5">
               <i class="fa-solid fa-helmet-safety"></i> App Inspector
             </a>
-          </div>
-          <div class="text-right hidden sm:block">
-            <div class="text-xs font-semibold text-slate-200">Marco Méndez (LP)</div>
-            <div class="text-[10px] text-slate-400">Product Owner / Admin</div>
-          </div>
-          <div class="w-9 h-9 rounded-full bg-emerald-700 flex items-center justify-center text-sm font-bold border-2 border-emerald-500">
-            MM
           </div>
         </div>
       </div>
     </header>
 
     <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
       <!-- Banner Global: Alerta de Cliente No Alcanzado (E08) -->
-      <div id="bannerClienteNoAlcanzado" class="mb-6 bg-rose-50 border-2 border-rose-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+      <div id="bannerClienteNoAlcanzado" class="hidden mb-5 sm:mb-6 bg-rose-50 border-2 border-rose-300 rounded-xl p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 shadow-sm">
         <div class="flex items-start gap-3">
           <div class="w-9 h-9 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5">
             <i class="fa-solid fa-phone-volume"></i>
           </div>
           <div class="text-xs">
-            <div class="font-bold text-rose-900 text-sm">Alerta de "Cliente No Alcanzado" (Riesgo R4 — E08)</div>
-            <p id="textoClienteNoAlcanzado" class="text-rose-800 mt-0.5">
-              La cita <strong>INS-2026-000007</strong> (Michael A. Flores · +1-210-555-0310) tiene todas sus notificaciones en estado <strong>FALLIDA</strong> y pasó a <strong>SIN_CONFIRMAR</strong>. La oficina debe llamar por teléfono.
+            <div class="font-bold text-rose-900 text-xs sm:text-sm">Clientes sin confirmar: la oficina debe llamar</div>
+            <p id="textoClienteNoAlcanzado" class="text-rose-800 mt-0.5 leading-relaxed">
             </p>
           </div>
         </div>
-        <div class="flex gap-2 shrink-0">
-          <button onclick="cambiarTab('reprogramaciones')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 shrink-0">
+          <button onclick="cambiarTab('reprogramaciones')" class="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition text-center">
             Atender Citas Sin Confirmar
           </button>
-          <button onclick="cambiarTab('notificaciones')" class="bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-xs font-semibold px-3 py-2 rounded-lg transition">
+          <button onclick="cambiarTab('notificaciones')" class="w-full sm:w-auto bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-xs font-semibold px-3 py-2 rounded-lg transition text-center">
             Ver Bitácora Push/SMS
           </button>
         </div>
@@ -106,59 +127,56 @@
       <!-- ================================================================== -->
       <div id="viewAgenda">
       <!-- Top Action & Filter Bar -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 mb-5 sm:mb-6">
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
           
-          <!-- Date Navigator -->
-          <div class="flex items-center space-x-3">
-            <button id="btnPrevDay" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition">
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <div class="text-center">
-              <span id="currentDateDisplay" class="text-lg font-bold text-slate-900 block">Jueves, 29 de Octubre 2026</span>
-              <span id="currentSprintLabel" class="text-xs text-slate-500 font-medium">Hito E09 — Cierre Sprint 4 (Confirmación y Reprogramación)</span>
+          <!-- Date Navigator + Quick Milestone Buttons -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between xl:justify-start gap-3">
+            <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+              <button id="btnPrevDay" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition shrink-0">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <div class="text-center flex-1 sm:flex-initial">
+                <span id="currentDateDisplay" class="text-sm sm:text-lg font-bold text-slate-900 block leading-tight">Cargando…</span>
+                <span id="currentSprintLabel" class="text-[11px] sm:text-xs text-slate-500 font-medium block mt-0.5">Agenda de inspecciones — San Antonio, TX</span>
+              </div>
+              <button id="btnNextDay" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition shrink-0">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
-            <button id="btnNextDay" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition">
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-            <button id="btnE11Date" class="ml-2 px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition">
-              Jue 12 Nov (E11)
-            </button>
-            <button id="btnHoy" class="px-3 py-1.5 text-xs font-medium bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-emerald-800 transition">
-              Jue 29 Oct (E09)
-            </button>
-            <button id="btnE07Date" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition">
-              Jue 15 Oct (E07)
-            </button>
+
+            <div class="grid grid-cols-2 sm:flex items-center gap-1.5 sm:gap-2">
+              <button id="btnHoy" class="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition text-center whitespace-nowrap">
+                Hoy
+              </button>
+              <input type="date" id="inputFechaAgenda" aria-label="Elegir fecha de la agenda" class="px-2 py-1.5 text-[11px] sm:text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-700">
+              <select id="selectFechasConCitas" aria-label="Ir a un día con citas" class="col-span-2 sm:col-span-1 px-2 py-1.5 text-[11px] sm:text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-700">
+                <option value="">Días con citas…</option>
+              </select>
+            </div>
           </div>
 
           <!-- Filters -->
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-wrap items-end gap-3 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100">
             <!-- Inspector Filter -->
-            <div>
+            <div class="w-full sm:w-auto flex-1 lg:flex-initial">
               <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Inspector</label>
-              <select id="selectInspectorFilter" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2">
+              <select id="selectInspectorFilter" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2">
                 <option value="">Todos los inspectores</option>
-                <option value="1">Carlos Garza (Zonas 1 y 2)</option>
-                <option value="2">David Vance (Zonas 3 y 4)</option>
               </select>
             </div>
 
             <!-- Zone Filter -->
-            <div>
+            <div class="w-full sm:w-auto flex-1 lg:flex-initial">
               <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Zona (San Antonio)</label>
-              <select id="selectZonaFilter" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2">
+              <select id="selectZonaFilter" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2">
                 <option value="">Todas las zonas</option>
-                <option value="1">Norte (Stone Oak - 78258)</option>
-                <option value="2">Este (Alamo Heights - 78209)</option>
-                <option value="3">Centro / Sur (Southtown - 78204)</option>
-                <option value="4">Noroeste (Medical Center - 78229)</option>
               </select>
             </div>
 
             <!-- Action Button -->
-            <div class="flex items-end pt-5">
-              <button id="btnNuevaInspeccion" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 transition">
+            <div class="w-full sm:w-auto">
+              <button id="btnNuevaInspeccion" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 transition whitespace-nowrap">
                 <i class="fa-solid fa-plus"></i> Nueva Inspección
               </button>
             </div>
@@ -173,48 +191,9 @@
         <!-- Left Column: Inspections by Inspector Grid -->
         <div class="lg:col-span-8 space-y-6">
           
-          <!-- Inspector 1 Column -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-                  CG
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-slate-900">Carlos Garza</h3>
-                  <p class="text-xs text-slate-500">Placas TX-ROOF-01 · Cobertura: Stone Oak & Alamo Heights</p>
-                </div>
-              </div>
-              <span id="badgeCountInsp1" class="text-xs bg-blue-50 text-blue-700 font-medium px-2 py-0.5 rounded-full border border-blue-200">
-                2 citas
-              </span>
-            </div>
-
-            <div id="citasContainerInsp1" class="p-4 space-y-3 min-h-[160px]">
-              <!-- Cards will be populated dynamically -->
-            </div>
-          </div>
-
-          <!-- Inspector 2 Column -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
-                  DV
-                </div>
-                <div>
-                  <h3 class="text-sm font-bold text-slate-900">David Vance</h3>
-                  <p class="text-xs text-slate-500">Placas TX-AGAVE-02 · Cobertura: Southtown & Medical Center</p>
-                </div>
-              </div>
-              <span id="badgeCountInsp2" class="text-xs bg-purple-50 text-purple-700 font-medium px-2 py-0.5 rounded-full border border-purple-200">
-                1 cita
-              </span>
-            </div>
-
-            <div id="citasContainerInsp2" class="p-4 space-y-3 min-h-[160px]">
-              <!-- Cards will be populated dynamically -->
-            </div>
+          <!-- Una tarjeta por inspector activo (se genera desde /api/catalogos) -->
+          <div id="columnasInspectores" class="space-y-6">
+            <div class="bg-white rounded-xl border border-slate-200 p-6 text-center text-xs text-slate-400">Cargando agenda…</div>
           </div>
 
         </div>
@@ -302,56 +281,57 @@
       <!-- ================================================================== -->
       <!-- SECCIÓN 2: VISTA DE NOTIFICACIONES PUSH Y BITÁCORA R4 (E08)        -->
       <!-- ================================================================== -->
-      <div id="viewNotificaciones" class="hidden space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div id="viewNotificaciones" class="hidden space-y-5 sm:space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
               <i class="fa-solid fa-bell text-emerald-600"></i> Motor de Notificaciones Push y Respaldo SMS (E08)
             </h2>
-            <p class="text-xs text-slate-500 mt-0.5">
+            <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
               Seguimiento del Riesgo R4 (Entregabilidad), horario de silencio (21:00–07:00 RN-14), reintentos y respaldo Twilio SMS.
             </p>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="ejecutarDespachadorPanel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition flex items-center gap-1.5">
+          <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button onclick="ejecutarDespachadorPanel()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
               <i class="fa-solid fa-paper-plane"></i> Ejecutar Temporizadores y Despachador
             </button>
           </div>
         </div>
 
         <!-- KPIs de Entregabilidad R4 -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
             <div class="text-xs text-slate-500">Total Envíos</div>
-            <div id="kpiNotifTotal" class="text-2xl font-bold text-slate-900 mt-1">7</div>
+            <div id="kpiNotifTotal" class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">7</div>
           </div>
-          <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
+          <div class="bg-emerald-50 p-3.5 sm:p-4 rounded-xl border border-emerald-200 shadow-sm">
             <div class="text-xs text-emerald-700 font-medium">Push Entregadas</div>
-            <div id="kpiNotifPush" class="text-2xl font-bold text-emerald-800 mt-1">6</div>
+            <div id="kpiNotifPush" class="text-xl sm:text-2xl font-bold text-emerald-800 mt-1">6</div>
           </div>
-          <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-sm">
+          <div class="bg-blue-50 p-3.5 sm:p-4 rounded-xl border border-blue-200 shadow-sm">
             <div class="text-xs text-blue-700 font-medium">Respaldo SMS</div>
-            <div id="kpiNotifSms" class="text-2xl font-bold text-blue-800 mt-1">0</div>
+            <div id="kpiNotifSms" class="text-xl sm:text-2xl font-bold text-blue-800 mt-1">0</div>
           </div>
-          <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm">
+          <div class="bg-rose-50 p-3.5 sm:p-4 rounded-xl border border-rose-200 shadow-sm">
             <div class="text-xs text-rose-700 font-medium">Fallidas (3 int.)</div>
-            <div id="kpiNotifFallidas" class="text-2xl font-bold text-rose-800 mt-1">1</div>
+            <div id="kpiNotifFallidas" class="text-xl sm:text-2xl font-bold text-rose-800 mt-1">1</div>
           </div>
-          <div class="bg-slate-900 text-white p-4 rounded-xl shadow-sm">
+          <div class="col-span-2 sm:col-span-2 lg:col-span-1 bg-slate-900 text-white p-3.5 sm:p-4 rounded-xl shadow-sm">
             <div class="text-xs text-emerald-300 font-medium">Tasa Entregabilidad R4</div>
-            <div id="kpiNotifTasa" class="text-2xl font-bold text-white mt-1">86%</div>
+            <div id="kpiNotifTasa" class="text-xl sm:text-2xl font-bold text-white mt-1">86%</div>
           </div>
         </div>
 
-        <!-- Tabla de Notificaciones -->
+        <!-- Tabla de Notificaciones (Escritorio) + Tarjetas Responsivas (Móvil) -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <div class="px-4 sm:px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
             <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Bitácora de Notificaciones por Inspección (RN-13 / RN-14)
             </h3>
             <span class="text-[11px] text-slate-500">El botón "Reenviar" activa <code>reenvio_manual = true</code></span>
           </div>
-          <div class="overflow-x-auto">
+          <!-- Vista de Tabla para Tablet/Escritorio -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50/70 text-slate-500 border-b border-slate-200">
                 <tr>
@@ -369,17 +349,21 @@
               </tbody>
             </table>
           </div>
+          <!-- Vista de Tarjetas para Móvil -->
+          <div id="cardsNotificacionesMobile" class="md:hidden p-3 space-y-3">
+            <!-- Populated dynamically -->
+          </div>
         </div>
       </div> <!-- Fin #viewNotificaciones -->
 
       <!-- ================================================================== -->
       <!-- SECCIÓN 3: BANDEJA DE REPROGRAMACIONES Y SIN CONFIRMAR (E09)       -->
       <!-- ================================================================== -->
-      <div id="viewReprogramaciones" class="hidden space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div id="viewReprogramaciones" class="hidden space-y-5 sm:space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <!-- Bandeja de solicitudes del cliente (7 cols) -->
           <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-5 py-4 bg-slate-900 text-white flex justify-between items-center">
+            <div class="px-4 sm:px-5 py-4 bg-slate-900 text-white flex justify-between items-center">
               <div>
                 <h2 class="text-sm font-bold flex items-center gap-2">
                   <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Bandeja de Solicitudes de Reprogramación (E09)
@@ -389,15 +373,15 @@
                 </p>
               </div>
             </div>
-            <div id="contenedorBandejaReprog" class="p-5 space-y-4">
+            <div id="contenedorBandejaReprog" class="p-4 sm:p-5 space-y-4">
               <!-- Populated dynamically -->
             </div>
           </div>
 
           <!-- Alerta de citas SIN_CONFIRMAR (5 cols) -->
-          <div class="lg:col-span-5 space-y-6">
+          <div class="lg:col-span-5 space-y-5 sm:space-y-6">
             <div class="bg-white rounded-xl shadow-sm border border-amber-300 overflow-hidden">
-              <div class="px-5 py-4 bg-amber-50 border-b border-amber-200 flex justify-between items-center">
+              <div class="px-4 sm:px-5 py-4 bg-amber-50 border-b border-amber-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
                   <h2 class="text-sm font-bold text-amber-950 flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Alerta de Citas SIN_CONFIRMAR (RN-07)
@@ -406,7 +390,7 @@
                     Citas cuyo plazo venció sin respuesta. No se cancelan solas; confirma por llamada o cancela.
                   </p>
                 </div>
-                <button onclick="ejecutarBarridoSinConfirmar()" class="text-[11px] bg-amber-600 hover:bg-amber-700 text-white font-semibold px-2.5 py-1.5 rounded-lg transition">
+                <button onclick="ejecutarBarridoSinConfirmar()" class="w-full sm:w-auto text-[11px] bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-2 sm:py-1.5 rounded-lg transition text-center shrink-0">
                   Correr Temporizador
                 </button>
               </div>
@@ -416,7 +400,7 @@
             </div>
 
             <!-- Reprogramación iniciada por la oficina -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 space-y-3">
               <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-building-user text-emerald-600"></i> Reprogramación Iniciada por Oficina
               </h3>
@@ -426,16 +410,12 @@
               <form id="formMoverOficina" class="space-y-3 pt-1">
                 <div>
                   <label class="block text-[11px] font-semibold text-slate-600 mb-1">Cita a Mover</label>
-                  <select id="selectCitaOficina" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
-                    <option value="5">INS-2026-000005 — Robert B. Martinez (2026-10-29 09:00)</option>
-                    <option value="8">INS-2026-000008 — Elena Rodriguez (2026-10-30 10:00)</option>
-                    <option value="2">INS-2026-000002 — Sarah Jenkins (2026-10-15 11:30)</option>
-                  </select>
+                  <select id="selectCitaOficina" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2"></select>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div>
                     <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nueva Fecha</label>
-                    <input type="date" id="inputNuevaFechaOficina" value="2026-10-31" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
+                    <input type="date" id="inputNuevaFechaOficina" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
                   </div>
                   <div>
                     <label class="block text-[11px] font-semibold text-slate-600 mb-1">Inicio</label>
@@ -448,7 +428,7 @@
                 </div>
                 <div>
                   <label class="block text-[11px] font-semibold text-slate-600 mb-1">Motivo de la Oficina</label>
-                  <input type="text" id="inputMotivoOficina" value="Ajuste operativo de cuadrilla en San Antonio, TX" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
+                  <input type="text" id="inputMotivoOficina" placeholder="Ej. inspector incapacitado, lluvia intensa" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
                 </div>
                 <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2.5 rounded-lg transition">
                   Mover Cita y Notificar al Cliente
@@ -462,50 +442,53 @@
       <!-- ================================================================== -->
       <!-- SECCIÓN 4: MONITOR EN VIVO Y SEMÁFORO DE PUNTUALIDAD (E10)         -->
       <!-- ================================================================== -->
-      <div id="viewMonitor" class="hidden space-y-6">
-        <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-md border border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div id="viewMonitor" class="hidden space-y-5 sm:space-y-6">
+        <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
-              <h2 class="text-lg font-bold text-white">Monitor en Vivo de Inspectores en Ruta — San Antonio, TX (E10)</h2>
+              <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
+              <h2 class="text-base sm:text-lg font-bold text-white">Monitor en Vivo de Inspectores en Ruta — San Antonio, TX (E10)</h2>
             </div>
-            <p class="text-xs text-slate-300 mt-1">
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
               Seguimiento en tiempo real vía canal <code>inspeccion:{id}</code> (RN-08), ETA con Google Directions / respaldo en línea recta (RN-09) y alerta automática a menos de 1,000 m.
             </p>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="iniciarTrayectoDemoPanel(10)" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
-              <i class="fa-solid fa-truck-fast"></i> Iniciar Trayecto Carlos Garza (INS-10)
-            </button>
-            <button onclick="cerrarTrayectosOlvidadosPanel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition">
+          <div class="grid grid-cols-1 sm:grid-cols-3 lg:flex flex-wrap gap-2 w-full lg:w-auto">
+            <div class="flex gap-2 w-full sm:col-span-3 lg:w-auto">
+              <select id="selectCitaTrayectoDemo" aria-label="Cita para simular salida" class="flex-1 min-w-0 text-xs bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-2 py-2"></select>
+              <button onclick="iniciarTrayectoDemoPanel()" class="justify-center bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-3.5 py-2.5 sm:py-2 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-truck-fast"></i> Simular salida
+              </button>
+            </div>
+            <button onclick="cerrarTrayectosOlvidadosPanel()" class="w-full sm:w-auto justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2.5 sm:py-2 rounded-lg transition flex items-center gap-1.5">
               <i class="fa-solid fa-stopwatch"></i> Apagado Automático &gt;90m (R5)
             </button>
-            <button onclick="cargarMonitorVivo()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+            <button onclick="cargarMonitorVivo()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2.5 sm:py-2 rounded-lg transition flex items-center gap-1.5">
               <i class="fa-solid fa-rotate"></i> Actualizar
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <!-- Mapa en vivo de San Antonio y tarjetas de inspectores activos (8 cols) -->
           <div class="lg:col-span-8 space-y-4">
             <!-- Lienzo de Mapa Interactivo de San Antonio TX -->
             <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-lg">
-              <div class="px-4 py-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center text-xs text-slate-300">
+              <div class="px-4 py-3 bg-slate-900 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2 text-xs text-slate-300">
                 <span class="font-bold flex items-center gap-2">
-                  <i class="fa-solid fa-map-location-dot text-cyan-400"></i> Mapa Operativo en Vivo — San Antonio Metropolitan Area (I-10 / US-281 / Loop 1604)
+                  <i class="fa-solid fa-map-location-dot text-cyan-400"></i> Mapa Operativo en Vivo — San Antonio Metropolitan Area
                 </span>
-                <span id="badgeTotalEnCamino" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded-full font-bold">
-                  1 unidad en camino
+                <span id="badgeTotalEnCamino" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap">
+                  —
                 </span>
               </div>
-              <div id="mapaSanAntonioCanvas" class="relative h-72 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-6 overflow-hidden">
+              <div id="mapaSanAntonioCanvas" class="relative min-h-[18rem] h-auto bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-4 sm:p-6 overflow-hidden">
                 <!-- Vialidades esquemáticas de San Antonio -->
                 <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#38bdf8 1px, transparent 1px); background-size: 24px 24px;"></div>
-                <div class="absolute top-4 left-4 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-1 rounded border border-slate-700">
+                <div class="relative z-10 mb-3 inline-block text-[10px] font-mono text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded border border-slate-700">
                   Norte: Stone Oak (78258) · Noroeste: Medical Center (78229) · Este: Alamo Heights (78209)
                 </div>
-                <div id="contenedorPinesMapa" class="relative w-full h-full flex flex-col justify-center gap-3 pt-6">
+                <div id="contenedorPinesMapa" class="relative z-10 w-full flex flex-col justify-center gap-3">
                   <!-- Pines dinámicos -->
                 </div>
               </div>
@@ -518,27 +501,19 @@
           </div>
 
           <!-- Lista lateral de "Hoy" con Semáforo + Capacitación E10 (4 cols) -->
-          <div class="lg:col-span-4 space-y-6">
+          <div class="lg:col-span-4 space-y-5 sm:space-y-6">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div class="px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
+              <div class="px-4 sm:px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                   <i class="fa-solid fa-traffic-light text-amber-400"></i> Lista de "Hoy" con Semáforo
                 </h3>
-                <span class="text-[11px] text-slate-400">12 Nov 2026</span>
+                <span id="labelFechaMonitor" class="text-[11px] text-slate-400"></span>
               </div>
-              <div id="contenedorSemaforoHoy" class="p-4 space-y-3">
+              <div id="contenedorSemaforoHoy" class="p-3.5 sm:p-4 space-y-3">
                 <!-- Populated dynamically -->
               </div>
             </div>
 
-            <div class="bg-emerald-50 rounded-2xl border border-emerald-200 p-4 space-y-2 text-xs text-emerald-950">
-              <div class="font-bold text-sm flex items-center gap-2">
-                <i class="fa-solid fa-user-graduate text-emerald-700"></i> Capacitación a Inspectores Piloto (E10)
-              </div>
-              <p class="text-emerald-800">
-                Sesión completada con <strong>Carlos Garza (TX-ROOF-01)</strong> y <strong>David Vance (TX-AGAVE-02)</strong>: permiso de ubicación en segundo plano cada 15 s, corte automático al registrar llegada y prueba en calle.
-              </p>
-            </div>
           </div>
         </div>
       </div> <!-- Fin #viewMonitor -->
@@ -546,106 +521,140 @@
       <!-- ================================================================== -->
       <!-- SECCIÓN 5: TABLERO DE INDICADORES Y FEATURE FREEZE (E11)           -->
       <!-- ================================================================== -->
-      <div id="viewTablero" class="hidden space-y-6">
+      <div id="viewTablero" class="hidden space-y-5 sm:space-y-6">
         <!-- Banner de Feature Freeze (Cierre Sprint 5 — E11) -->
-        <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-2xl p-5 shadow-md border border-emerald-700/50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div class="flex items-start gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-lg shrink-0 mt-0.5">
+        <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-emerald-700/50 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+          <div class="flex items-start gap-3 sm:gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-lg shrink-0 mt-0.5 shadow">
               ❄️
             </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-base font-bold text-white">Tablero Ejecutivo de Indicadores (E11)</h2>
-                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold uppercase">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-sm sm:text-base font-bold text-white">Tablero Ejecutivo de Indicadores (E11)</h2>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold uppercase whitespace-nowrap">
                   Feature Freeze Activo · 12 Nov 2026
                 </span>
               </div>
-              <p class="text-xs text-slate-300 mt-1">
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
                 Vistas SQL en vivo (<code>v_indicadores_semana</code>, <code>v_puntualidad_inspector</code>, <code>v_efectividad_notificacion</code>). Alcance funcional congelado al 100% para cierre de Sprint 5.
               </p>
             </div>
           </div>
-          <div class="flex flex-wrap items-center gap-2 shrink-0">
-            <input type="date" id="inputKpiInicio" value="2026-10-01" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5">
-            <span class="text-xs text-slate-400">a</span>
-            <input type="date" id="inputKpiFin" value="2026-11-19" class="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5">
-            <button onclick="cargarTableroIndicadores()" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition">
-              Filtrar
-            </button>
-            <button onclick="descargarCsvIndicadores()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5">
-              <i class="fa-solid fa-file-csv"></i> Exportar a CSV
-            </button>
+          <div class="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-800">
+            <div class="grid grid-cols-2 sm:flex items-center gap-2">
+              <input type="date" id="inputKpiInicio" class="w-full sm:w-auto bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 sm:py-1.5">
+              <input type="date" id="inputKpiFin" class="w-full sm:w-auto bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 sm:py-1.5">
+            </div>
+            <div class="grid grid-cols-2 sm:flex items-center gap-2">
+              <button onclick="cargarTableroIndicadores()" class="w-full sm:w-auto justify-center bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-600 text-xs font-semibold px-3.5 py-2 sm:py-1.5 rounded-lg transition flex items-center gap-1.5">
+                <i class="fa-solid fa-filter"></i> Filtrar
+              </button>
+              <button onclick="descargarCsvIndicadores()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-file-csv"></i> Exportar a CSV
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- 5 Tarjetas Principales del Tablero -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div class="text-xs text-slate-500 font-medium">Citas del Periodo</div>
-            <div id="kpiTabTotal" class="text-2xl font-extrabold text-slate-900 mt-1">12</div>
-            <div class="text-[11px] text-slate-400 mt-1">Oct – Nov 2026 (San Antonio)</div>
+        <!-- 5 Tarjetas Principales del Tablero (Responsivas en Móvil, Tablet y Escritorio) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-500 font-semibold">Citas del Periodo</span>
+              <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs"><i class="fa-regular fa-calendar-check"></i></span>
+            </div>
+            <div id="kpiTabTotal" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">—</div>
+            <div id="kpiTabPeriodo" class="text-[11px] text-slate-400 mt-1">Periodo seleccionado</div>
           </div>
-          <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
-            <div class="text-xs text-emerald-800 font-bold">Tasa de Confirmación</div>
-            <div id="kpiTabConfirmacion" class="text-2xl font-extrabold text-emerald-700 mt-1">83.3%</div>
-            <div class="text-[11px] text-emerald-700 mt-1">✅ Supera meta &ge; 80% (Antes: 0%)</div>
+          <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-emerald-800 font-bold">Tasa de Confirmación</span>
+              <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check-double"></i></span>
+            </div>
+            <div id="kpiTabConfirmacion" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-2">—</div>
+            <div id="kpiTabConfirmacionMeta" class="text-[11px] text-slate-500 mt-1">Meta &ge; 80 % (Plan §11) · Antes: 0 %</div>
           </div>
-          <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm">
-            <div class="text-xs text-rose-800 font-bold">Visitas Fallidas (Ausente)</div>
-            <div id="kpiTabFallidas" class="text-2xl font-extrabold text-rose-700 mt-1">0 (0%)</div>
-            <div class="text-[11px] text-rose-700 mt-1">📉 Reducción vs 32% por correo</div>
+          <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-rose-800 font-bold">Visitas Fallidas (Ausente)</span>
+              <span class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-house-circle-xmark"></i></span>
+            </div>
+            <div id="kpiTabFallidas" class="text-2xl sm:text-3xl font-extrabold text-rose-700 mt-2">—</div>
+            <div class="text-[11px] text-rose-700 mt-1">Línea base por correo: 18 %</div>
           </div>
-          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
-            <div class="text-xs text-amber-800 font-bold">Reprogramadas a Tiempo</div>
-            <div id="kpiTabReprog" class="text-2xl font-extrabold text-amber-700 mt-1">1</div>
+          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-amber-800 font-bold">Reprogramadas a Tiempo</span>
+              <span class="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-clock-rotate-left"></i></span>
+            </div>
+            <div id="kpiTabReprog" class="text-2xl sm:text-3xl font-extrabold text-amber-700 mt-2">—</div>
             <div class="text-[11px] text-amber-700 mt-1">Visitas en vano evitadas</div>
           </div>
-          <div class="bg-slate-900 text-white p-4 rounded-xl shadow-sm">
-            <div class="text-xs text-emerald-300 font-bold">Inspecciones Completadas</div>
-            <div id="kpiTabCompletadas" class="text-2xl font-extrabold text-white mt-1">1</div>
+          <div class="sm:col-span-2 lg:col-span-1 bg-slate-900 text-white p-4 rounded-xl shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-emerald-300 font-bold">Inspecciones Completadas</span>
+              <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xs"><i class="fa-solid fa-file-pdf"></i></span>
+            </div>
+            <div id="kpiTabCompletadas" class="text-2xl sm:text-3xl font-extrabold text-white mt-2">—</div>
             <div class="text-[11px] text-slate-400 mt-1">Con fotos y reporte PDF</div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <!-- Gráfica de Citas por Estado + Evolución Semanal (6 cols) -->
-          <div class="lg:col-span-6 space-y-6">
-            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-chart-bar text-emerald-600"></i> Distribución de Citas por Estado (Gráfica de Barras)
-              </h3>
-              <div id="contenedorGraficaEstados" class="space-y-2.5 text-xs">
+        <!-- Cuadrícula 2x2 Responsiva de Gráficas y Rankings (md:grid-cols-2) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <!-- Gráfica de Citas por Estado -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-chart-bar text-emerald-600"></i> Distribución de Citas por Estado
+                </h3>
+                <span class="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">RN-01 Máquina de Estados</span>
+              </div>
+              <div id="contenedorGraficaEstados" class="space-y-3 text-xs">
                 <!-- Populated dynamically -->
               </div>
             </div>
+          </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-chart-line text-cyan-600"></i> Evolución Semanal de Confirmación (<code>v_indicadores_semana</code>)
-              </h3>
+          <!-- Evolución Semanal de Confirmación -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-chart-line text-cyan-600"></i> Evolución Semanal (<code>v_indicadores_semana</code>)
+                </h3>
+                <span class="text-[10px] font-semibold bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Tendencia Oct–Nov</span>
+              </div>
               <div id="contenedorEvolucionSemanal" class="space-y-2.5 text-xs">
                 <!-- Populated dynamically -->
               </div>
             </div>
           </div>
 
-          <!-- Ranking de Puntualidad por Inspector + Efectividad por Canal (6 cols) -->
-          <div class="lg:col-span-6 space-y-6">
-            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-medal text-amber-500"></i> Ranking de Puntualidad por Inspector (<code>v_puntualidad_inspector</code>)
-              </h3>
+          <!-- Ranking de Puntualidad por Inspector -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-medal text-amber-500"></i> Ranking de Puntualidad (<code>v_puntualidad_inspector</code>)
+                </h3>
+                <span class="text-[10px] font-semibold bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200">Llegada en Ventana</span>
+              </div>
               <div id="contenedorRankingInspectores" class="space-y-3 text-xs">
                 <!-- Populated dynamically -->
               </div>
             </div>
+          </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-              <div class="flex justify-between items-center mb-3">
+          <!-- Efectividad por Canal -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <i class="fa-solid fa-tower-broadcast text-purple-600"></i> Efectividad por Canal (<code>v_efectividad_notificacion</code>)
                 </h3>
-                <button onclick="purgarPuntosPanel()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition">
+                <button onclick="purgarPuntosPanel()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition whitespace-nowrap">
                   🧹 Purgar GPS &gt;30d (RN-17)
                 </button>
               </div>
@@ -660,42 +669,42 @@
       <!-- ================================================================== -->
       <!-- SECCIÓN 6: CATÁLOGOS, SEGURIDAD Y PILOTO (E05 / E06 / E12)         -->
       <!-- ================================================================== -->
-      <div id="viewCatalogos" class="hidden space-y-6">
-        <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-md border border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div id="viewCatalogos" class="hidden space-y-5 sm:space-y-6">
+        <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-shield-halved text-amber-400"></i> Catálogos Operativos, Seguridad (E05/E06) y Piloto (E12)
             </h2>
-            <p class="text-xs text-slate-300 mt-1">
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
               Gestión de Clientes (baja lógica RN-15), Domicilios geocodificados en San Antonio, TX, Zonas, Inspectores, Bitácora de Auditoría E05 y Opiniones de Clientes Piloto E12.
             </p>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="cargarCatalogosYSeguridad()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
+          <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button onclick="cargarCatalogosYSeguridad()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 sm:py-2 rounded-lg transition flex items-center gap-1.5">
               <i class="fa-solid fa-rotate"></i> Sincronizar Catálogos y Bitácora
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <!-- Clientes y Alta con Baja Lógica RN-15 (7 cols) -->
-          <div class="lg:col-span-7 space-y-6">
+          <div class="lg:col-span-7 space-y-5 sm:space-y-6">
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+              <div class="px-4 sm:px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
                   Catálogo de Clientes (RN-15 Baja Lógica, sin borrado físico)
                 </h3>
-                <span id="badgeCountClientesCat" class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">4 activos</span>
+                <span id="badgeCountClientesCat" class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">—</span>
               </div>
-              <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                <form id="formNuevoClienteCat" class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
-                  <input type="text" id="catCliNombre" placeholder="Nombre completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5">
-                  <input type="text" id="catCliTel" placeholder="+1-210-555-0999" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5">
-                  <select id="catCliCanal" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5">
+              <div class="p-3.5 sm:p-4 border-b border-slate-100 bg-slate-50/50">
+                <form id="formNuevoClienteCat" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <input type="text" id="catCliNombre" placeholder="Nombre completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
+                  <input type="text" id="catCliTel" placeholder="+1-210-555-0999" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
+                  <select id="catCliCanal" class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
                     <option value="PUSH">Canal: PUSH</option>
                     <option value="SMS">Canal: SMS</option>
                   </select>
-                  <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-3 py-1.5 transition">
+                  <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-3 py-2 sm:py-1.5 transition">
                     + Alta Cliente
                   </button>
                 </form>
@@ -704,11 +713,11 @@
                 <table class="w-full text-left text-xs">
                   <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
-                      <th class="py-2.5 px-4">Cliente</th>
-                      <th class="py-2.5 px-4">Teléfono / Correo</th>
-                      <th class="py-2.5 px-4">Canal</th>
-                      <th class="py-2.5 px-4">Estado</th>
-                      <th class="py-2.5 px-4 text-right">RN-15</th>
+                      <th class="py-2.5 px-3 sm:px-4">Cliente</th>
+                      <th class="py-2.5 px-3 sm:px-4">Teléfono / Correo</th>
+                      <th class="py-2.5 px-3 sm:px-4">Canal</th>
+                      <th class="py-2.5 px-3 sm:px-4">Estado</th>
+                      <th class="py-2.5 px-3 sm:px-4 text-right">RN-15</th>
                     </tr>
                   </thead>
                   <tbody id="tablaClientesCatBody" class="divide-y divide-slate-100"></tbody>
@@ -718,35 +727,35 @@
 
             <!-- Domicilios Geocodificados -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+              <div class="px-4 sm:px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
                   Domicilios con Geocodificación y Pin en Mapa (San Antonio, TX — E06)
                 </h3>
               </div>
-              <div id="contenedorDomiciliosCat" class="p-4 space-y-2.5 text-xs"></div>
+              <div id="contenedorDomiciliosCat" class="p-3.5 sm:p-4 space-y-2.5 text-xs"></div>
             </div>
           </div>
 
           <!-- Bitácora de Seguridad E05 + Encuestas Piloto E12 (5 cols) -->
-          <div class="lg:col-span-5 space-y-6">
+          <div class="lg:col-span-5 space-y-5 sm:space-y-6">
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div class="px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
+              <div class="px-4 sm:px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                   <i class="fa-solid fa-lock text-amber-400"></i> Bitácora de Seguridad y Roles (E05)
                 </h3>
                 <span class="text-[10px] text-emerald-300 font-mono">JWT + RLS Activo</span>
               </div>
-              <div id="contenedorBitacoraE05" class="p-4 space-y-2 text-xs max-h-64 overflow-y-auto"></div>
+              <div id="contenedorBitacoraE05" class="p-3.5 sm:p-4 space-y-2 text-xs max-h-64 overflow-y-auto"></div>
             </div>
 
             <div class="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
-              <div class="px-5 py-3.5 bg-emerald-900 text-white flex justify-between items-center">
+              <div class="px-4 sm:px-5 py-3.5 bg-emerald-900 text-white flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                   <i class="fa-solid fa-star text-amber-300"></i> Opiniones de Clientes Piloto (E12)
                 </h3>
-                <span class="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-full font-bold">100% Aceptación</span>
+                <span id="badgeEncuestas" class="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-full font-bold">—</span>
               </div>
-              <div id="contenedorEncuestasE12" class="p-4 space-y-2.5 text-xs"></div>
+              <div id="contenedorEncuestasE12" class="p-3.5 sm:p-4 space-y-2.5 text-xs"></div>
             </div>
           </div>
         </div>
@@ -771,42 +780,29 @@
           <div id="alertErrorTraslape" class="hidden p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-xs flex items-start gap-2">
             <i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5"></i>
             <div>
-              <span class="font-bold">Error de Traslape (RN-02):</span>
+              <span id="tituloErrorNueva" class="font-bold">No se pudo programar la inspección:</span>
               <p id="msgErrorTraslape">El inspector ya cuenta con una cita en horario en conflicto.</p>
             </div>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente (San Antonio, TX)</label>
-            <select id="inputCliente" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500">
-              <option value="1">Robert B. Martinez — (210) 555-0201 (Stone Oak)</option>
-              <option value="2">Sarah Jenkins — (210) 555-0233 (Alamo Heights)</option>
-              <option value="3">Michael A. Flores — (210) 555-0310 (Southtown)</option>
-              <option value="4">Elena Rodriguez — (210) 555-0455 (Medical Center)</option>
-            </select>
+            <select id="inputCliente" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500"></select>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Domicilio</label>
-            <select id="inputDomicilio" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500">
-              <option value="1">19202 Stone Oak Pkwy, San Antonio, TX 78258</option>
-              <option value="2">5930 Broadway St, San Antonio, TX 78209</option>
-              <option value="3">1011 S St Marys St, San Antonio, TX 78204</option>
-              <option value="4">7703 Floyd Curl Dr, San Antonio, TX 78229</option>
-            </select>
+            <select id="inputDomicilio" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500"></select>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha</label>
-              <input type="date" id="inputFecha" value="2026-10-15" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5">
+              <input type="date" id="inputFecha" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">Inspector</label>
-              <select id="inputInspector" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5">
-                <option value="1">Carlos Garza (TX-ROOF-01)</option>
-                <option value="2">David Vance (TX-AGAVE-02)</option>
-              </select>
+              <select id="inputInspector" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5"></select>
             </div>
           </div>
 
@@ -894,6 +890,8 @@
                 <i class="fa-solid fa-ban"></i> Cancelar Cita
               </button>
             </div>
+            <p id="detAccionesAviso" class="hidden text-[11px] text-slate-500 mt-2"></p>
+            <div id="detAccionForm" class="hidden mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2.5"></div>
           </div>
 
           <!-- Línea de Tiempo (Historial Inmutable) -->
@@ -915,266 +913,257 @@
     // Conexión con la API local
     const API_URL = 'http://localhost:4000/api';
 
-    let citasData = [
-      {
-        id_inspeccion: 1,
-        folio: 'INS-2026-000001',
-        id_inspector: 1,
-        inspector_nombre: 'Carlos Garza',
-        placa_vehiculo: 'TX-ROOF-01',
-        id_cliente: 1,
-        cliente_nombre: 'Robert B. Martinez',
-        cliente_telefono: '+1-210-555-0201',
-        id_domicilio: 1,
-        calle: 'Stone Oak Pkwy',
-        numero: '19202',
-        colonia: 'Stone Oak',
-        ciudad: 'San Antonio',
-        domicilio_estado: 'Texas',
-        codigo_postal: '78258',
-        referencias: 'Portón negro con interfono.',
-        id_zona: 1,
-        fecha_programada: '2026-10-15',
-        ventana_inicio: '09:00',
-        ventana_fin: '11:00',
-        estado: 'CONFIRMADA',
-        motivo_visita: 'Revisión de tejas levantadas tras tormenta de viento'
-      },
-      {
-        id_inspeccion: 2,
-        folio: 'INS-2026-000002',
-        id_inspector: 1,
-        inspector_nombre: 'Carlos Garza',
-        placa_vehiculo: 'TX-ROOF-01',
-        id_cliente: 2,
-        cliente_nombre: 'Sarah Jenkins',
-        cliente_telefono: '+1-210-555-0233',
-        id_domicilio: 2,
-        calle: 'Broadway St',
-        numero: '5930',
-        colonia: 'Alamo Heights',
-        ciudad: 'San Antonio',
-        domicilio_estado: 'Texas',
-        codigo_postal: '78209',
-        referencias: 'Frente a gasolinera Chevron.',
-        id_zona: 2,
-        fecha_programada: '2026-10-15',
-        ventana_inicio: '11:30',
-        ventana_fin: '13:30',
-        estado: 'NOTIFICADA',
-        motivo_visita: 'Evaluación por posible impacto de granizo en cumbrera'
-      },
-      {
-        id_inspeccion: 3,
-        folio: 'INS-2026-000003',
-        id_inspector: 2,
-        inspector_nombre: 'David Vance',
-        placa_vehiculo: 'TX-AGAVE-02',
-        id_cliente: 3,
-        cliente_nombre: 'Michael A. Flores',
-        cliente_telefono: '+1-210-555-0310',
-        id_domicilio: 3,
-        calle: 'S St Marys St',
-        numero: '1011',
-        colonia: 'Southtown',
-        ciudad: 'San Antonio',
-        domicilio_estado: 'Texas',
-        codigo_postal: '78204',
-        referencias: 'Entrada por portón metálico trasero.',
-        id_zona: 3,
-        fecha_programada: '2026-10-15',
-        ventana_inicio: '14:30',
-        ventana_fin: '16:30',
-        estado: 'PROGRAMADA',
-        motivo_visita: 'Inspección comercial anual preventiva en cubierta plana'
-      },
-      {
-        id_inspeccion: 5,
-        folio: 'INS-2026-000005',
-        id_inspector: 1,
-        inspector_nombre: 'Carlos Garza',
-        placa_vehiculo: 'TX-ROOF-01',
-        id_cliente: 1,
-        cliente_nombre: 'Robert B. Martinez',
-        cliente_telefono: '+1-210-555-0201',
-        id_domicilio: 1,
-        calle: 'Stone Oak Pkwy',
-        numero: '19202',
-        colonia: 'Stone Oak',
-        ciudad: 'San Antonio',
-        domicilio_estado: 'Texas',
-        codigo_postal: '78258',
-        referencias: 'Portón negro con interfono.',
-        id_zona: 1,
-        fecha_programada: '2026-10-29',
-        ventana_inicio: '09:00',
-        ventana_fin: '11:00',
-        estado: 'CONFIRMADA',
-        motivo_visita: 'Seguimiento de reparación de teja asfáltica en Stone Oak'
-      },
-      {
-        id_inspeccion: 6,
-        folio: 'INS-2026-000006',
-        id_inspector: 1,
-        inspector_nombre: 'Carlos Garza',
-        placa_vehiculo: 'TX-ROOF-01',
-        id_cliente: 2,
-        cliente_nombre: 'Sarah Jenkins',
-        cliente_telefono: '+1-210-555-0233',
-        id_domicilio: 2,
-        calle: 'Broadway St',
-        numero: '5930',
-        colonia: 'Alamo Heights',
-        ciudad: 'San Antonio',
-        domicilio_estado: 'Texas',
-        codigo_postal: '78209',
-        referencias: 'Frente a gasolinera Chevron.',
-        id_zona: 2,
-        fecha_programada: '2026-10-29',
-        ventana_inicio: '11:30',
-        ventana_fin: '13:30',
-        estado: 'REPROG_SOLICITADA',
-        motivo_visita: 'Inspección de cumbrera y canaletas en Alamo Heights'
-      },
-      {
-        id_inspeccion: 7,
-        folio: 'INS-2026-000007',
-        id_inspector: 2,
-        inspector_nombre: 'David Vance',
-        placa_vehiculo: 'TX-AGAVE-02',
-        id_cliente: 3,
-        cliente_nombre: 'Michael A. Flores',
-        cliente_telefono: '+1-210-555-0310',
-        id_domicilio: 3,
-        calle: 'S St Marys St',
-        numero: '1011',
-        colonia: 'Southtown',
-        ciudad: 'San Antonio',
-        domicilio_estado: 'Texas',
-        codigo_postal: '78204',
-        referencias: 'Entrada por portón metálico trasero.',
-        id_zona: 3,
-        fecha_programada: '2026-10-29',
-        ventana_inicio: '14:30',
-        ventana_fin: '16:30',
-        estado: 'SIN_CONFIRMAR',
-        motivo_visita: 'Inspección preventiva de cubierta comercial en Southtown'
-      }
-    ];
-
-    let notificacionesData = [
-      {
-        id_notificacion: 3,
-        id_inspeccion: 5,
-        folio: 'INS-2026-000005',
-        cliente_nombre: 'Robert B. Martinez',
-        tipo: 'DIA_PROGRAMADO',
-        canal: 'PUSH',
-        destinatario: 'ExponentPushToken[cli-robert-martinez-ios17]',
-        estado: 'ENTREGADA',
-        intentos: 1,
-        reenvio_manual: 0,
-        entregada_en: '2026-10-28T09:00:02Z',
-        error: null
-      },
-      {
-        id_notificacion: 4,
-        id_inspeccion: 5,
-        folio: 'INS-2026-000005',
-        cliente_nombre: 'Robert B. Martinez',
-        tipo: 'RECORDATORIO',
-        canal: 'PUSH',
-        destinatario: 'ExponentPushToken[cli-robert-martinez-ios17]',
-        estado: 'ENTREGADA',
-        intentos: 1,
-        reenvio_manual: 0,
-        entregada_en: '2026-10-29T07:00:02Z',
-        error: null
-      },
-      {
-        id_notificacion: 5,
-        id_inspeccion: 6,
-        folio: 'INS-2026-000006',
-        cliente_nombre: 'Sarah Jenkins',
-        tipo: 'DIA_PROGRAMADO',
-        canal: 'PUSH',
-        destinatario: 'ExponentPushToken[cli-sarah-jenkins-and14]',
-        estado: 'ENTREGADA',
-        intentos: 1,
-        reenvio_manual: 0,
-        entregada_en: '2026-10-28T11:30:02Z',
-        error: null
-      },
-      {
-        id_notificacion: 6,
-        id_inspeccion: 7,
-        folio: 'INS-2026-000007',
-        cliente_nombre: 'Michael A. Flores',
-        tipo: 'DIA_PROGRAMADO',
-        canal: 'SMS',
-        destinatario: '+1-210-555-0310',
-        estado: 'FALLIDA',
-        intentos: 3,
-        reenvio_manual: 0,
-        entregada_en: null,
-        error: 'Twilio Error 30005: Unknown destination handset / Buzón lleno tras 3 intentos'
-      }
-    ];
-
-    let reprogramacionesData = [
-      {
-        id_reprogramacion: 1,
-        id_inspeccion: 6,
-        folio: 'INS-2026-000006',
-        cliente_nombre: 'Sarah Jenkins',
-        cliente_telefono: '+1-210-555-0233',
-        inspector_nombre: 'Carlos Garza',
-        veces_reprogramada: 1,
-        fecha_anterior: '2026-10-29',
-        ventana_inicio_anterior: '11:30',
-        fecha_solicitada: '2026-10-30',
-        ventana_inicio_solicitada: '09:00',
-        ventana_fin_solicitada: '11:00',
-        motivo: 'Tengo cita médica en el centro de San Antonio a mediodía, ¿podrían venir el viernes por la mañana?',
-        estado: 'SOLICITADA'
-      }
-    ];
-
-    let fechaFiltro = '2026-10-29';
+    let citasData = [];
+    let todasLasCitas = [];
+    let notificacionesData = [];
+    let reprogramacionesData = [];
+    let catalogos = { zonas: [], inspectores: [], clientes: [], domicilios: [] };
+    const ID_USUARIO_PANEL = 'u-admin-001';
+    const ESTADOS_NO_MODIFICABLES = ['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA'];
+    let fechaFiltro = hoyISO();
     let selectedCita = null;
+    let monitorTimer = null;
 
-    async function cargarCitasDesdeApi() {
+    // ---------------------------------------------------------------------
+    // Utilidades generales
+    // ---------------------------------------------------------------------
+    function aISO(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function hoyISO() {
+      return aISO(new Date());
+    }
+
+    function sumarDias(iso, dias) {
+      const d = new Date(`${iso}T12:00:00`);
+      d.setDate(d.getDate() + dias);
+      return aISO(d);
+    }
+
+    function formatearFechaLarga(iso) {
+      const txt = new Date(`${iso}T12:00:00`).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      return txt.charAt(0).toUpperCase() + txt.slice(1);
+    }
+
+    function esc(valor) {
+      return String(valor ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function iniciales(nombre) {
+      return String(nombre || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+    }
+
+    function textoDomicilio(d) {
+      if (!d) return '';
+      return `${d.numero || ''} ${d.calle || ''}, ${d.colonia || ''}${d.codigo_postal ? ' ' + d.codigo_postal : ''}`.trim();
+    }
+
+    function marcarEstadoApi(conectada) {
       const dot = document.getElementById('apiStatusDot');
       const text = document.getElementById('apiStatusText');
+      if (!dot || !text) return;
+      if (conectada) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block shrink-0';
+        text.className = 'text-[10px] sm:text-[11px] text-emerald-300 font-medium truncate';
+        text.textContent = 'API conectada';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse shrink-0';
+        text.className = 'text-[10px] sm:text-[11px] text-rose-300 font-medium truncate';
+        text.textContent = 'API desconectada — los cambios no se guardan';
+      }
+    }
+
+    // Avisos no bloqueantes (reemplazan a alert)
+    function toast(mensaje, tipo = 'ok') {
+      let cont = document.getElementById('contenedorToasts');
+      if (!cont) {
+        cont = document.createElement('div');
+        cont.id = 'contenedorToasts';
+        cont.className = 'fixed bottom-4 right-4 left-4 sm:left-auto z-[60] flex flex-col gap-2 sm:w-96';
+        cont.setAttribute('role', 'status');
+        cont.setAttribute('aria-live', 'polite');
+        document.body.appendChild(cont);
+      }
+      const estilos = {
+        ok: 'bg-emerald-50 border-emerald-300 text-emerald-900',
+        error: 'bg-rose-50 border-rose-300 text-rose-900',
+        info: 'bg-slate-50 border-slate-300 text-slate-800'
+      };
+      const iconos = { ok: 'fa-circle-check text-emerald-600', error: 'fa-circle-exclamation text-rose-600', info: 'fa-circle-info text-slate-500' };
+      const div = document.createElement('div');
+      div.className = `border rounded-xl shadow-lg px-4 py-3 text-xs flex items-start gap-2.5 ${estilos[tipo] || estilos.info}`;
+      div.innerHTML = `<i class="fa-solid ${iconos[tipo] || iconos.info} mt-0.5"></i><div class="flex-1 whitespace-pre-line">${esc(mensaje)}</div><button class="text-slate-400 hover:text-slate-700" aria-label="Cerrar aviso">&times;</button>`;
+      div.querySelector('button').onclick = () => div.remove();
+      cont.appendChild(div);
+      setTimeout(() => div.remove(), tipo === 'error' ? 9000 : 5000);
+    }
+
+    // Diálogo para pedir un texto obligatorio (reemplaza a prompt)
+    function pedirTexto({ titulo, mensaje = '', placeholder = '', textoBoton = 'Aceptar', minimo = 5 }) {
+      return new Promise((resolve) => {
+        const fondo = document.createElement('div');
+        fondo.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[55] flex items-center justify-center p-4';
+        fondo.innerHTML = `
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-5 space-y-3" role="dialog" aria-modal="true">
+            <h3 class="text-sm font-bold text-slate-900">${esc(titulo)}</h3>
+            ${mensaje ? `<p class="text-xs text-slate-600">${esc(mensaje)}</p>` : ''}
+            <textarea rows="3" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5" placeholder="${esc(placeholder)}"></textarea>
+            <p class="hidden text-[11px] text-rose-700" data-error>Escribe al menos ${minimo} caracteres.</p>
+            <div class="flex justify-end gap-2">
+              <button data-cancelar class="px-3 py-2 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium">Volver</button>
+              <button data-aceptar class="px-3 py-2 text-xs bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold">${esc(textoBoton)}</button>
+            </div>
+          </div>`;
+        document.body.appendChild(fondo);
+        const area = fondo.querySelector('textarea');
+        area.focus();
+        const cerrar = (valor) => { fondo.remove(); resolve(valor); };
+        fondo.querySelector('[data-cancelar]').onclick = () => cerrar(null);
+        fondo.querySelector('[data-aceptar]').onclick = () => {
+          const v = area.value.trim();
+          if (v.length < minimo) { fondo.querySelector('[data-error]').classList.remove('hidden'); return; }
+          cerrar(v);
+        };
+      });
+    }
+
+    // Llamada a la API con manejo uniforme de errores
+    async function api(ruta, opciones = {}) {
+      let res;
       try {
-        const res = await fetch(`${API_URL}/inspecciones?fecha=${fechaFiltro}`);
-        if (res.ok) {
-          const data = await res.json();
-          citasData = data.inspecciones || [];
-          if (dot && text) {
-            dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block';
-            text.className = 'text-[11px] text-emerald-300 font-medium';
-            text.textContent = '🟢 API Conectada (Puerto 4000) — Base de Datos Activa';
-          }
-        } else {
-          throw new Error('Respuesta no exitosa');
-        }
+        res = await fetch(`${API_URL}${ruta}`, {
+          method: opciones.method || 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          body: opciones.body !== undefined ? JSON.stringify(opciones.body) : undefined
+        });
+      } catch (_) {
+        marcarEstadoApi(false);
+        throw new Error('No hay conexión con la API (http://localhost:4000). Ejecuta "npm run api" en la raíz del proyecto y vuelve a intentar.');
+      }
+      marcarEstadoApi(true);
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok) {
+        const err = new Error(data.error || `La API respondió con error ${res.status}.`);
+        err.codigo = data.codigo;
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    // ---------------------------------------------------------------------
+    // Catálogos base (inspectores, zonas, clientes y domicilios)
+    // ---------------------------------------------------------------------
+    async function cargarCatalogosBase() {
+      const data = await api('/catalogos');
+      catalogos = {
+        zonas: data.zonas || [],
+        inspectores: data.inspectores || [],
+        clientes: data.clientes || [],
+        domicilios: data.domicilios || []
+      };
+      llenarSelectsCatalogo();
+    }
+
+    function opcionesHtml(lista, valor, texto, vacio) {
+      return (vacio ? `<option value="">${esc(vacio)}</option>` : '') +
+        lista.map(x => `<option value="${esc(x[valor])}">${esc(texto(x))}</option>`).join('');
+    }
+
+    function llenarSelectsCatalogo() {
+      const selInsp = document.getElementById('selectInspectorFilter');
+      const selZona = document.getElementById('selectZonaFilter');
+      const prevInsp = selInsp.value;
+      const prevZona = selZona.value;
+      selInsp.innerHTML = opcionesHtml(catalogos.inspectores, 'id_inspector', i => `${i.nombre}${i.zonas_asignadas ? ' (' + i.zonas_asignadas + ')' : ''}`, 'Todos los inspectores');
+      selZona.innerHTML = opcionesHtml(catalogos.zonas, 'id_zona', z => z.nombre, 'Todas las zonas');
+      selInsp.value = prevInsp;
+      selZona.value = prevZona;
+
+      document.getElementById('inputCliente').innerHTML = opcionesHtml(catalogos.clientes, 'id_cliente', c => `${c.nombre} — ${c.telefono}`, 'Selecciona un cliente');
+      document.getElementById('inputInspector').innerHTML = opcionesHtml(catalogos.inspectores, 'id_inspector', i => `${i.nombre}${i.placa_vehiculo ? ' (' + i.placa_vehiculo + ')' : ''}`, 'Selecciona un inspector');
+      actualizarDomiciliosDelCliente();
+    }
+
+    function actualizarDomiciliosDelCliente() {
+      const idCliente = document.getElementById('inputCliente').value;
+      const selDom = document.getElementById('inputDomicilio');
+      const doms = catalogos.domicilios.filter(d => String(d.id_cliente) === String(idCliente));
+      if (!idCliente) {
+        selDom.innerHTML = '<option value="">Primero selecciona un cliente</option>';
+      } else if (doms.length === 0) {
+        selDom.innerHTML = '<option value="">El cliente no tiene domicilios registrados</option>';
+      } else {
+        selDom.innerHTML = opcionesHtml(doms, 'id_domicilio', d => `${textoDomicilio(d)}${d.zona_nombre ? ' · ' + d.zona_nombre : ''}`);
+      }
+    }
+
+    // Lista completa de citas: alimenta "Días con citas" y la reprogramación por oficina
+    async function cargarFechasConCitas() {
+      try {
+        const data = await api('/inspecciones');
+        todasLasCitas = data.inspecciones || [];
+      } catch (_) {
+        todasLasCitas = [];
+      }
+      const conteo = {};
+      todasLasCitas.forEach(c => { conteo[c.fecha_programada] = (conteo[c.fecha_programada] || 0) + 1; });
+      const fechas = Object.keys(conteo).sort().reverse();
+      document.getElementById('selectFechasConCitas').innerHTML = '<option value="">Días con citas…</option>' +
+        fechas.map(f => `<option value="${f}">${f} · ${conteo[f]} cita(s)</option>`).join('');
+
+      const movibles = todasLasCitas.filter(c => !ESTADOS_NO_MODIFICABLES.includes(c.estado) && (c.veces_reprogramada || 0) < 3);
+      const selOficina = document.getElementById('selectCitaOficina');
+      selOficina.innerHTML = movibles.length
+        ? opcionesHtml(movibles, 'id_inspeccion', c => `${c.folio} — ${c.cliente_nombre} (${c.fecha_programada} ${c.ventana_inicio})`)
+        : '<option value="">No hay citas que se puedan mover</option>';
+    }
+
+    async function cargarCitasDesdeApi() {
+      try {
+        const data = await api(`/inspecciones?fecha=${fechaFiltro}`);
+        citasData = data.inspecciones || [];
       } catch (err) {
-        if (dot && text) {
-          dot.className = 'w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse';
-          text.className = 'text-[11px] text-rose-300 font-medium';
-          text.textContent = '🔴 API Apagada — Modo Simulado (No guarda en Base de Datos)';
-        }
-        console.warn('API local no accesible, usando datos precargados:', err);
+        citasData = [];
+        toast(err.message, 'error');
       }
       renderCalendar();
     }
 
+    const COLORES_INSPECTOR = [
+      'bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700', 'bg-amber-100 text-amber-700',
+      'bg-cyan-100 text-cyan-700', 'bg-rose-100 text-rose-700', 'bg-lime-100 text-lime-700'
+    ];
+
+    function columnaInspectorHtml(titulo, subtitulo, avatar, colorAvatar, citas) {
+      const col = document.createElement('div');
+      col.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden';
+      col.innerHTML = `
+        <div class="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-2">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-8 h-8 rounded-full ${colorAvatar} flex items-center justify-center font-bold text-xs shrink-0">${esc(avatar)}</div>
+            <div class="min-w-0">
+              <h3 class="text-sm font-bold text-slate-900 truncate">${esc(titulo)}</h3>
+              <p class="text-xs text-slate-500 truncate">${esc(subtitulo)}</p>
+            </div>
+          </div>
+          <span class="text-xs bg-white text-slate-700 font-medium px-2 py-0.5 rounded-full border border-slate-200 shrink-0">${citas.length} ${citas.length === 1 ? 'cita' : 'citas'}</span>
+        </div>
+        <div class="p-4 space-y-3 min-h-[120px]"></div>`;
+      const cuerpo = col.lastElementChild;
+      if (citas.length === 0) {
+        cuerpo.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Sin citas para este día</div>';
+      } else {
+        citas.forEach(c => cuerpo.appendChild(createCard(c)));
+      }
+      return col;
+    }
+
     function renderCalendar() {
-      const container1 = document.getElementById('citasContainerInsp1');
-      const container2 = document.getElementById('citasContainerInsp2');
-      container1.innerHTML = '';
-      container2.innerHTML = '';
+      const cont = document.getElementById('columnasInspectores');
+      cont.innerHTML = '';
 
       const inspFiltro = document.getElementById('selectInspectorFilter').value;
       const zonaFiltro = document.getElementById('selectZonaFilter').value;
@@ -1186,33 +1175,36 @@
         return true;
       });
 
-      let count1 = 0, count2 = 0;
-      let total = filtradas.length, conf = 0, notif = 0, prog = 0;
-
-      filtradas.forEach(cita => {
-        if (cita.estado === 'CONFIRMADA') conf++;
-        else if (cita.estado === 'NOTIFICADA') notif++;
-        else prog++;
-
-        const card = createCard(cita);
-        if (cita.id_inspector === 1) {
-          container1.appendChild(card);
-          count1++;
-        } else if (cita.id_inspector === 2) {
-          container2.appendChild(card);
-          count2++;
-        }
+      let conf = 0, notif = 0, otras = 0;
+      filtradas.forEach(c => {
+        if (c.estado === 'CONFIRMADA') conf++;
+        else if (c.estado === 'NOTIFICADA') notif++;
+        else otras++;
       });
-
-      document.getElementById('badgeCountInsp1').textContent = `${count1} citas`;
-      document.getElementById('badgeCountInsp2').textContent = `${count2} citas`;
-      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statTotal').textContent = filtradas.length;
       document.getElementById('statConfirmadas').textContent = conf;
       document.getElementById('statNotificadas').textContent = notif;
-      document.getElementById('statPendientes').textContent = prog;
+      document.getElementById('statPendientes').textContent = otras;
 
-      if (count1 === 0) container1.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Sin citas para este día</div>';
-      if (count2 === 0) container2.innerHTML = '<div class="text-center py-6 text-xs text-slate-400">Sin citas para este día</div>';
+      if (catalogos.inspectores.length === 0 && filtradas.length === 0) {
+        cont.innerHTML = '<div class="bg-white rounded-xl border border-slate-200 p-6 text-center text-xs text-slate-500">No hay datos para mostrar. Verifica que la API esté encendida.</div>';
+        return;
+      }
+
+      const inspectores = catalogos.inspectores.filter(i => !inspFiltro || String(i.id_inspector) === String(inspFiltro));
+      const idsConColumna = new Set();
+      inspectores.forEach((insp, idx) => {
+        idsConColumna.add(String(insp.id_inspector));
+        const citas = filtradas.filter(c => String(c.id_inspector) === String(insp.id_inspector));
+        const sub = [insp.placa_vehiculo ? `Placas ${insp.placa_vehiculo}` : null, insp.zonas_asignadas ? `Zonas: ${insp.zonas_asignadas}` : null].filter(Boolean).join(' · ');
+        cont.appendChild(columnaInspectorHtml(insp.nombre, sub || 'Sin zonas asignadas', iniciales(insp.nombre), COLORES_INSPECTOR[idx % COLORES_INSPECTOR.length], citas));
+      });
+
+      // Citas sin inspector (o con un inspector dado de baja) no se pierden
+      const huerfanas = filtradas.filter(c => !c.id_inspector || !idsConColumna.has(String(c.id_inspector)));
+      if (huerfanas.length > 0) {
+        cont.appendChild(columnaInspectorHtml('Sin inspector asignado', 'Asigna un inspector desde el detalle de la cita', '?', 'bg-slate-200 text-slate-700', huerfanas));
+      }
     }
 
     function getEstadoBadge(estado) {
@@ -1251,53 +1243,193 @@
     }
 
     function abrirDetalle(cita) {
+      abrirDetallePorId(cita.id_inspeccion, cita);
+    }
+
+    async function abrirDetallePorId(idInspeccion, citaPrevia = null) {
+      if (citaPrevia) pintarDetalle(citaPrevia, null);
+      document.getElementById('modalDetalleCita').classList.remove('hidden');
+      try {
+        const detalle = await api(`/inspecciones/${idInspeccion}`);
+        pintarDetalle(detalle, detalle.historial || []);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+    }
+
+    function pintarDetalle(cita, historial) {
       selectedCita = cita;
       document.getElementById('detFolioBadge').textContent = cita.folio;
-      document.getElementById('detEstadoBadge').textContent = cita.estado;
-      document.getElementById('detClienteNombre').textContent = cita.cliente_nombre;
-      document.getElementById('detClienteTelefono').textContent = cita.cliente_telefono;
+      const badgeEstado = document.getElementById('detEstadoBadge');
+      badgeEstado.textContent = cita.estado;
+      document.getElementById('detClienteNombre').textContent = cita.cliente_nombre || '';
+      document.getElementById('detClienteTelefono').textContent = cita.cliente_telefono || '';
       document.getElementById('detInspectorNombre').textContent = cita.inspector_nombre || 'Sin asignar';
       document.getElementById('detInspectorPlacas').textContent = cita.placa_vehiculo ? `Vehículo ${cita.placa_vehiculo}` : '';
-      document.getElementById('detDireccion').textContent = `${cita.calle} #${cita.numero}, ${cita.colonia}, ${cita.ciudad}, Texas ${cita.codigo_postal}`;
+      document.getElementById('detDireccion').textContent = `${textoDomicilio(cita)}, ${cita.ciudad || 'San Antonio'}, Texas`;
       document.getElementById('detReferencias').textContent = cita.referencias || 'Sin referencias';
-      document.getElementById('detMotivo').textContent = cita.motivo_visita || 'Inspección de techo';
+      document.getElementById('detMotivo').textContent = `${cita.motivo_visita || 'Inspección de techo'} · ${cita.fecha_programada} (${cita.ventana_inicio} - ${cita.ventana_fin})`;
 
-      // Historial
+      // Disponibilidad de acciones según el estado (RN-05 / RN-06)
+      const bloqueada = ESTADOS_NO_MODIFICABLES.includes(cita.estado);
+      const sinReprog = (cita.veces_reprogramada || 0) >= 3;
+      const bReasig = document.getElementById('btnActionReasignar');
+      const bMover = document.getElementById('btnActionMover');
+      const bCancel = document.getElementById('btnActionCancelar');
+      [bReasig, bMover, bCancel].forEach(b => { b.disabled = bloqueada; b.classList.toggle('opacity-50', bloqueada); b.classList.toggle('cursor-not-allowed', bloqueada); });
+      if (!bloqueada && sinReprog) { bMover.disabled = true; bMover.classList.add('opacity-50', 'cursor-not-allowed'); }
+      const aviso = document.getElementById('detAccionesAviso');
+      if (bloqueada) {
+        aviso.textContent = `La cita está en estado ${cita.estado}: ya no se puede reasignar, mover ni cancelar desde la agenda.`;
+        aviso.classList.remove('hidden');
+      } else if (sinReprog) {
+        aviso.textContent = 'La cita ya alcanzó el límite de 3 reprogramaciones (RN-06).';
+        aviso.classList.remove('hidden');
+      } else {
+        aviso.classList.add('hidden');
+      }
+      cerrarFormularioAccion();
+
+      // Historial real de la cita
       const histContainer = document.getElementById('detHistorialContainer');
-      histContainer.innerHTML = `
-        <div class="relative pl-2">
-          <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-white"></div>
-          <div class="text-xs font-bold text-slate-800">PROGRAMADA</div>
-          <div class="text-[11px] text-slate-500">Cita agendada por administración (Panel)</div>
-        </div>
-      `;
-      if (cita.estado === 'NOTIFICADA' || cita.estado === 'CONFIRMADA') {
-        histContainer.innerHTML += `
-          <div class="relative pl-2">
-            <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-white"></div>
-            <div class="text-xs font-bold text-slate-800">NOTIFICADA</div>
-            <div class="text-[11px] text-slate-500">Aviso previo enviado al cliente</div>
-          </div>
-        `;
+      if (historial === null) {
+        histContainer.innerHTML = '<div class="text-[11px] text-slate-400">Cargando historial…</div>';
+        return;
       }
-      if (cita.estado === 'CONFIRMADA') {
-        histContainer.innerHTML += `
-          <div class="relative pl-2">
-            <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white"></div>
-            <div class="text-xs font-bold text-slate-800">CONFIRMADA</div>
-            <div class="text-[11px] text-slate-500">Cliente confirmó disponibilidad desde la app</div>
+      if (historial.length === 0) {
+        histContainer.innerHTML = '<div class="text-[11px] text-slate-400">Sin movimientos registrados.</div>';
+        return;
+      }
+      histContainer.innerHTML = historial.map(h => `
+        <div class="relative pl-2">
+          <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white"></div>
+          <div class="text-xs font-bold text-slate-800">${esc(h.estado_anterior && h.estado_anterior !== h.estado_nuevo ? h.estado_anterior + ' → ' + h.estado_nuevo : h.estado_nuevo)}</div>
+          <div class="text-[11px] text-slate-500">${esc(h.nota || '')}</div>
+          <div class="text-[10px] text-slate-400">${esc((h.ocurrido_en || '').replace('T', ' ').slice(0, 16))} · ${esc(h.origen || '')}${h.usuario_nombre ? ' · ' + esc(h.usuario_nombre) : ''}</div>
+        </div>`).join('');
+    }
+
+    function cerrarFormularioAccion() {
+      const form = document.getElementById('detAccionForm');
+      form.classList.add('hidden');
+      form.innerHTML = '';
+    }
+
+    function mostrarFormularioAccion(tipo) {
+      if (!selectedCita) return;
+      const c = selectedCita;
+      const contenedor = document.getElementById('detAccionForm');
+      const claseCampo = 'w-full text-xs bg-white border border-slate-300 rounded-lg p-2';
+      const botones = (texto, color) => `
+        <p data-error class="hidden text-[11px] text-rose-700"></p>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="button" data-volver class="px-3 py-1.5 text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg font-medium">Volver</button>
+          <button type="submit" class="px-3 py-1.5 text-xs ${color} text-white rounded-lg font-semibold">${texto}</button>
+        </div>`;
+
+      if (tipo === 'reasignar') {
+        const otros = catalogos.inspectores.filter(i => String(i.id_inspector) !== String(c.id_inspector));
+        contenedor.innerHTML = `<form data-accion class="space-y-2.5">
+          <h5 class="text-xs font-bold text-slate-800">Reasignar inspector</h5>
+          <label class="block text-[11px] font-semibold text-slate-600">Nuevo inspector
+            <select name="idInspector" required class="${claseCampo} mt-1">${opcionesHtml(otros, 'id_inspector', i => `${i.nombre}${i.zonas_asignadas ? ' (' + i.zonas_asignadas + ')' : ''}`, 'Selecciona un inspector')}</select>
+          </label>
+          <label class="block text-[11px] font-semibold text-slate-600">Motivo
+            <input name="motivo" required minlength="5" class="${claseCampo} mt-1" placeholder="Ej. reorganización de ruta">
+          </label>
+          ${botones('Reasignar', 'bg-slate-900 hover:bg-slate-800')}</form>`;
+      } else if (tipo === 'mover') {
+        contenedor.innerHTML = `<form data-accion class="space-y-2.5">
+          <h5 class="text-xs font-bold text-slate-800">Mover fecha u horario</h5>
+          <p class="text-[11px] text-slate-500">Reprogramaciones usadas: ${c.veces_reprogramada || 0} de 3. El cliente recibirá el aviso del nuevo horario.</p>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="block text-[11px] font-semibold text-slate-600">Fecha<input type="date" name="nuevaFecha" required value="${esc(c.fecha_programada)}" class="${claseCampo} mt-1"></label>
+            <label class="block text-[11px] font-semibold text-slate-600">Inicio<input type="time" name="nuevaVentanaInicio" required value="${esc(c.ventana_inicio)}" class="${claseCampo} mt-1"></label>
+            <label class="block text-[11px] font-semibold text-slate-600">Fin<input type="time" name="nuevaVentanaFin" required value="${esc(c.ventana_fin)}" class="${claseCampo} mt-1"></label>
           </div>
-        `;
+          <label class="block text-[11px] font-semibold text-slate-600">Motivo
+            <input name="motivo" required minlength="5" class="${claseCampo} mt-1" placeholder="Ej. lluvia intensa en la zona">
+          </label>
+          ${botones('Mover y notificar al cliente', 'bg-slate-900 hover:bg-slate-800')}</form>`;
+      } else if (tipo === 'cancelar') {
+        contenedor.innerHTML = `<form data-accion class="space-y-2.5">
+          <h5 class="text-xs font-bold text-rose-800">Cancelar inspección ${esc(c.folio)}</h5>
+          <p class="text-[11px] text-slate-500">La cancelación no se puede deshacer y queda registrada en el historial.</p>
+          <label class="block text-[11px] font-semibold text-slate-600">Motivo (obligatorio)
+            <textarea name="motivo" required minlength="5" rows="2" class="${claseCampo} mt-1" placeholder="Ej. el cliente vendió la propiedad"></textarea>
+          </label>
+          ${botones('Confirmar cancelación', 'bg-rose-600 hover:bg-rose-700')}</form>`;
       }
 
-      document.getElementById('modalDetalleCita').classList.remove('hidden');
+      contenedor.classList.remove('hidden');
+      const form = contenedor.querySelector('form');
+      form.querySelector('[data-volver]').onclick = cerrarFormularioAccion;
+      form.onsubmit = (e) => { e.preventDefault(); ejecutarAccionDetalle(tipo, new FormData(form)); };
+      const primerCampo = form.querySelector('select, input, textarea');
+      if (primerCampo) primerCampo.focus();
     }
+
+    async function ejecutarAccionDetalle(tipo, datos) {
+      const c = selectedCita;
+      const form = document.getElementById('detAccionForm').querySelector('form');
+      const err = form.querySelector('[data-error]');
+      const botonEnviar = form.querySelector('button[type="submit"]');
+      err.classList.add('hidden');
+
+      let ruta, body, exito;
+      if (tipo === 'reasignar') {
+        ruta = `/inspecciones/${c.id_inspeccion}/reasignar`;
+        body = { idInspector: parseInt(datos.get('idInspector'), 10), motivo: datos.get('motivo'), idUsuario: ID_USUARIO_PANEL };
+        exito = (r) => `Inspección ${r.inspeccion.folio} reasignada a ${r.inspeccion.inspector_nombre}.`;
+      } else if (tipo === 'mover') {
+        if (datos.get('nuevaVentanaFin') <= datos.get('nuevaVentanaInicio')) {
+          err.textContent = 'La hora de fin debe ser posterior a la hora de inicio.';
+          err.classList.remove('hidden');
+          return;
+        }
+        ruta = `/inspecciones/${c.id_inspeccion}/mover`;
+        body = { nuevaFecha: datos.get('nuevaFecha'), nuevaVentanaInicio: datos.get('nuevaVentanaInicio'), nuevaVentanaFin: datos.get('nuevaVentanaFin'), motivo: datos.get('motivo'), idUsuario: ID_USUARIO_PANEL };
+        exito = (r) => `Inspección ${r.inspeccion.folio} movida al ${r.inspeccion.fecha_programada} (${r.inspeccion.ventana_inicio} - ${r.inspeccion.ventana_fin}). Se avisó al cliente.`;
+      } else {
+        ruta = `/inspecciones/${c.id_inspeccion}/cancelar`;
+        body = { motivo: datos.get('motivo'), idUsuario: ID_USUARIO_PANEL, origen: 'PANEL' };
+        exito = () => `Inspección ${c.folio} cancelada.`;
+      }
+
+      botonEnviar.disabled = true;
+      botonEnviar.classList.add('opacity-60');
+      try {
+        const r = await api(ruta, { method: 'PATCH', body });
+        toast(exito(r));
+        await Promise.all([cargarCitasDesdeApi(), cargarFechasConCitas()]);
+        await abrirDetallePorId(c.id_inspeccion);
+      } catch (e) {
+        err.textContent = e.message;
+        err.classList.remove('hidden');
+      } finally {
+        botonEnviar.disabled = false;
+        botonEnviar.classList.remove('opacity-60');
+      }
+    }
+
+    document.getElementById('btnActionReasignar').onclick = () => mostrarFormularioAccion('reasignar');
+    document.getElementById('btnActionMover').onclick = () => mostrarFormularioAccion('mover');
+    document.getElementById('btnActionCancelar').onclick = () => mostrarFormularioAccion('cancelar');
 
     // Modal controls
     document.getElementById('btnNuevaInspeccion').onclick = () => {
       document.getElementById('alertErrorTraslape').classList.add('hidden');
+      document.getElementById('formNuevaInspeccion').reset();
+      llenarSelectsCatalogo();
+      document.getElementById('inputFecha').value = fechaFiltro;
+      const inspFiltro = document.getElementById('selectInspectorFilter').value;
+      if (inspFiltro) document.getElementById('inputInspector').value = inspFiltro;
       document.getElementById('modalNuevaInspeccion').classList.remove('hidden');
+      if (catalogos.clientes.length === 0) {
+        mostrarErrorNueva('No se pudieron cargar los clientes e inspectores. Verifica que la API esté encendida.');
+      }
     };
+    document.getElementById('inputCliente').onchange = actualizarDomiciliosDelCliente;
     document.getElementById('btnCloseModalNueva').onclick = () => {
       document.getElementById('modalNuevaInspeccion').classList.add('hidden');
     };
@@ -1306,9 +1438,16 @@
     };
     document.getElementById('btnCloseModalDetalle').onclick = () => {
       document.getElementById('modalDetalleCita').classList.add('hidden');
+      cerrarFormularioAccion();
     };
 
-    // Form submit with real API call and offline fallback
+    function mostrarErrorNueva(mensaje, titulo = 'No se pudo programar la inspección:') {
+      document.getElementById('tituloErrorNueva').textContent = titulo;
+      document.getElementById('msgErrorTraslape').textContent = mensaje;
+      document.getElementById('alertErrorTraslape').classList.remove('hidden');
+    }
+
+    // Alta de inspección: solo se guarda a través de la API (sin modo simulado)
     document.getElementById('formNuevaInspeccion').onsubmit = async (e) => {
       e.preventDefault();
       const idCliente = parseInt(document.getElementById('inputCliente').value, 10);
@@ -1321,13 +1460,19 @@
       const notas = document.getElementById('inputNotas').value;
 
       document.getElementById('alertErrorTraslape').classList.add('hidden');
+      if (!idCliente || !idDomicilio || !idInspector) {
+        mostrarErrorNueva('Selecciona cliente, domicilio e inspector.');
+        return;
+      }
+      if (vFin <= vInicio) {
+        mostrarErrorNueva('La hora de fin debe ser posterior a la hora de inicio.');
+        return;
+      }
 
-      // 1. Intentar guardar a través de la API real
       try {
-        const res = await fetch(`${API_URL}/inspecciones`, {
+        const data = await api('/inspecciones', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             idCliente,
             idDomicilio,
             idInspector,
@@ -1336,125 +1481,57 @@
             ventanaFin: vFin,
             motivoVisita: motivo,
             notas: notas || undefined,
-            creadaPor: 'u-admin-001'
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          if (data.codigo === 'TRASLAPE_INSPECTOR_RN02') {
-            document.getElementById('msgErrorTraslape').textContent = data.error;
-            document.getElementById('alertErrorTraslape').classList.remove('hidden');
-          } else {
-            alert(`Error de la API: ${data.error || 'No se pudo crear'}`);
+            creadaPor: ID_USUARIO_PANEL
           }
-          return;
-        }
-
-        // Éxito con la API real
+        });
         document.getElementById('modalNuevaInspeccion').classList.add('hidden');
-        await cargarCitasDesdeApi();
-        alert(`✅ ¡Cita guardada en la base de datos real (SQLite)!\nFolio oficial generado por API: ${data.inspeccion.folio}`);
-        return;
-      } catch (errApi) {
-        console.warn('API apagada al intentar POST, procediendo con modo memoria:', errApi);
+        irAFecha(fecha);
+        cargarFechasConCitas();
+        toast(`Inspección ${data.inspeccion.folio} programada para el ${fecha} (${vInicio} - ${vFin}).`);
+      } catch (err) {
+        mostrarErrorNueva(err.message, err.codigo === 'TRASLAPE_INSPECTOR_RN02' ? 'Horario traslapado (RN-02):' : 'No se pudo programar la inspección:');
       }
-
-      // 2. Modo Offline / Simulado (si la API está apagada)
-      const traslape = citasData.find(c => 
-        c.id_inspector === idInspector &&
-        c.fecha_programada === fecha &&
-        c.estado !== 'CANCELADA' &&
-        (c.ventana_inicio < vFin && c.ventana_fin > vInicio)
-      );
-
-      if (traslape) {
-        document.getElementById('msgErrorTraslape').textContent = 
-          `El inspector ya cuenta con la cita [${traslape.folio}] (${traslape.ventana_inicio} - ${traslape.ventana_fin}) en horario traslapado para el ${fecha}. Violación de regla RN-02.`;
-        document.getElementById('alertErrorTraslape').classList.remove('hidden');
-        return;
-      }
-
-      const nueva = {
-        id_inspeccion: citasData.length + 1,
-        folio: `INS-2026-00000${citasData.length + 1}`,
-        id_inspector: idInspector,
-        inspector_nombre: idInspector === 1 ? 'Carlos Garza' : 'David Vance',
-        placa_vehiculo: idInspector === 1 ? 'TX-ROOF-01' : 'TX-AGAVE-02',
-        id_cliente: idCliente,
-        cliente_nombre: 'Robert B. Martinez',
-        cliente_telefono: '+1-210-555-0201',
-        id_domicilio: idDomicilio,
-        calle: 'Stone Oak Pkwy',
-        numero: '19202',
-        colonia: 'Stone Oak',
-        ciudad: 'San Antonio',
-        domicilio_estado: 'Texas',
-        codigo_postal: '78258',
-        fecha_programada: fecha,
-        ventana_inicio: vInicio,
-        ventana_fin: vFin,
-        estado: 'PROGRAMADA',
-        motivo_visita: motivo
-      };
-
-      citasData.push(nueva);
-      document.getElementById('modalNuevaInspeccion').classList.add('hidden');
-      renderCalendar();
-      alert(`⚠️ La API está apagada. La cita se creó temporalmente en la memoria de esta pestaña (Folio: ${nueva.folio}).\nPara que se guarde permanentemente en la base de datos real, arranca la API en la terminal: 'node --experimental-strip-types --experimental-sqlite api/src/server.ts'.`);
     };
 
-      document.getElementById('selectInspectorFilter').onchange = renderCalendar;
+    document.getElementById('selectInspectorFilter').onchange = renderCalendar;
     document.getElementById('selectZonaFilter').onchange = renderCalendar;
 
     function actualizarEtiquetaFecha() {
-      const display = document.getElementById('currentDateDisplay');
-      const label = document.getElementById('currentSprintLabel');
-      if (fechaFiltro === '2026-11-12') {
-        display.textContent = 'Jueves, 12 de Noviembre 2026';
-        label.textContent = 'Hito E11 — Cierre Sprint 5 (Trayecto en Vivo, Ejecución, Modo Sin Señal y Tablero)';
-      } else if (fechaFiltro === '2026-10-29') {
-        display.textContent = 'Jueves, 29 de Octubre 2026';
-        label.textContent = 'Hito E09 — Cierre Sprint 4 (Confirmación y Reprogramación)';
-      } else if (fechaFiltro === '2026-10-15') {
-        display.textContent = 'Jueves, 15 de Octubre 2026';
-        label.textContent = 'Hito E07 — Cierre Sprint 3 (Agenda)';
-      } else {
-        display.textContent = `Fecha: ${fechaFiltro}`;
-        label.textContent = 'Agenda de Inspecciones — San Antonio, TX';
-      }
+      document.getElementById('currentDateDisplay').textContent = formatearFechaLarga(fechaFiltro);
+      document.getElementById('currentSprintLabel').textContent = fechaFiltro === hoyISO()
+        ? 'Hoy · Agenda de inspecciones — San Antonio, TX'
+        : 'Agenda de inspecciones — San Antonio, TX';
+      document.getElementById('inputFechaAgenda').value = fechaFiltro;
+      const lblMonitor = document.getElementById('labelFechaMonitor');
+      if (lblMonitor) lblMonitor.textContent = formatearFechaLarga(fechaFiltro);
     }
 
-    document.getElementById('btnE11Date').onclick = () => {
-      fechaFiltro = '2026-11-12';
+    function irAFecha(iso) {
+      if (!iso) return;
+      fechaFiltro = iso;
       actualizarEtiquetaFecha();
       cargarCitasDesdeApi();
+      if (!document.getElementById('viewMonitor').classList.contains('hidden')) cargarMonitorVivo();
+    }
+
+    document.getElementById('btnHoy').onclick = () => irAFecha(hoyISO());
+    document.getElementById('inputFechaAgenda').onchange = (e) => irAFecha(e.target.value);
+    document.getElementById('selectFechasConCitas').onchange = (e) => {
+      irAFecha(e.target.value);
+      e.target.value = '';
     };
-    document.getElementById('btnHoy').onclick = () => {
-      fechaFiltro = '2026-10-29';
-      actualizarEtiquetaFecha();
-      cargarCitasDesdeApi();
-    };
-    document.getElementById('btnE07Date').onclick = () => {
-      fechaFiltro = '2026-10-15';
-      actualizarEtiquetaFecha();
-      cargarCitasDesdeApi();
-    };
-    document.getElementById('btnPrevDay').onclick = () => {
-      const d = new Date(fechaFiltro + 'T12:00:00Z');
-      d.setUTCDate(d.getUTCDate() - 1);
-      fechaFiltro = d.toISOString().split('T')[0];
-      actualizarEtiquetaFecha();
-      cargarCitasDesdeApi();
-    };
-    document.getElementById('btnNextDay').onclick = () => {
-      const d = new Date(fechaFiltro + 'T12:00:00Z');
-      d.setUTCDate(d.getUTCDate() + 1);
-      fechaFiltro = d.toISOString().split('T')[0];
-      actualizarEtiquetaFecha();
-      cargarCitasDesdeApi();
-    };
+    document.getElementById('btnPrevDay').onclick = () => irAFecha(sumarDias(fechaFiltro, -1));
+    document.getElementById('btnNextDay').onclick = () => irAFecha(sumarDias(fechaFiltro, 1));
+
+    function toggleMobileNav() {
+      const drawer = document.getElementById('mobileQuickDrawer');
+      const icon = document.getElementById('iconMobileMenu');
+      if (!drawer) return;
+      const isHidden = drawer.classList.toggle('hidden');
+      if (icon) {
+        icon.className = isHidden ? 'fa-solid fa-bars text-sm' : 'fa-solid fa-xmark text-sm';
+      }
+    }
 
     function cambiarTab(tab) {
       const vAgenda = document.getElementById('viewAgenda');
@@ -1471,8 +1548,8 @@
       const bTablero = document.getElementById('tabBtnTablero');
       const bCatalogos = document.getElementById('tabBtnCatalogos');
 
-      const activeClass = 'bg-slate-800 text-emerald-400 px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 border-b-2 border-emerald-500 transition';
-      const inactiveClass = 'text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-md text-xs font-medium flex items-center gap-1.5 transition';
+      const activeClass = 'shrink-0 whitespace-nowrap bg-slate-800 text-emerald-400 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 border-b-2 border-emerald-500 transition';
+      const inactiveClass = 'shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition';
 
       vAgenda.classList.toggle('hidden', tab !== 'agenda');
       vNotif.classList.toggle('hidden', tab !== 'notificaciones');
@@ -1488,18 +1565,33 @@
       bTablero.className = tab === 'tablero' ? activeClass : inactiveClass;
       if (bCatalogos) bCatalogos.className = tab === 'catalogos' ? activeClass : inactiveClass;
 
+      const mapBtns = {
+        agenda: bAgenda,
+        notificaciones: bNotif,
+        reprogramaciones: bReprog,
+        monitor: bMonitor,
+        tablero: bTablero,
+        catalogos: bCatalogos
+      };
+      if (mapBtns[tab] && mapBtns[tab].scrollIntoView) {
+        mapBtns[tab].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
       if (tab === 'notificaciones') cargarNotificacionesPanel();
       if (tab === 'reprogramaciones') cargarReprogramacionesYSinConfirmar();
-      if (tab === 'monitor') cargarMonitorVivo();
+      if (monitorTimer) { clearInterval(monitorTimer); monitorTimer = null; }
+      if (tab === 'monitor') {
+        cargarMonitorVivo();
+        monitorTimer = setInterval(cargarMonitorVivo, 15000);
+      }
       if (tab === 'tablero') cargarTableroIndicadores();
       if (tab === 'catalogos') cargarCatalogosYSeguridad();
     }
 
     async function cargarNotificacionesPanel() {
       try {
-        const res = await fetch(`${API_URL}/notificaciones`);
-        if (res.ok) {
-          const data = await res.json();
+        const data = await api('/notificaciones');
+        {
           notificacionesData = data.notificaciones || [];
           if (data.resumen) {
             document.getElementById('kpiNotifTotal').textContent = data.resumen.total;
@@ -1509,13 +1601,19 @@
             document.getElementById('kpiNotifTasa').textContent = `${data.resumen.tasaExitoGlobal}%`;
           }
         }
-      } catch (_) {}
+      } catch (err) {
+        notificacionesData = [];
+        toast(err.message, 'error');
+      }
       renderTablaNotificaciones();
     }
 
     function renderTablaNotificaciones() {
       const tbody = document.getElementById('tablaNotificacionesBody');
+      const mobileCards = document.getElementById('cardsNotificacionesMobile');
       tbody.innerHTML = '';
+      if (mobileCards) mobileCards.innerHTML = '';
+
       notificacionesData.forEach(n => {
         const tr = document.createElement('tr');
         const badgeEstado = n.estado === 'ENTREGADA'
@@ -1529,7 +1627,7 @@
 
         tr.innerHTML = `
           <td class="py-3 px-4">
-            <div class="font-mono font-bold text-slate-800">${n.folio || 'INS-2026-00000' + n.id_inspeccion}</div>
+            <div class="font-mono font-bold text-slate-800">${n.folio || 'Cita #' + n.id_inspeccion}</div>
             <div class="text-slate-500">${n.cliente_nombre || 'Cliente'}</div>
           </td>
           <td class="py-3 px-4 font-semibold text-slate-700">${n.tipo} ${n.reenvio_manual ? '<span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded ml-1">Manual</span>' : ''}</td>
@@ -1547,62 +1645,68 @@
           </td>
         `;
         tbody.appendChild(tr);
+
+        if (mobileCards) {
+          const card = document.createElement('div');
+          card.className = 'p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs';
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <span class="font-mono font-bold text-slate-900">${n.folio || 'Cita #' + n.id_inspeccion}</span>
+                <span class="text-slate-600 font-medium ml-1">· ${n.cliente_nombre || 'Cliente'}</span>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeEstado}">${n.estado}</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeCanal}">${n.canal}</span>
+              <span class="font-semibold text-slate-700">${n.tipo}</span>
+              <span class="text-[11px] font-mono text-slate-500">(${n.intentos}/3 int.)</span>
+            </div>
+            <div class="text-[11px] text-slate-500 break-all">${n.error ? `<span class="text-rose-600 font-medium">${n.error}</span>` : `Entregada: ${n.entregada_en || 'OK'}`}</div>
+            <button onclick="reenviarNotif(${n.id_notificacion})" class="w-full bg-white hover:bg-emerald-600 hover:text-white text-slate-700 border border-slate-300 font-semibold py-1.5 rounded-lg transition text-center">
+              <i class="fa-solid fa-rotate-right mr-1"></i>Reenviar Manualmente
+            </button>
+          `;
+          mobileCards.appendChild(card);
+        }
       });
     }
 
     async function reenviarNotif(idNotificacion) {
       try {
-        const res = await fetch(`${API_URL}/notificaciones/${idNotificacion}/reenviar`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idUsuario: 'u-admin-001' })
-        });
-        if (res.ok) {
-          await cargarNotificacionesPanel();
-          alert('✅ Notificación reenviada manualmente (reenvio_manual = true, RN-13).');
-          return;
-        }
-      } catch (_) {}
-      alert('✅ Reenvío manual simulado registrado (reenvio_manual = true).');
+        await api(`/notificaciones/${idNotificacion}/reenviar`, { method: 'POST', body: { idUsuario: ID_USUARIO_PANEL } });
+        await cargarNotificacionesPanel();
+        toast('Notificación reenviada manualmente (queda marcada como reenvío manual, RN-13).');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     async function ejecutarDespachadorPanel() {
       try {
-        const res = await fetch(`${API_URL}/notificaciones/despachar`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        if (res.ok) {
-          await cargarNotificacionesPanel();
-          await cargarCitasDesdeApi();
-          alert('✅ Temporizadores de 24h y 3h y despachador ejecutados con éxito.');
-          return;
-        }
-      } catch (_) {}
-      alert('✅ Despachador de notificaciones ejecutado.');
+        await api('/notificaciones/despachar', { method: 'POST', body: {} });
+        await Promise.all([cargarNotificacionesPanel(), cargarCitasDesdeApi()]);
+        toast('Despachador ejecutado: se procesaron los avisos pendientes de 24 h y 3 h.');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     async function cargarReprogramacionesYSinConfirmar() {
       try {
-        const [resReprog, resSinConf] = await Promise.all([
-          fetch(`${API_URL}/reprogramaciones`),
-          fetch(`${API_URL}/inspecciones/sin-confirmar`)
+        const [dReprog, dSinConf] = await Promise.all([
+          api('/reprogramaciones'),
+          api('/inspecciones/sin-confirmar')
         ]);
-        if (resReprog.ok) {
-          const d = await resReprog.json();
-          reprogramacionesData = d.solicitudes || [];
-        }
-        if (resSinConf.ok) {
-          const d2 = await resSinConf.json();
-          renderSinConfirmar(d2.citas || []);
-        } else {
-          renderSinConfirmar(citasData.filter(c => c.estado === 'SIN_CONFIRMAR'));
-        }
-      } catch (_) {
-        renderSinConfirmar(citasData.filter(c => c.estado === 'SIN_CONFIRMAR'));
+        reprogramacionesData = dReprog.solicitudes || [];
+        renderSinConfirmar(dSinConf.citas || []);
+      } catch (err) {
+        reprogramacionesData = [];
+        renderSinConfirmar([]);
+        toast(err.message, 'error');
       }
       renderBandejaReprogramaciones();
+      cargarFechasConCitas();
     }
 
     function renderBandejaReprogramaciones() {
@@ -1626,31 +1730,31 @@
           : 'bg-rose-100 text-rose-800 border-rose-200';
 
         div.innerHTML = `
-          <div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span class="font-mono font-bold text-xs text-slate-800">${sol.folio}</span>
               <span class="text-xs font-bold text-slate-900">${sol.cliente_nombre}</span>
               <span class="text-[10px] text-slate-500">(Reprog. ${sol.veces_reprogramada || 1}/3 RN-06)</span>
             </div>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${badge}">${sol.estado}</span>
           </div>
-          <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-lg border border-slate-200">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-lg border border-slate-200">
             <div>
               <span class="text-[10px] text-slate-400 block uppercase">Fecha Actual</span>
               <span class="font-semibold text-slate-700">${sol.fecha_anterior} (${sol.ventana_inicio_anterior})</span>
             </div>
             <div>
               <span class="text-[10px] text-emerald-600 block uppercase font-bold">Fecha Solicitada</span>
-              <span class="font-bold text-emerald-700">${sol.fecha_solicitada} (${sol.ventana_inicio_solicitada} - ${sol.ventana_fin_solicitada || '11:00'})</span>
+              <span class="font-bold text-emerald-700">${sol.fecha_solicitada} (${sol.ventana_inicio_solicitada} - ${sol.ventana_fin_solicitada || '—'})</span>
             </div>
           </div>
           <div class="text-xs text-slate-600 italic">Motivo del cliente: "${sol.motivo || 'Sin motivo'}"</div>
           ${sol.estado === 'SOLICITADA' ? `
-            <div class="flex justify-end gap-2 pt-1">
-              <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, true)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+            <div class="flex flex-col sm:flex-row justify-end gap-2 pt-1">
+              <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, true)" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 sm:py-1.5 rounded-lg transition text-center">
                 <i class="fa-solid fa-check mr-1"></i>Aprobar (Conservar Folio)
               </button>
-              <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, false)" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+              <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, false)" class="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-2 sm:py-1.5 rounded-lg transition text-center">
                 <i class="fa-solid fa-xmark mr-1"></i>Rechazar con Motivo
               </button>
             </div>
@@ -1660,7 +1764,20 @@
       });
     }
 
+    function actualizarBannerSinConfirmar(lista) {
+      const banner = document.getElementById('bannerClienteNoAlcanzado');
+      const texto = document.getElementById('textoClienteNoAlcanzado');
+      if (!lista || lista.length === 0) {
+        banner.classList.add('hidden');
+        return;
+      }
+      const muestra = lista.slice(0, 3).map(c => `${esc(c.folio)} (${esc(c.cliente_nombre)} · ${esc(c.cliente_telefono)})`).join(', ');
+      texto.innerHTML = `${lista.length === 1 ? 'Hay 1 cita' : `Hay ${lista.length} citas`} en <strong>SIN_CONFIRMAR</strong>: ${muestra}${lista.length > 3 ? ' y más' : ''}. Llama al cliente antes de enviar al inspector (RN-07).`;
+      banner.classList.remove('hidden');
+    }
+
     function renderSinConfirmar(lista) {
+      actualizarBannerSinConfirmar(lista);
       const cont = document.getElementById('contenedorSinConfirmar');
       cont.innerHTML = '';
       if (!lista || lista.length === 0) {
@@ -1676,7 +1793,7 @@
             <span class="text-[10px] font-bold bg-orange-100 text-orange-800 px-2 py-0.5 rounded">SIN_CONFIRMAR</span>
           </div>
           <div class="font-bold text-slate-900">${c.cliente_nombre} · <a href="tel:${c.cliente_telefono}" class="text-emerald-700 underline">${c.cliente_telefono}</a></div>
-          <div class="text-slate-600">📅 ${c.fecha_programada} (${c.ventana_inicio} - ${c.ventana_fin}) · Insp: ${c.inspector_nombre || 'David Vance'}</div>
+          <div class="text-slate-600">📅 ${c.fecha_programada} (${c.ventana_inicio} - ${c.ventana_fin}) · Insp: ${c.inspector_nombre || 'sin asignar'}</div>
           <div class="flex gap-2 pt-1">
             <button onclick="confirmarPorLlamadaPanel(${c.id_inspeccion})" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 rounded-lg transition">
               📞 Confirmar por Llamada
@@ -1693,85 +1810,69 @@
     async function resolverSolicitudPanel(idReprog, aprobada) {
       let motivoRechazo = '';
       if (!aprobada) {
-        motivoRechazo = prompt('Motivo del rechazo (se enviará al cliente):') || '';
-        if (!motivoRechazo.trim()) return;
+        motivoRechazo = await pedirTexto({
+          titulo: 'Rechazar solicitud de reprogramación',
+          mensaje: 'El motivo se enviará al cliente.',
+          placeholder: 'Ej. no hay inspectores disponibles ese día; le proponemos el jueves',
+          textoBoton: 'Rechazar solicitud'
+        });
+        if (!motivoRechazo) return;
       }
       try {
-        const res = await fetch(`${API_URL}/reprogramaciones/${idReprog}/resolver`, {
+        const data = await api(`/reprogramaciones/${idReprog}/resolver`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ aprobada, motivoRechazo, resueltaPor: 'u-admin-001' })
+          body: { aprobada, motivoRechazo, resueltaPor: ID_USUARIO_PANEL }
         });
-        const data = await res.json();
-        if (res.ok) {
-          await cargarReprogramacionesYSinConfirmar();
-          await cargarCitasDesdeApi();
-          alert(aprobada
-            ? `✅ Solicitud aprobada. La cita conserva su folio ${data.inspeccion.folio} y se envió notificación al cliente.`
-            : '✅ Solicitud rechazada con motivo registrado.');
-          return;
-        } else {
-          alert(`Error: ${data.error}`);
-          return;
-        }
-      } catch (_) {}
-      const item = reprogramacionesData.find(r => r.id_reprogramacion === idReprog);
-      if (item) item.estado = aprobada ? 'APROBADA' : 'RECHAZADA';
-      renderBandejaReprogramaciones();
-      alert('✅ Resolución aplicada.');
+        await Promise.all([cargarReprogramacionesYSinConfirmar(), cargarCitasDesdeApi()]);
+        toast(aprobada
+          ? `Solicitud aprobada. La cita conserva su folio ${data.inspeccion.folio} y se avisó al cliente.`
+          : 'Solicitud rechazada; el motivo quedó registrado.');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     async function confirmarPorLlamadaPanel(idInspeccion) {
       try {
-        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/confirmar`, {
+        await api(`/inspecciones/${idInspeccion}/confirmar`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idUsuario: 'u-admin-001', confirmadaPorLlamada: true })
+          body: { idUsuario: ID_USUARIO_PANEL, confirmadaPorLlamada: true }
         });
-        if (res.ok) {
-          await cargarReprogramacionesYSinConfirmar();
-          await cargarCitasDesdeApi();
-          alert('✅ Cita confirmada por llamada telefónica (estado actualizado a CONFIRMADA).');
-          return;
-        }
-      } catch (_) {}
-      const cita = citasData.find(c => c.id_inspeccion === idInspeccion);
-      if (cita) cita.estado = 'CONFIRMADA';
-      renderCalendar();
-      cargarReprogramacionesYSinConfirmar();
-      alert('✅ Cita confirmada por llamada telefónica.');
+        await Promise.all([cargarReprogramacionesYSinConfirmar(), cargarCitasDesdeApi()]);
+        toast('Cita confirmada por llamada telefónica.');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     async function cancelarSinConfirmarPanel(idInspeccion) {
-      const motivo = prompt('Motivo de cancelación:') || 'Cliente no localizado tras intentos de contacto';
+      const motivo = await pedirTexto({
+        titulo: 'Cancelar inspección',
+        mensaje: 'La cancelación no se puede deshacer y queda en el historial de la cita.',
+        placeholder: 'Ej. cliente no localizado tras 3 llamadas',
+        textoBoton: 'Confirmar cancelación'
+      });
+      if (!motivo) return;
       try {
-        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/cancelar`, {
+        await api(`/inspecciones/${idInspeccion}/cancelar`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ motivo, idUsuario: 'u-admin-001', origen: 'PANEL' })
+          body: { motivo, idUsuario: ID_USUARIO_PANEL, origen: 'PANEL' }
         });
-        if (res.ok) {
-          await cargarReprogramacionesYSinConfirmar();
-          await cargarCitasDesdeApi();
-          alert('✅ Cita cancelada con motivo en el historial.');
-          return;
-        }
-      } catch (_) {}
+        await Promise.all([cargarReprogramacionesYSinConfirmar(), cargarCitasDesdeApi()]);
+        toast('Cita cancelada; el motivo quedó en el historial.');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     async function ejecutarBarridoSinConfirmar() {
       try {
-        const res = await fetch(`${API_URL}/temporizadores/sin-confirmar`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        if (res.ok) {
-          await cargarReprogramacionesYSinConfirmar();
-          await cargarCitasDesdeApi();
-          alert('✅ Temporizador ejecutado: las citas NOTIFICADA sin respuesta pasaron a SIN_CONFIRMAR (RN-07).');
-        }
-      } catch (_) {}
+        await api('/temporizadores/sin-confirmar', { method: 'POST', body: {} });
+        await Promise.all([cargarReprogramacionesYSinConfirmar(), cargarCitasDesdeApi()]);
+        toast('Revisión ejecutada: las citas notificadas sin respuesta pasaron a SIN_CONFIRMAR (RN-07).');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     document.getElementById('formMoverOficina').onsubmit = async (e) => {
@@ -1780,69 +1881,48 @@
       const nuevaFecha = document.getElementById('inputNuevaFechaOficina').value;
       const nuevaVentanaInicio = document.getElementById('inputNuevoInicioOficina').value;
       const nuevaVentanaFin = document.getElementById('inputNuevoFinOficina').value;
-      const motivo = document.getElementById('inputMotivoOficina').value;
-
+      const motivo = document.getElementById('inputMotivoOficina').value.trim();
+      if (!idCita) {
+        toast('No hay una cita seleccionada para mover.', 'info');
+        return;
+      }
+      if (nuevaVentanaFin <= nuevaVentanaInicio) {
+        toast('La hora de fin debe ser posterior a la hora de inicio.', 'error');
+        return;
+      }
       try {
-        const res = await fetch(`${API_URL}/inspecciones/${idCita}/mover`, {
+        const data = await api(`/inspecciones/${idCita}/mover`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nuevaFecha,
-            nuevaVentanaInicio,
-            nuevaVentanaFin,
-            motivo,
-            idUsuario: 'u-admin-001'
-          })
+          body: { nuevaFecha, nuevaVentanaInicio, nuevaVentanaFin, motivo, idUsuario: ID_USUARIO_PANEL }
         });
-        const data = await res.json();
-        if (!res.ok) {
-          alert(`Error: ${data.error}`);
-          return;
-        }
-        await cargarCitasDesdeApi();
-        alert(`✅ Cita ${data.inspeccion.folio} reprogramada por la oficina al ${nuevaFecha} y notificación enviada al cliente.`);
+        document.getElementById('inputMotivoOficina').value = '';
+        await Promise.all([cargarCitasDesdeApi(), cargarFechasConCitas()]);
+        toast(`Cita ${data.inspeccion.folio} movida al ${nuevaFecha} (${nuevaVentanaInicio} - ${nuevaVentanaFin}); se avisó al cliente.`);
       } catch (err) {
-        alert('✅ Reprogramación de oficina aplicada.');
+        toast(err.message, 'error');
       }
     };
 
     // =========================================================================
     // E10 — Funciones del Monitor en Vivo y Semáforo de Puntualidad
     // =========================================================================
-    let monitorFallbackData = {
-      fecha: '2026-11-12',
-      totalEnCamino: 1,
-      inspectoresEnCamino: [
-        {
-          idTrayecto: 2,
-          idInspeccion: 12,
-          folio: 'INS-2026-000012',
-          inspector: { idInspector: 2, nombre: 'David Vance', telefono: '+1-210-555-0188', placaVehiculo: 'TX-AGAVE-02' },
-          cliente: { nombre: 'Elena Rodriguez', telefono: '+1-210-555-0455', enCasa: false },
-          destino: { direccion: '7703 Floyd Curl Dr, Medical Center, TX 78229', latitud: 29.50821, longitud: -98.57912 },
-          posicionActual: { latitud: 29.5029, longitud: -98.5689, capturadoEn: 'Hace 15 seg' },
-          etaMinutos: 9,
-          etaAproximado: false,
-          distanciaRestanteM: 1150,
-          ventana: '14:30 - 16:30'
-        }
-      ],
-      citasHoy: [
-        { idInspeccion: 10, folio: 'INS-2026-000010', ventanaInicio: '09:00', ventanaFin: '11:00', estado: 'CONFIRMADA', clienteNombre: 'Robert B. Martinez', inspectorNombre: 'Carlos Garza', colonia: 'Stone Oak', presenciaConfirmada: true, semaforo: 'VERDE', etiquetaSemaforo: 'Cliente en casa' },
-        { idInspeccion: 11, folio: 'INS-2026-000011', ventanaInicio: '11:30', ventanaFin: '13:30', estado: 'EN_SITIO', clienteNombre: 'Sarah Jenkins', inspectorNombre: 'Carlos Garza', colonia: 'Alamo Heights', presenciaConfirmada: true, semaforo: 'VERDE', etiquetaSemaforo: 'En atención activa' },
-        { idInspeccion: 12, folio: 'INS-2026-000012', ventanaInicio: '14:30', ventanaFin: '16:30', estado: 'EN_CAMINO', clienteNombre: 'Elena Rodriguez', inspectorNombre: 'David Vance', colonia: 'Medical Center', presenciaConfirmada: false, semaforo: 'VERDE', etiquetaSemaforo: 'Inspector en camino' }
-      ]
-    };
-
     async function cargarMonitorVivo() {
-      let data = monitorFallbackData;
+      let data;
       try {
-        const res = await fetch(`${API_URL}/monitor-vivo?fecha=2026-11-12`);
-        if (res.ok) {
-          data = await res.json();
-          monitorFallbackData = data;
-        }
-      } catch (_) {}
+        data = await api(`/monitor-vivo?fecha=${fechaFiltro}`);
+      } catch (err) {
+        toast(err.message, 'error');
+        data = { totalEnCamino: 0, inspectoresEnCamino: [], citasHoy: [] };
+      }
+      document.getElementById('labelFechaMonitor').textContent = formatearFechaLarga(fechaFiltro);
+      const salibles = (data.citasHoy || []).filter(c => ['CONFIRMADA', 'SIN_CONFIRMAR', 'NOTIFICADA', 'REPROGRAMADA'].includes(c.estado));
+      const selDemo = document.getElementById('selectCitaTrayectoDemo');
+      selDemo.innerHTML = salibles.length
+        ? salibles.map(c => {
+            const insp = catalogos.inspectores.find(i => i.nombre === c.inspectorNombre);
+            return `<option value="${c.idInspeccion}" data-inspector="${insp ? insp.id_inspector : ''}">${esc(c.folio)} · ${esc(c.inspectorNombre || 'Sin inspector')} → ${esc(c.clienteNombre)}</option>`;
+          }).join('')
+        : '<option value="">Sin citas listas para salir este día</option>';
 
       document.getElementById('badgeTotalEnCamino').textContent = `${data.totalEnCamino} unidad(es) en camino`;
 
@@ -1853,26 +1933,27 @@
 
       if (!data.inspectoresEnCamino || data.inspectoresEnCamino.length === 0) {
         pinesCont.innerHTML = '<div class="text-center text-slate-400 text-xs">Ningún inspector tiene trayecto activo en este momento (Privacidad RN-08).</div>';
-        cardsCont.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-xs text-slate-500">Pulsa "Iniciar Trayecto Carlos Garza (INS-10)" arriba para abrir un trayecto en vivo.</div>';
+        cardsCont.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-xs text-slate-500">Elige una cita en "Simular salida" para abrir un trayecto de demostración.</div>';
       } else {
         data.inspectoresEnCamino.forEach((item) => {
           const pin = document.createElement('div');
-          pin.className = 'bg-slate-900/90 border border-cyan-500/50 rounded-xl p-3 text-white flex items-center justify-between shadow-lg';
+          pin.className = 'bg-slate-900/90 border border-cyan-500/50 rounded-xl p-3 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-lg';
           pin.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-cyan-600 flex items-center justify-center text-base font-bold shadow">🛻</div>
-              <div>
-                <div class="text-xs font-bold flex items-center gap-2">
-                  ${item.inspector.nombre} <span class="text-[10px] font-mono bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300">${item.inspector.placaVehiculo || 'TX-ROOF'}</span>
+            <div class="flex items-start sm:items-center gap-3 min-w-0">
+              <div class="w-9 h-9 rounded-lg bg-cyan-600 flex items-center justify-center text-base font-bold shadow shrink-0">🛻</div>
+              <div class="min-w-0">
+                <div class="text-xs font-bold flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <span>${item.inspector.nombre}</span>
+                  <span class="text-[10px] font-mono bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300">${item.inspector.placaVehiculo || 'Sin placa'}</span>
                   <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">${item.folio}</span>
                 </div>
-                <div class="text-[11px] text-slate-300 mt-0.5">
+                <div class="text-[11px] text-slate-300 mt-0.5 break-words">
                   GPS: <code class="text-cyan-300">${item.posicionActual.latitud.toFixed(5)}, ${item.posicionActual.longitud.toFixed(5)}</code> ➔ <strong>${item.destino.direccion}</strong>
                 </div>
               </div>
             </div>
-            <div class="text-right">
-              <div class="text-base font-extrabold text-cyan-300">ETA: ${item.etaMinutos} min</div>
+            <div class="sm:text-right flex sm:block items-center justify-between pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800 shrink-0">
+              <div class="text-sm sm:text-base font-extrabold text-cyan-300">ETA: ${item.etaMinutos} min</div>
               <div class="text-[10px] text-slate-400">${item.distanciaRestanteM} m restantes ${item.etaAproximado ? '(Aprox RN-09)' : ''}</div>
             </div>
           `;
@@ -1881,20 +1962,20 @@
           const card = document.createElement('div');
           card.className = 'bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3';
           card.innerHTML = `
-            <div class="space-y-1 text-xs">
-              <div class="flex items-center gap-2">
+            <div class="space-y-1 text-xs min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
                 <span class="font-mono font-bold text-slate-900">${item.folio}</span>
                 <span class="bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded text-[10px]">EN_CAMINO · GPS 15s</span>
                 ${item.cliente.enCasa ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">🏠 Cliente en casa</span>' : ''}
               </div>
               <div class="font-bold text-slate-800">${item.inspector.nombre} ➔ Cliente: ${item.cliente.nombre} (${item.cliente.telefono})</div>
-              <div class="text-slate-500">Destino: ${item.destino.direccion} · Ventana: ${item.ventana}</div>
+              <div class="text-slate-500 break-words">Destino: ${item.destino.direccion} · Ventana: ${item.ventana}</div>
             </div>
-            <div class="flex flex-wrap gap-2 shrink-0">
-              <button onclick="simularAvancePanel(${item.idInspeccion}, false)" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 shrink-0">
+              <button onclick="simularAvancePanel(${item.idInspeccion}, false)" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition text-center">
                 ▶ Avanzar GPS (15s)
               </button>
-              <button onclick="simularAvancePanel(${item.idInspeccion}, true)" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+              <button onclick="simularAvancePanel(${item.idInspeccion}, true)" class="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition text-center">
                 📍 Acercar &lt;1 km (POR_LLEGAR)
               </button>
             </div>
@@ -1928,57 +2009,41 @@
       });
     }
 
-    async function iniciarTrayectoDemoPanel(idInspeccion) {
+    async function iniciarTrayectoDemoPanel() {
+      const sel = document.getElementById('selectCitaTrayectoDemo');
+      const idInspeccion = parseInt(sel.value, 10);
+      const idInspector = parseInt(sel.selectedOptions[0]?.dataset.inspector || '', 10);
+      if (!idInspeccion || !idInspector) {
+        toast('Elige una cita confirmada del día (con inspector asignado) para simular la salida.', 'info');
+        return;
+      }
       try {
-        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/trayecto`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idInspector: 1 })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          alert(`Aviso: ${data.error}`);
-          return;
-        }
-        await cargarMonitorVivo();
-        alert(`✅ Trayecto iniciado para cita #${idInspeccion}. ETA inicial: ${data.etaMinutos} min.`);
-      } catch (_) {
-        alert('✅ Trayecto simulado iniciado.');
+        const data = await api(`/inspecciones/${idInspeccion}/trayecto`, { method: 'POST', body: { idInspector } });
+        await Promise.all([cargarMonitorVivo(), cargarCitasDesdeApi()]);
+        toast(`Trayecto iniciado. ETA inicial: ${data.etaMinutos} min.`);
+      } catch (err) {
+        toast(err.message, 'error');
       }
     }
 
     async function simularAvancePanel(idInspeccion, acercarPorLlegar) {
       try {
-        const res = await fetch(`${API_URL}/inspecciones/${idInspeccion}/simular-avance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ acercarPorLlegar })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          await cargarMonitorVivo();
-          alert(`🛰️ ${data.mensaje}`);
-          return;
-        }
-      } catch (_) {}
-      alert('🛰️ Coordenada GPS actualizada en el canal Realtime.');
+        const data = await api(`/inspecciones/${idInspeccion}/simular-avance`, { method: 'POST', body: { acercarPorLlegar } });
+        await cargarMonitorVivo();
+        toast(data.mensaje, 'info');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     async function cerrarTrayectosOlvidadosPanel() {
       try {
-        const res = await fetch(`${API_URL}/temporizadores/cerrar-trayectos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        const data = await res.json();
-        if (res.ok) {
-          await cargarMonitorVivo();
-          alert(`⏱️ Verificación de trayectos >${data.maxMinutosConfigurado} min completada (Riesgo R5). Cancelados: ${data.totalCancelados}.`);
-          return;
-        }
-      } catch (_) {}
-      alert('⏱️ Verificación de apagado automático a los 90 min ejecutada.');
+        const data = await api('/temporizadores/cerrar-trayectos', { method: 'POST', body: {} });
+        await cargarMonitorVivo();
+        toast(`Revisión de trayectos de más de ${data.maxMinutosConfigurado} min completada. Cerrados: ${data.totalCancelados}.`, 'info');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     // =========================================================================
@@ -1987,40 +2052,18 @@
     async function cargarTableroIndicadores() {
       const inicio = document.getElementById('inputKpiInicio').value;
       const fin = document.getElementById('inputKpiFin').value;
-      let data = {
-        tarjetas: { totalCitas: 12, confirmadas: 10, tasaConfirmacionPct: 83.3, visitasFallidas: 0, tasaVisitasFallidasPct: 0, reprogramadas: 1, completadas: 1 },
-        citasPorEstado: [
-          { estado: 'CONFIRMADA', total: 4 },
-          { estado: 'NOTIFICADA', total: 2 },
-          { estado: 'COMPLETADA', total: 1 },
-          { estado: 'EN_SITIO', total: 1 },
-          { estado: 'EN_CAMINO', total: 1 },
-          { estado: 'REPROG_SOLICITADA', total: 1 },
-          { estado: 'SIN_CONFIRMAR', total: 1 },
-          { estado: 'PROGRAMADA', total: 1 }
-        ],
-        evolucionSemanal: [
-          { semana: '2026-W41', fecha_inicio_semana: '2026-10-15', citas: 4, confirmadas: 2, visitas_fallidas: 0, completadas: 0, pct_confirmacion: 50.0 },
-          { semana: '2026-W43', fecha_inicio_semana: '2026-10-29', citas: 4, confirmadas: 3, visitas_fallidas: 0, completadas: 0, pct_confirmacion: 75.0 },
-          { semana: '2026-W44', fecha_inicio_semana: '2026-11-05', citas: 1, confirmadas: 1, visitas_fallidas: 0, completadas: 1, pct_confirmacion: 100.0 },
-          { semana: '2026-W45', fecha_inicio_semana: '2026-11-12', citas: 3, confirmadas: 3, visitas_fallidas: 0, completadas: 0, pct_confirmacion: 100.0 }
-        ],
-        rankingPuntualidad: [
-          { idInspector: 1, nombre: 'Carlos Garza', placaVehiculo: 'TX-ROOF-01', visitas: 2, enVentana: 2, pctPuntualidad: 100, minTrasladoProm: 23.0 },
-          { idInspector: 2, nombre: 'David Vance', placaVehiculo: 'TX-AGAVE-02', visitas: 1, enVentana: 1, pctPuntualidad: 100, minTrasladoProm: 21.5 }
-        ],
-        efectividadPorCanal: [
-          { canal: 'PUSH', enviadas: 8, entregadas: 8, fallidas: 0, pct_entrega: 100.0 },
-          { canal: 'SMS', enviadas: 1, entregadas: 0, fallidas: 1, pct_entrega: 0.0 }
-        ]
-      };
-
+      let data;
       try {
-        const res = await fetch(`${API_URL}/indicadores?fechaInicio=${inicio}&fechaFin=${fin}`);
-        if (res.ok) {
-          data = await res.json();
-        }
-      } catch (_) {}
+        data = await api(`/indicadores?fechaInicio=${inicio}&fechaFin=${fin}`);
+      } catch (err) {
+        toast(err.message, 'error');
+        return;
+      }
+      document.getElementById('kpiTabPeriodo').textContent = `Del ${inicio} al ${fin}`;
+      const metaConf = document.getElementById('kpiTabConfirmacionMeta');
+      const cumpleMeta = data.tarjetas.tasaConfirmacionPct >= 80;
+      metaConf.className = `text-[11px] mt-1 ${cumpleMeta ? 'text-emerald-700' : 'text-amber-700'}`;
+      metaConf.textContent = `${cumpleMeta ? 'Cumple' : 'Debajo de'} la meta ≥ 80 % (Plan §11) · Antes: 0 %`;
 
       document.getElementById('kpiTabTotal').textContent = data.tarjetas.totalCitas;
       document.getElementById('kpiTabConfirmacion').textContent = `${data.tarjetas.tasaConfirmacionPct}%`;
@@ -2052,14 +2095,19 @@
       contSem.innerHTML = '';
       (data.evolucionSemanal || []).forEach((sem) => {
         const div = document.createElement('div');
-        div.className = 'p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between';
+        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5';
         div.innerHTML = `
-          <div>
-            <span class="font-bold text-slate-800">${sem.semana}</span>
-            <span class="text-slate-500 ml-1">(Desde ${sem.fecha_inicio_semana})</span>
-            <div class="text-[11px] text-slate-500">Citas: ${sem.citas} · Confirmadas: ${sem.confirmadas} · Completadas: ${sem.completadas}</div>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="font-bold text-slate-800">${sem.semana}</span>
+              <span class="text-slate-500 ml-1 text-[11px]">(Desde ${sem.fecha_inicio_semana})</span>
+            </div>
+            <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-lg">${sem.pct_confirmacion}% conf.</span>
           </div>
-          <span class="text-sm font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">${sem.pct_confirmacion}% conf.</span>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div class="bg-cyan-600 h-full rounded-full" style="width: ${Math.max(8, sem.pct_confirmacion)}%"></div>
+          </div>
+          <div class="text-[11px] text-slate-500">Citas: ${sem.citas} · Confirmadas: ${sem.confirmadas} · Completadas: ${sem.completadas} · Fallidas: ${sem.visitas_fallidas}</div>
         `;
         contSem.appendChild(div);
       });
@@ -2069,16 +2117,16 @@
       contRank.innerHTML = '';
       (data.rankingPuntualidad || []).forEach((insp, idx) => {
         const div = document.createElement('div');
-        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between';
+        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2';
         div.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center">#${idx + 1}</div>
-            <div>
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center shrink-0">#${idx + 1}</div>
+            <div class="min-w-0">
               <div class="font-bold text-slate-900">${insp.nombre} <span class="text-[10px] font-mono text-slate-500">(${insp.placaVehiculo})</span></div>
               <div class="text-[11px] text-slate-500">Visitas en sitio: ${insp.visitas} · En ventana: ${insp.enVentana} · Traslado prom: ${insp.minTrasladoProm} min</div>
             </div>
           </div>
-          <div class="text-right">
+          <div class="sm:text-right flex sm:block items-center justify-between pt-1.5 sm:pt-0 border-t sm:border-t-0 border-slate-200 shrink-0">
             <span class="text-sm font-extrabold text-emerald-700">${insp.pctPuntualidad}%</span>
             <div class="text-[10px] text-slate-400">Puntualidad</div>
           </div>
@@ -2091,13 +2139,18 @@
       contCan.innerHTML = '';
       (data.efectividadPorCanal || []).forEach((can) => {
         const div = document.createElement('div');
-        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between';
+        div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5';
         div.innerHTML = `
-          <div>
-            <span class="font-bold text-slate-900">Canal ${can.canal}</span>
-            <div class="text-[11px] text-slate-500">Enviadas: ${can.enviadas} · Entregadas: ${can.entregadas} · Fallidas: ${can.fallidas}</div>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="font-bold text-slate-900">Canal ${can.canal}</span>
+              <span class="text-[11px] text-slate-500 ml-1">(Enviadas: ${can.enviadas} · Entregadas: ${can.entregadas} · Fallidas: ${can.fallidas})</span>
+            </div>
+            <span class="text-xs font-extrabold ${can.pct_entrega >= 80 ? 'text-emerald-700 bg-emerald-100' : 'text-amber-700 bg-amber-100'} px-2.5 py-0.5 rounded-lg">${can.pct_entrega}% entrega</span>
           </div>
-          <span class="text-sm font-extrabold ${can.pct_entrega >= 80 ? 'text-emerald-700' : 'text-amber-700'}">${can.pct_entrega}% entrega</span>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div class="${can.pct_entrega >= 80 ? 'bg-emerald-600' : 'bg-amber-500'} h-full rounded-full" style="width: ${Math.max(6, can.pct_entrega)}%"></div>
+          </div>
         `;
         contCan.appendChild(div);
       });
@@ -2111,71 +2164,31 @@
 
     async function purgarPuntosPanel() {
       try {
-        const res = await fetch(`${API_URL}/mantenimiento/purgar-puntos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ diasRetencion: 30 })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          alert(`🧹 Purga de privacidad RN-17 completada: ${data.puntosEliminados} punto(s) GPS con más de ${data.diasRetencion} días eliminados.`);
-          return;
-        }
-      } catch (_) {}
-      alert('🧹 Purga de puntos GPS >30 días ejecutada (RN-17).');
+        const data = await api('/mantenimiento/purgar-puntos', { method: 'POST', body: { diasRetencion: 30 } });
+        toast(`Purga completada: ${data.puntosEliminados} punto(s) GPS con más de ${data.diasRetencion} días eliminados (RN-17).`);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     // =========================================================================
     // E05 / E06 / E12 — Catálogos, Bitácora de Seguridad y Encuestas Piloto
     // =========================================================================
-    let clientesCatFallback = [
-      { id_cliente: 1, nombre: 'Robert B. Martinez', telefono: '+1-210-555-0201', correo: 'rmartinez@satx-home.com', canal_preferido: 'PUSH', activo: 1 },
-      { id_cliente: 2, nombre: 'Sarah Jenkins', telefono: '+1-210-555-0233', correo: 'sjenkins@alamoheights.org', canal_preferido: 'PUSH', activo: 1 },
-      { id_cliente: 3, nombre: 'Michael A. Flores', telefono: '+1-210-555-0310', correo: 'mflores@southtown.tx', canal_preferido: 'SMS', activo: 1 },
-      { id_cliente: 4, nombre: 'Elena Rodriguez', telefono: '+1-210-555-0455', correo: 'erodriguez@medcenter.com', canal_preferido: 'PUSH', activo: 1 }
-    ];
-
     async function cargarCatalogosYSeguridad() {
-      let clientes = clientesCatFallback;
-      let domicilios = [
-        { id_domicilio: 1, cliente_nombre: 'Robert B. Martinez', direccion: '19202 Stone Oak Pkwy, San Antonio, TX 78258', colonia: 'Stone Oak', latitud: 29.62011, longitud: -98.48642, geocodificado: 1 },
-        { id_domicilio: 2, cliente_nombre: 'Sarah Jenkins', direccion: '5930 Broadway St, San Antonio, TX 78209', colonia: 'Alamo Heights', latitud: 29.4812, longitud: -98.46489, geocodificado: 1 },
-        { id_domicilio: 3, cliente_nombre: 'Michael A. Flores', direccion: '1011 S St Marys St, San Antonio, TX 78204', colonia: 'Southtown', latitud: 29.41234, longitud: -98.49102, geocodificado: 1 },
-        { id_domicilio: 4, cliente_nombre: 'Elena Rodriguez', direccion: '7703 Floyd Curl Dr, San Antonio, TX 78229', colonia: 'Medical Center', latitud: 29.50821, longitud: -98.57912, geocodificado: 1 }
-      ];
-      let bitacora = [
-        { id_bitacora: 1, accion: 'LOGIN_ADMIN', entidad: 'usuario', detalle: 'Inicio de sesión ADMINISTRADOR (Marco Méndez) en Panel', creado_en: '2026-11-12T08:00:00Z' },
-        { id_bitacora: 2, accion: 'LOGIN_INSPECTOR', entidad: 'usuario', detalle: 'Sesión persistente verificada para Carlos Garza (TX-ROOF-01)', creado_en: '2026-11-12T08:05:00Z' },
-        { id_bitacora: 3, accion: 'LOGIN_OTP_CLIENTE', entidad: 'usuario', detalle: 'Autenticación OTP verificada para Robert B. Martinez (+1-210-555-0201)', creado_en: '2026-11-12T08:10:00Z' },
-        { id_bitacora: 4, accion: 'APROBAR_REPROGRAMACION', entidad: 'inspeccion', detalle: 'Reprogramación aprobada conservando folio INS-2026-000001 (RN-06)', creado_en: '2026-10-29T10:15:00Z' }
-      ];
-      let encuestas = [
-        { cliente_nombre: 'Robert B. Martinez', folio: 'INS-2026-000009', entendio_notificacion: 1, facil_confirmar: 1, sirvio_mapa: 1, comentario: 'Excelente poder confirmar con un toque y ver a qué hora exacta llegaba Carlos Garza.' },
-        { cliente_nombre: 'Sarah Jenkins', folio: 'INS-2026-000011', entendio_notificacion: 1, facil_confirmar: 1, sirvio_mapa: 1, comentario: 'Antes nunca veía los correos; el aviso al celular y el mapa en vivo son comodísimos.' },
-        { cliente_nombre: 'Elena Rodriguez', folio: 'INS-2026-000012', entendio_notificacion: 1, facil_confirmar: 1, sirvio_mapa: 1, comentario: 'Me dio mucha tranquilidad ver la placa TX-AGAVE-02 y el tiempo estimado en tiempo real.' }
-      ];
-
+      let clientes = [], domicilios = [], bitacora = [], encuestas = [];
       try {
-        const [rCat, rBit, rEnc] = await Promise.all([
-          fetch(`${API_URL}/catalogos?incluirInactivos=1`),
-          fetch(`${API_URL}/bitacora`),
-          fetch(`${API_URL}/encuestas-piloto`)
+        const [dCat, dBit, dEnc] = await Promise.all([
+          api('/catalogos?incluirInactivos=1'),
+          api('/bitacora'),
+          api('/encuestas-piloto')
         ]);
-        if (rCat.ok) {
-          const dCat = await rCat.json();
-          clientes = dCat.clientes || clientes;
-          domicilios = dCat.domicilios || domicilios;
-          clientesCatFallback = clientes;
-        }
-        if (rBit.ok) {
-          const dBit = await rBit.json();
-          bitacora = dBit.registros || bitacora;
-        }
-        if (rEnc.ok) {
-          const dEnc = await rEnc.json();
-          encuestas = dEnc.encuestas || encuestas;
-        }
-      } catch (_) {}
+        clientes = dCat.clientes || [];
+        domicilios = dCat.domicilios || [];
+        bitacora = dBit.registros || [];
+        encuestas = dEnc.encuestas || [];
+      } catch (err) {
+        toast(err.message, 'error');
+      }
 
       const activos = clientes.filter(c => c.activo !== 0).length;
       document.getElementById('badgeCountClientesCat').textContent = `${activos} activos / ${clientes.length} total`;
@@ -2203,10 +2216,10 @@
         div.className = 'p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between';
         div.innerHTML = `
           <div>
-            <div class="font-bold text-slate-900">${d.direccion} <span class="text-slate-500">(${d.colonia})</span></div>
+            <div class="font-bold text-slate-900">${esc(d.direccion || textoDomicilio(d))} <span class="text-slate-500">(${esc(d.zona_nombre || d.colonia || '')})</span></div>
             <div class="text-[11px] text-slate-500">Cliente: ${d.cliente_nombre || 'Registrado'} · Pin GPS: <code>${d.latitud}, ${d.longitud}</code></div>
           </div>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-100 text-cyan-800">📍 Geocodificado</span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700" title="Las coordenadas son aproximadas: aún no hay geocodificación real (RF-11)">📍 Pin aproximado</span>
         `;
         contDom.appendChild(div);
       });
@@ -2228,15 +2241,22 @@
 
       const contEnc = document.getElementById('contenedorEncuestasE12');
       contEnc.innerHTML = '';
+      document.getElementById('badgeEncuestas').textContent = `${encuestas.length} respuesta(s)`;
+      if (encuestas.length === 0) {
+        contEnc.innerHTML = '<div class="text-center py-4 text-[11px] text-slate-400">Aún no hay encuestas respondidas.</div>';
+      }
+      if (bitacora.length === 0) {
+        document.getElementById('contenedorBitacoraE05').innerHTML = '<div class="text-center py-4 text-[11px] text-slate-400">Sin registros en la bitácora.</div>';
+      }
       encuestas.forEach(e => {
         const div = document.createElement('div');
         div.className = 'p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-1';
         div.innerHTML = `
           <div class="flex justify-between items-center">
-            <span class="font-bold text-slate-900">${e.cliente_nombre} <span class="font-mono text-[10px] text-slate-500">(${e.folio})</span></span>
-            <span class="text-[10px] font-bold text-emerald-800">✅ Notif · ✅ 1-Toque · ✅ Mapa</span>
+            <span class="font-bold text-slate-900">${esc(e.cliente_nombre)} <span class="font-mono text-[10px] text-slate-500">${e.id_inspeccion ? '(cita #' + e.id_inspeccion + ')' : ''}</span></span>
+            <span class="text-[10px] font-bold text-emerald-800">${e.entendio_notificacion ? '✅' : '❌'} Aviso · ${e.facil_confirmar ? '✅' : '❌'} Confirmar · ${e.util_mapa_vivo ? '✅' : '❌'} Mapa</span>
           </div>
-          <p class="text-[11px] text-slate-600 italic">"${e.comentario}"</p>
+          ${e.comentario ? `<p class="text-[11px] text-slate-600 italic">"${esc(e.comentario)}"</p>` : ''}
         `;
         contEnc.appendChild(div);
       });
@@ -2244,21 +2264,12 @@
 
     async function bajaLogicaClientePanel(idCliente) {
       try {
-        const res = await fetch(`${API_URL}/clientes/${idCliente}/baja`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ motivo: 'Baja lógica desde el Panel RN-15' })
-        });
-        if (res.ok) {
-          await cargarCatalogosYSeguridad();
-          alert('✅ Baja lógica aplicada (activo = 0). El historial de inspecciones se conserva íntegro (RN-15).');
-          return;
-        }
-      } catch (_) {}
-      const c = clientesCatFallback.find(x => x.id_cliente === idCliente);
-      if (c) c.activo = 0;
-      cargarCatalogosYSeguridad();
-      alert('✅ Baja lógica aplicada (RN-15).');
+        await api(`/clientes/${idCliente}/baja`, { method: 'PATCH', body: { motivo: 'Baja lógica desde el panel' } });
+        await Promise.all([cargarCatalogosYSeguridad(), cargarCatalogosBase()]);
+        toast('Cliente dado de baja. Su historial de inspecciones se conserva (RN-15).');
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     }
 
     document.getElementById('formNuevoClienteCat').onsubmit = async (e) => {
@@ -2267,28 +2278,35 @@
       const telefono = document.getElementById('catCliTel').value.trim();
       const canalPreferido = document.getElementById('catCliCanal').value;
       try {
-        const res = await fetch(`${API_URL}/clientes`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, telefono, canalPreferido })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          alert(`Error: ${data.error}`);
-          return;
-        }
+        await api('/clientes', { method: 'POST', body: { nombre, telefono, canalPreferido } });
         document.getElementById('catCliNombre').value = '';
         document.getElementById('catCliTel').value = '';
-        await cargarCatalogosYSeguridad();
-        alert(`✅ Cliente "${nombre}" registrado con éxito en San Antonio, TX.`);
-        return;
-      } catch (_) {}
-      clientesCatFallback.push({ id_cliente: Date.now(), nombre, telefono, canal_preferido: canalPreferido, activo: 1 });
-      cargarCatalogosYSeguridad();
-      alert(`✅ Cliente "${nombre}" registrado.`);
+        await Promise.all([cargarCatalogosYSeguridad(), cargarCatalogosBase()]);
+        toast(`Cliente "${nombre}" registrado.`);
+      } catch (err) {
+        toast(err.message, 'error');
+      }
     };
 
-    cargarCitasDesdeApi();
+    async function inicializarPanel() {
+      document.getElementById('inputKpiInicio').value = sumarDias(hoyISO(), -60);
+      document.getElementById('inputKpiFin').value = sumarDias(hoyISO(), 14);
+      document.getElementById('inputNuevaFechaOficina').value = sumarDias(hoyISO(), 1);
+      actualizarEtiquetaFecha();
+      try {
+        await cargarCatalogosBase();
+      } catch (err) {
+        toast(err.message, 'error');
+      }
+      await cargarCitasDesdeApi();
+      cargarFechasConCitas();
+      try {
+        const d = await api('/inspecciones/sin-confirmar');
+        actualizarBannerSinConfirmar(d.citas || []);
+      } catch (_) { /* el error de conexión ya se avisó arriba */ }
+    }
+
+    inicializarPanel();
   </script>
 </body>
 </html>

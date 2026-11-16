@@ -46,6 +46,16 @@ export class ErrorHorarioInvalido extends Error {
 }
 
 /**
+ * Error de validación de datos o de estado al operar la agenda desde el panel (respuesta HTTP 400).
+ */
+export class ErrorValidacionAgenda extends Error {
+  constructor(mensaje: string) {
+    super(mensaje);
+    this.name = 'ErrorValidacionAgenda';
+  }
+}
+
+/**
  * Valida si un inspector tiene otra cita en la misma fecha cuya ventana de atención se traslape (RN-02).
  */
 export function validarTraslapeInspector(
@@ -154,7 +164,15 @@ export function reasignarInspector(idInspeccion: number, dto: ReasignarInspeccio
   if (!cita) throw new Error(`Inspección #${idInspeccion} no existe.`);
 
   if (['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA'].includes(cita.estado)) {
-    throw new Error(`No se puede reasignar una inspección en estado ${cita.estado}.`);
+    throw new ErrorValidacionAgenda(`No se puede reasignar una inspección en estado ${cita.estado}.`);
+  }
+
+  if (!dto.idInspector) {
+    throw new ErrorValidacionAgenda('Selecciona el inspector al que se reasignará la inspección.');
+  }
+
+  if (Number(dto.idInspector) === Number(cita.id_inspector)) {
+    throw new ErrorValidacionAgenda('La inspección ya está asignada a ese inspector.');
   }
 
   // Validar si el nuevo inspector tiene traslape
@@ -192,12 +210,16 @@ export function moverInspeccion(idInspeccion: number, dto: MoverInspeccionDTO) {
 
   // RN-05: El cliente o admin no puede mover citas activas en camino o completadas
   if (['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA'].includes(cita.estado)) {
-    throw new Error(`No se puede mover una inspección en estado ${cita.estado} (Violación RN-05).`);
+    throw new ErrorValidacionAgenda(`No se puede mover una inspección en estado ${cita.estado} (Violación RN-05).`);
   }
 
   // RN-06: Máximo 3 reprogramaciones
   if (cita.veces_reprogramada >= 3) {
-    throw new Error(`Esta inspección ya ha alcanzado el límite de 3 reprogramaciones permitidas (Violación RN-06). Se requiere autorización especial.`);
+    throw new ErrorValidacionAgenda(`Esta inspección ya ha alcanzado el límite de 3 reprogramaciones permitidas (Violación RN-06). Se requiere autorización especial.`);
+  }
+
+  if (!dto.nuevaFecha || !/^\d{4}-\d{2}-\d{2}$/.test(dto.nuevaFecha)) {
+    throw new ErrorValidacionAgenda('Indica la nueva fecha de la inspección (AAAA-MM-DD).');
   }
 
   validarVentanaOperacion(dto.nuevaVentanaInicio, dto.nuevaVentanaFin);
@@ -271,6 +293,10 @@ export function moverInspeccion(idInspeccion: number, dto: MoverInspeccionDTO) {
  * Cancelar inspección con registro de motivo en el historial.
  */
 export function cancelarInspeccion(idInspeccion: number, dto: CancelarInspeccionDTO) {
+  // RF-20: el motivo de cancelación es obligatorio
+  if (!dto.motivo || dto.motivo.trim().length < 5) {
+    throw new ErrorValidacionAgenda('El motivo de cancelación es obligatorio (mínimo 5 caracteres).');
+  }
   return transicionar(
     idInspeccion,
     EstadoInspeccion.CANCELADA,

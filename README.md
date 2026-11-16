@@ -1,7 +1,7 @@
 # 🌵 AgaveAlerta — Sistema Integral de Gestión, Notificación y Seguimiento de Inspecciones de Techos
 **Cliente:** Agave Roofing (San Antonio, Texas)  
 **Materia:** Proyecto Integrador I — UANL  
-**Estado del Proyecto:** 100% Completado (`E01` a `E12` · Sprints 0 a 6)
+**Estado del Proyecto:** Release 1.0 de demostración (`E01` a `E12` · Sprints 0 a 6)
 
 ---
 
@@ -19,29 +19,36 @@
 
 ## 🏗️ Estructura del Monorepo
 
-- `api/` — Backend REST + SQLite/PostgreSQL (`node:sqlite`), Máquina de Estados (`RN-01` a `RN-17`), Motor de Notificaciones Push/SMS (`E08`), Reprogramaciones (`E09`), Seguimiento GPS y ETA (`E10`), Ejecución/Sincronización Idempotente e Indicadores (`E11`), Seguridad y Catálogos (`E05`/`E06`/`E12`).
-- `panel/` — Panel Web de Administración (React/TypeScript + Simulador HTML interactivo) con Agenda (`E07`), Bitácora Push/SMS (`E08`), Bandeja de Reprogramaciones (`E09`), Monitor en Vivo (`E10`), Tablero Ejecutivo KPI + CSV (`E11`) y Catálogos/Seguridad (`E05`/`E06`/`E12`).
-- `app-inspector/` — Aplicación Móvil del Inspector en **Flutter + Dart** (MVP) y Simulador Web, con Ruta del Día, GPS en segundo plano cada 15 s, captura de resultado con fotos (`RN-11`), cliente ausente (`RN-10`) y cola offline SQLite con sincronización idempotente (`RN-12`).
-- `app-cliente/` — Aplicación Móvil del Cliente en **Flutter + Dart** (MVP) y Simulador Web, con confirmación en $\le 3$ toques, solicitud de reprogramación (`RN-05`/`RN-06`), mapa en vivo con ETA (`RN-08`/`RN-09`), aviso *"Ya estoy en mi casa"*, consulta de Reporte PDF y encuesta piloto (`E12`).
-- `shared/` — Tipos de dominio, estados, DTOs y cliente HTTP compartido (`ApiClient`).
-- `docs/` — Documentación normativa (`01` a `05`), manuales de usuario, matrices y reportes de pruebas, y paquetes de entrega (`E03` a `E12`).
+- `api/` — API REST en Node.js 22 + TypeScript nativo (módulo `http`, sin Express) con SQLite en modo WAL (`node:sqlite`). Máquina de estados (`RN-01` a `RN-17`), notificaciones push/SMS **simuladas** con reintentos y respaldo (`E08`), reprogramaciones (`E09`), trayecto y ETA estimado (`E10`), ejecución, sincronización idempotente e indicadores (`E11`), catálogos y bitácora (`E05`/`E06`).
+- `panel/` — Panel web de administración en una sola página (`panel/index.html`, HTML + JavaScript + Tailwind por CDN): agenda (`E07`), bitácora de notificaciones (`E08`), bandeja de reprogramaciones (`E09`), monitor en vivo (`E10`), tablero de indicadores con CSV (`E11`) y catálogos (`E05`/`E06`). Los archivos de `panel/src/pages/*.tsx` son prototipos en React que no forman parte de la versión entregada.
+- `app-inspector/` — App del inspector en **Flutter + Dart** (patrón MVP): ruta del día, "Voy en camino" con avance GPS simulado, llegada, resultado, cliente ausente y navegación a Maps/Waze. Su **simulador web** (`simulador_web/index.html`) agrega mensajería y cola sin conexión con sincronización idempotente (`RN-12`).
+- `app-cliente/` — App del cliente en **Flutter + Dart** (patrón MVP): próxima cita, confirmación, reprogramación (`RN-05`/`RN-06`), seguimiento con distancia y ETA, aviso *"Ya estoy en casa"*, reporte y encuesta piloto. Su **simulador web** agrega notificaciones simuladas, mapa esquemático y mensajería.
+- `shared/` — Tipos de dominio, estados y DTOs compartidos.
+- `docs/` — Documentación normativa (`01` a `07`), manuales, casos y resultados de pruebas, y paquetes de entrega (`E03` a `E12`). Las diferencias entre el SRS y lo construido están en `docs/02_SRS_Requerimientos.md` §5.
+
+> **Alcance de esta versión:** Release 1.0 de demostración local. Autenticación real, push/SMS reales, Google Directions, GPS y cámara en Flutter, y migración a Supabase quedan como trabajo futuro (ver `docs/entregas/E12/ADR-001-Arquitectura-Final-y-Despliegue.md`).
 
 ---
 
 ## 🚀 Cómo Ejecutar el Proyecto
 
-### 1. Sembrar la Base de Datos y Levantar la API + Simuladores Web (`Puerto 3001`)
+Requisito: **Node.js 22 o superior** (usa `--experimental-strip-types` y `--experimental-sqlite`).
+
+### 1. Sembrar la base de datos y levantar la API (`puerto 4000`)
 ```bash
-npm run seed
-npm run dev:api
+npm run seed   # regenera data/agavealerta.db con los datos de prueba
+npm run api    # API en http://localhost:4000
 ```
-Una vez corriendo en `http://localhost:3001`:
-- **Panel de Administración:** `http://localhost:3001/panel/index.html`
-- **Simulador Web App Inspector:** `http://localhost:3001/app-inspector/index.html`
-- **Simulador Web App Cliente:** `http://localhost:3001/app-cliente/index.html`
-- **Healthcheck API:** `http://localhost:3001/api/salud`
+Con la API corriendo, abre estos archivos directamente en el navegador (la API no sirve archivos estáticos):
+- **Panel de administración:** `panel/index.html`
+- **Simulador web app del inspector:** `app-inspector/simulador_web/index.html`
+- **Simulador web app del cliente:** `app-cliente/simulador_web/index.html`
+- **Healthcheck de la API:** `http://localhost:4000/api/salud`
+
+Para usar otro puerto: `PORT=5000 npm run api` (y actualizar `API_URL` en el panel y los simuladores).
 
 ### 2. Ejecutar las Aplicaciones Móviles en Flutter
+Las apps apuntan a `http://localhost:4000/api` (`lib/services/*_api_service.dart`). En el emulador de Android usa `http://10.0.2.2:4000/api` y en un teléfono real la IP de la computadora en la red local.
 ```bash
 # App del Inspector
 cd app-inspector
@@ -52,7 +59,7 @@ cd ../app-cliente
 flutter run
 ```
 
-### 3. Ejecutar las Suites de Pruebas Automatizadas (`E07`, `E08/E09`, `E10/E11`)
+### 3. Ejecutar las Suites de Pruebas Automatizadas (`E07`, `E08/E09`, `E10/E11` — 28 escenarios)
 ```bash
 npm test
 ```

@@ -9,7 +9,8 @@ import {
   moverInspeccion,
   cancelarInspeccion,
   ErrorTraslapeInspector,
-  ErrorHorarioInvalido
+  ErrorHorarioInvalido,
+  ErrorValidacionAgenda
 } from './services/agendaService.ts';
 import { transicionar, ErrorTransicionInvalida } from './services/maquinaEstadosService.ts';
 import { obtenerRutaDelDia } from './services/rutaInspectorService.ts';
@@ -724,6 +725,14 @@ const server = http.createServer(async (req, res) => {
         error: err.message,
         estadoActual: err.estadoActual,
         estadoNuevo: err.estadoNuevo
+      });
+    }
+
+    if (err instanceof ErrorValidacionAgenda) {
+      return json(res, 400, {
+        ok: false,
+        codigo: 'VALIDACION_AGENDA',
+        error: err.message
       });
     }
 

@@ -100,24 +100,24 @@ export const MonitorYTableroPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Banner Congelamiento Funcional (E11) */}
-      <div className="bg-emerald-950 text-white rounded-2xl p-5 flex justify-between items-center shadow-lg">
+      <div className="bg-emerald-950 text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 shadow-lg">
         <div>
           <span className="text-[11px] font-extrabold uppercase tracking-wider bg-emerald-800 px-2.5 py-0.5 rounded-full">
             Hito E11 · Congelamiento Funcional (12 Nov 2026)
           </span>
-          <h2 className="text-lg font-extrabold mt-1">
+          <h2 className="text-base sm:text-lg font-extrabold mt-1">
             Monitor en Vivo (E10) y Tablero de Indicadores Operativos (E11)
           </h2>
           <p className="text-xs text-emerald-200">
             Vistas SQLite: v_indicadores_semana, v_puntualidad_inspector y v_efectividad_notificacion
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={handleCerrarTrayectosOlvidados}
-            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg"
+            className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg text-center"
           >
             ⏱️ Cerrar Trayectos &gt;90m (R5)
           </button>
@@ -125,7 +125,7 @@ export const MonitorYTableroPage: React.FC = () => {
             href="http://localhost:4000/api/panel/indicadores/csv"
             target="_blank"
             rel="noreferrer"
-            className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-lg"
+            className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-lg text-center"
           >
             📥 Exportar CSV
           </a>
@@ -133,14 +133,14 @@ export const MonitorYTableroPage: React.FC = () => {
       </div>
 
       {/* E10 — Monitor en Vivo y Lista Semáforo */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 space-y-4">
           <h3 className="text-sm font-bold text-slate-900">
             🛰️ Inspectores en Campo y Telemetría GPS en Tiempo Real (E10)
           </h3>
           <div className="space-y-3">
             {monitor.inspectoresEnCampo.map((ins: any) => (
-              <div key={ins.id_inspector} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center text-xs">
+              <div key={ins.id_inspector} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-xs">
                 <div>
                   <div className="font-bold text-slate-900">
                     {ins.nombre} ({ins.placa_vehiculo})
@@ -153,16 +153,16 @@ export const MonitorYTableroPage: React.FC = () => {
                   </div>
                 </div>
                 {ins.id_inspeccion_activa && (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex sm:flex-col gap-1.5">
                     <button
                       onClick={() => handleSimularAvance(ins.id_inspeccion_activa, false)}
-                      className="bg-indigo-600 text-white font-bold px-2.5 py-1 rounded"
+                      className="flex-1 sm:flex-initial bg-indigo-600 text-white font-bold px-2.5 py-1.5 rounded text-center"
                     >
                       🛰️ +1 Paso GPS
                     </button>
                     <button
                       onClick={() => handleSimularAvance(ins.id_inspeccion_activa, true)}
-                      className="bg-amber-600 text-white font-bold px-2.5 py-1 rounded"
+                      className="flex-1 sm:flex-initial bg-amber-600 text-white font-bold px-2.5 py-1.5 rounded text-center"
                     >
                       📍 &lt; 1 km (RN-02)
                     </button>
@@ -173,20 +173,20 @@ export const MonitorYTableroPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 space-y-4">
           <h3 className="text-sm font-bold text-slate-900">
             🚦 Lista Semáforo de Citas del Día ({monitor.fecha})
           </h3>
           <div className="space-y-2.5">
             {monitor.citasSemaforo.map((c: any) => (
-              <div key={c.id_inspeccion} className="p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+              <div key={c.id_inspeccion} className="p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs">
                 <div>
                   <div className="font-bold text-slate-900">
                     {c.folio} · {c.cliente_nombre} ({c.estado})
                   </div>
                   <div className="text-slate-600">{c.motivo_semaforo}</div>
                 </div>
-                <span className="font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-800">
+                <span className="self-start sm:self-auto font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-800">
                   {c.semaforo}
                 </span>
               </div>
@@ -196,7 +196,7 @@ export const MonitorYTableroPage: React.FC = () => {
       </div>
 
       {/* E11 — 6 Tarjetas de Indicadores Operativos */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="text-[11px] font-bold text-slate-400 uppercase">Confirmación Previa</div>
           <div className="text-2xl font-black text-emerald-600 mt-1">

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/ruta_parada_model.dart';
 import '../../presenters/contracts/ruta_inspector_contract.dart';
 import '../../presenters/ruta_inspector_presenter.dart';
@@ -21,6 +23,8 @@ class RutaDelDiaScreen extends StatefulWidget {
 class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInspectorViewContract {
   late final RutaInspectorPresenter _presenter;
   bool _isLoading = false;
+  late int _idInspectorActual;
+  late String _nombreInspectorActual;
   String _fechaSeleccionada = '2026-11-12';
   List<RutaParada> _paradas = [];
 
@@ -29,8 +33,10 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
   @override
   void initState() {
     super.initState();
+    _idInspectorActual = widget.idInspector;
+    _nombreInspectorActual = widget.nombreInspector;
     _presenter = RutaInspectorPresenter(this);
-    _presenter.cargarRuta(widget.idInspector, _fechaSeleccionada);
+    _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada);
   }
 
   @override
@@ -243,15 +249,22 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Inspector: ${widget.nombreInspector}',
+                'Inspector: $_nombreInspectorActual (#$_idInspectorActual)',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 6),
-              const Text('Vehículo: Placas TX-ROOF-01 • Tel: +1-210-555-0142', style: TextStyle(fontSize: 12)),
+              Text(
+                _idInspectorActual == 1
+                    ? 'Vehículo: Placas TX-ROOF-01 • Tel: +1-210-555-0142'
+                    : 'Vehículo: Placas TX-AGAVE-02 • Tel: +1-210-555-0188',
+                style: const TextStyle(fontSize: 12),
+              ),
               const SizedBox(height: 6),
-              const Text(
-                'Zonas Asignadas (E06): Norte (Stone Oak 78258) y Este (Alamo Heights 78209)',
-                style: TextStyle(fontSize: 12),
+              Text(
+                _idInspectorActual == 1
+                    ? 'Zonas Asignadas (E06): Norte (Stone Oak 78258) y Este (Alamo Heights 78209)'
+                    : 'Zonas Asignadas (E06): Centro/Sur (Southtown 78204) y Noroeste (Medical Center 78229)',
+                style: const TextStyle(fontSize: 12),
               ),
               const Divider(height: 20),
               const Row(
@@ -284,6 +297,352 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
     );
   }
 
+  void _mostrarMapaRutaDialog(RutaParada parada) {
+    final latDestino = parada.domicilio.latitud ?? 29.6201;
+    final lngDestino = parada.domicilio.longitud ?? -98.4864;
+    final latInspector = parada.trayectoActivo?.latitudActual ?? 29.4241;
+    final lngInspector = parada.trayectoActivo?.longitudActual ?? -98.4936;
+    final eta = parada.trayectoActivo?.etaMinutos ?? 18;
+    final distM = parada.trayectoActivo?.distanciaRestanteM ?? 9850;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.map, color: agaveEmerald, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Mapa de Ruta • ${parada.folio}',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Lienzo de Mapa de Navegación en San Antonio, TX
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.cyan.shade600, width: 1.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'SAN ANTONIO, TX (I-10 / US-281)',
+                            style: TextStyle(
+                              color: Colors.cyanAccent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: parada.estaEnCamino ? agaveEmerald : Colors.blueGrey.shade700,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            parada.estaEnCamino ? 'GPS EN VIVO • ETA $eta min' : 'Ruta Estimada: $eta min',
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.cyan.shade600,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.local_shipping, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('Inspector', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                          ],
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(
+                                '$distM m',
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                child: Divider(color: Colors.cyanAccent, thickness: 2),
+                              ),
+                              Text(
+                                parada.estaEnCamino ? 'Compartiendo cada 15s' : 'Vía rápida sugerida',
+                                style: const TextStyle(color: Colors.white60, fontSize: 9),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: agaveEmerald,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.home_work, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('Cliente', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '📍 Mi GPS: (${latInspector.toStringAsFixed(5)}, ${lngInspector.toStringAsFixed(5)})',
+                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '🎯 Pin Destino: (${latDestino.toStringAsFixed(5)}, ${lngDestino.toStringAsFixed(5)})',
+                      style: const TextStyle(color: Colors.cyanAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Cliente: ${parada.cliente.nombre} (${parada.cliente.telefono})',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Dirección: ${parada.domicilio.direccionCompleta}, ${parada.domicilio.colonia}, ${parada.domicilio.ciudad}, TX ${parada.domicilio.codigoPostal}',
+                style: const TextStyle(fontSize: 12),
+              ),
+              if (parada.domicilio.referencias != null && parada.domicilio.referencias!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Referencias: ${parada.domicilio.referencias}',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey.shade700),
+                ),
+              ],
+              const Divider(height: 22),
+              const Text(
+                'ABRIR NAVEGACIÓN EXTERNA (PASO A PASO)',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black87,
+                      side: BorderSide(color: Colors.grey.shade400),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    onPressed: () => _abrirEnAppDeMapas(parada, 'apple'),
+                    icon: const Icon(Icons.explore, size: 15, color: Colors.blue),
+                    label: const Text('Apple Maps', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black87,
+                      side: BorderSide(color: Colors.grey.shade400),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    onPressed: () => _abrirEnAppDeMapas(parada, 'google'),
+                    icon: const Icon(Icons.map, size: 15, color: agaveEmerald),
+                    label: const Text('Google Maps', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black87,
+                      side: BorderSide(color: Colors.grey.shade400),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    onPressed: () => _abrirEnAppDeMapas(parada, 'waze'),
+                    icon: const Icon(Icons.directions_car, size: 15, color: Colors.cyan),
+                    label: const Text('Waze', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cerrar'),
+          ),
+          if (parada.puedeIniciarTrayecto)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo.shade700),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _presenter.iniciarTrayecto(
+                  parada.idInspeccion,
+                  _idInspectorActual,
+                  _fechaSeleccionada,
+                );
+              },
+              icon: const Icon(Icons.navigation, size: 16, color: Colors.white),
+              label: const Text('Iniciar Trayecto Aquí', style: TextStyle(color: Colors.white, fontSize: 12)),
+            )
+          else if (parada.estaEnCamino)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: agaveEmerald),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _presenter.simularAvanceGps(
+                  parada.idInspeccion,
+                  _idInspectorActual,
+                  _fechaSeleccionada,
+                );
+              },
+              icon: const Icon(Icons.my_location, size: 16, color: Colors.white),
+              label: const Text('Avanzar +1 Paso GPS', style: TextStyle(color: Colors.white, fontSize: 12)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _abrirEnAppDeMapas(RutaParada parada, String proveedor) async {
+    final latDestino = parada.domicilio.latitud ?? 29.6201;
+    final lngDestino = parada.domicilio.longitud ?? -98.4864;
+    final latInspector = parada.trayectoActivo?.latitudActual ?? 29.4241;
+    final lngInspector = parada.trayectoActivo?.longitudActual ?? -98.4936;
+
+    final Uri uri;
+    if (proveedor == 'apple') {
+      uri = Uri.parse(
+        'http://maps.apple.com/?saddr=$latInspector,$lngInspector&daddr=$latDestino,$lngDestino&dirflg=d',
+      );
+    } else if (proveedor == 'waze') {
+      uri = Uri.parse(
+        'https://waze.com/ul?ll=$latDestino,$lngDestino&navigate=yes',
+      );
+    } else {
+      uri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&origin=$latInspector,$lngInspector&destination=$latDestino,$lngDestino&travelmode=driving',
+      );
+    }
+
+    try {
+      final abierto = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!abierto && mounted) {
+        showError('No se pudo abrir la aplicación de mapas seleccionada.');
+      }
+    } on MissingPluginException {
+      if (mounted) {
+        showError(
+          'Para activar url_launcher en el simulador tras instalar el paquete, detén (q) y ejecuta flutter run nuevamente.',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        showError('Error al abrir mapa externo: $e');
+      }
+    }
+  }
+
+  void _mostrarSelectorAppsMapa(RutaParada parada) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.navigation, color: agaveEmerald, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Navegar hacia ${parada.domicilio.colonia} (${parada.folio})',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${parada.domicilio.direccionCompleta}, ${parada.domicilio.ciudad}, TX',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+              const Divider(height: 20),
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.explore, color: Colors.blue),
+                title: const Text('Abrir en Apple Maps', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Navegación nativa paso a paso en iOS / macOS'),
+                trailing: const Icon(Icons.open_in_new, size: 16),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _abrirEnAppDeMapas(parada, 'apple');
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.map, color: agaveEmerald),
+                title: const Text('Abrir en Google Maps', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Ruta en automóvil con tráfico en tiempo real'),
+                trailing: const Icon(Icons.open_in_new, size: 16),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _abrirEnAppDeMapas(parada, 'google');
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.directions_car, color: Colors.cyan),
+                title: const Text('Abrir en Waze', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Navegación directa a coordenadas GPS del domicilio'),
+                trailing: const Icon(Icons.open_in_new, size: 16),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _abrirEnAppDeMapas(parada, 'waze');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -297,7 +656,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             Text(
-              '${widget.nombreInspector}  •  $_fechaSeleccionada',
+              '$_nombreInspectorActual  •  $_fechaSeleccionada',
               style: const TextStyle(fontSize: 12),
             ),
           ],
@@ -305,6 +664,21 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         actions: [
+          PopupMenuButton<int>(
+            icon: const Icon(Icons.engineering),
+            tooltip: 'Cambiar Inspector',
+            onSelected: (idInsp) {
+              setState(() {
+                _idInspectorActual = idInsp;
+                _nombreInspectorActual = idInsp == 1 ? 'Carlos Garza' : 'David Vance';
+              });
+              _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada);
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 1, child: Text('Insp #1: Carlos Garza (Stone Oak / Alamo)')),
+              PopupMenuItem(value: 2, child: Text('Insp #2: David Vance (EN_CAMINO E10)')),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.badge_outlined),
             tooltip: 'Perfil y Permisos (E05 / E06)',
@@ -312,7 +686,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.calendar_month),
-            onSelected: (fecha) => _presenter.cargarRuta(widget.idInspector, fecha),
+            onSelected: (fecha) => _presenter.cargarRuta(_idInspectorActual, fecha),
             itemBuilder: (_) => const [
               PopupMenuItem(value: '2026-11-12', child: Text('Jue 12 Nov (E10 / E11)')),
               PopupMenuItem(value: '2026-11-05', child: Text('Jue 05 Nov (E10)')),
@@ -321,14 +695,14 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _presenter.cargarRuta(widget.idInspector, _fechaSeleccionada),
+            onPressed: () => _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada),
           ),
         ],
       ),
       body: _isLoading && _paradas.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () => _presenter.cargarRuta(widget.idInspector, _fechaSeleccionada),
+              onRefresh: () => _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada),
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -391,19 +765,27 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen> implements RutaInsp
                       return ParadaCardWidget(
                         orden: index,
                         parada: parada,
+                        onVerMapaRuta: () => _mostrarMapaRutaDialog(parada),
+                        onAbrirAppMapas: () => _mostrarSelectorAppsMapa(parada),
                         onIniciarTrayecto: () => _presenter.iniciarTrayecto(
                           parada.idInspeccion,
-                          widget.idInspector,
+                          _idInspectorActual,
                           _fechaSeleccionada,
                         ),
                         onSimularAvanceGps: () => _presenter.simularAvanceGps(
                           parada.idInspeccion,
-                          widget.idInspector,
+                          _idInspectorActual,
                           _fechaSeleccionada,
+                        ),
+                        onAcercarUnKm: () => _presenter.simularAvanceGps(
+                          parada.idInspeccion,
+                          _idInspectorActual,
+                          _fechaSeleccionada,
+                          acercar: true,
                         ),
                         onRegistrarLlegada: () => _presenter.registrarLlegada(
                           parada.idInspeccion,
-                          widget.idInspector,
+                          _idInspectorActual,
                           _fechaSeleccionada,
                         ),
                         onCapturarResultado: () => _capturarResultadoDialog(parada.idInspeccion),

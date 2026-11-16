@@ -1,60 +1,70 @@
 # ADR-001 (Versión Final E12): Arquitectura Definitiva, Respaldo y Monitoreo
 
 **Autor:** Jorge Alberto Barbosa García (BD — Matrícula 2071973)  
-**Estado:** Aceptado y Validado en Producción (E12 — 19 nov 2026)  
+**Estado:** Aceptado — validado en **entorno local de demostración** (actualizado el 13 nov 2026)  
+**Relacionado con:** [02_SRS_Requerimientos.md §5 — Control de cambios](../../02_SRS_Requerimientos.md)
 
 ---
 
-## 1. Contexto y Decisión de Arquitectura
+## 1. Contexto y decisión de arquitectura
 
-Para resolver el problema de visitas fallidas de **Agave Roofing** en San Antonio, Texas, se diseñó e implementó una arquitectura de monorepo con contratos tipados compartidos (`shared/`), una API REST transaccional (`api/`) y tres clientes especializados (`panel/`, `app-inspector/`, `app-cliente/`):
+Para atender el problema de visitas fallidas de **Agave Roofing** en San Antonio, Texas, se implementó un monorepo con tipos compartidos (`shared/`), una API REST (`api/`) y tres clientes (`panel/`, `app-inspector/`, `app-cliente/`).
 
-1. **Apps Móviles (`app-inspector` y `app-cliente`):**
-   - Construidas en **Flutter (Dart)** bajo el patrón arquitectónico **MVP (Model–View–Presenter)** para separar estrictamente la lógica de presentación de las vistas, acompañadas de simuladores web interactivos en HTML5/TypeScript para pruebas cruzadas en tiempo real.
-2. **Panel Web de Administración (`panel`):**
-   - Aplicación web reactiva con componentes en **React + TypeScript + Tailwind CSS**, consumiendo las vistas analíticas de la base de datos y el monitor en vivo.
-3. **Backend y Persistencia (`api` + SQLite WAL / PostgreSQL Supabase):**
-   - Servidor REST en **Node.js v22+ con TypeScript nativo** y motor relacional **SQLite en modo WAL (`PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;`)** compatible 1:1 con el esquema **PostgreSQL / Supabase** (`docs/03_Diseno_Base_de_Datos.md` y `docs/setup_rls.sql`).
-   - Esta decisión permitió ejecutar todas las pruebas transaccionales (`RN-01` a `RN-17`) de forma determinista y sin latencia externa, manteniendo compatibilidad total con Supabase Realtime, FCM y Twilio SMS.
+1. **Apps móviles (`app-inspector` y `app-cliente`):**
+   - Construidas en **Flutter (Dart)** con el patrón **MVP (Model–View–Presenter)**.
+   - Cada app tiene además un **simulador web** (HTML + JavaScript) que se usa en la demostración para mostrar los flujos completos (mensajería, cola sin conexión, notificaciones simuladas) que aún no están en la versión Flutter.
+2. **Panel web de administración (`panel/index.html`):**
+   - Página única en **HTML + JavaScript** con estilos de **Tailwind CSS (CDN)** que consume la API por `fetch`.
+   - Los archivos `panel/src/pages/*.tsx` son **prototipos en React** que no forman parte de la versión entregada (no hay proyecto Vite ni dependencias de React configuradas).
+3. **Backend y persistencia (`api/`):**
+   - Servidor REST en **Node.js 22 con TypeScript nativo** (`--experimental-strip-types`) usando el módulo `http` de Node, **sin Express**.
+   - Base de datos **SQLite en modo WAL** (`node:sqlite`) con claves foráneas activas. El esquema sigue el diseño relacional de `docs/03_Diseno_Base_de_Datos.md`, pensado para PostgreSQL; `api/prisma/schema.prisma` y `docs/setup_rls.sql` quedan como **diseño de referencia para la migración**, no se usan en esta versión.
+
+**Por qué SQLite y no Supabase en esta versión:** permitió ejecutar las pruebas de las reglas de negocio de forma determinista y sin depender de cuentas, cuotas ni red. La contraparte es que la autenticación, el canal en tiempo real y las políticas RLS de Supabase **no están en uso**.
 
 ---
 
-## 2. Diagrama de Despliegue Final
+## 2. Diagrama de despliegue (versión entregada)
 
 ```mermaid
 flowchart LR
-  subgraph Campo["Clientes e Inspectores en San Antonio, TX"]
-    AppInsp["🛻 App del Inspector\n(Flutter MVP + Cola SQLite RN-12)"]
-    AppCli["📱 App del Cliente\n(Flutter MVP + Mapa ETA + PDF)"]
+  subgraph Equipo["Computadora de demostración"]
+    AppInsp["App del Inspector\n(Flutter MVP + simulador web)"]
+    AppCli["App del Cliente\n(Flutter MVP + simulador web)"]
+    Panel["Panel Web Admin\n(HTML + JS + Tailwind CDN)"]
+    API["API REST Node.js 22 + TS\n(puerto 4000)"]
+    DB[("SQLite WAL\ndata/agavealerta.db")]
+    Sim["Integraciones simuladas\n(push, SMS y ETA)"]
   end
 
-  subgraph Oficina["Oficina Agave Roofing"]
-    Panel["🖥️ Panel Web Admin\n(Agenda + Monitor Vivo + Tablero KPI)"]
-  end
-
-  subgraph Backend["Servidor Central AgaveAlerta"]
-    API["⚙️ API REST Node.js + TS\n(Máquina de Estados + Despachador R4)"]
-    DB[("🗄️ Base de Datos Relacional\n(12 Tablas + 3 Vistas KPI + Bitácora)")]
-  end
-
-  subgraph Externos["Servicios de Mensajería y Mapas"]
-    FCM["🔔 Push Notifications (FCM / Expo)"]
-    Twilio["💬 SMS Respaldo (Twilio)"]
-    Maps["🗺️ Google Maps & Directions\n(+ Fallback Línea Recta RN-09)"]
-  end
-
-  AppInsp <-->|"REST + POST /api/sincronizar"| API
-  AppCli <-->|"REST + Seguimiento Vivo"| API
-  Panel <-->|"REST + Exportación CSV"| API
+  AppInsp <-->|"REST"| API
+  AppCli <-->|"REST"| API
+  Panel <-->|"REST + CSV"| API
   API <--> DB
-  API --> FCM
-  API --> Twilio
-  API --> Maps
+  API --> Sim
 ```
+
+### 2.1 Arquitectura objetivo (trabajo futuro)
+
+La arquitectura del SRS v1.0 sigue siendo el destino: PostgreSQL en Supabase con RLS, Supabase Auth (correo y OTP), Supabase Realtime para la ubicación en vivo, Firebase Cloud Messaging para push, Twilio para SMS, Google Directions para el ETA y el panel desplegado en Vercel.
 
 ---
 
-## 3. Respaldo de Base de Datos y Monitoreo de Bitácora (E12)
+## 3. Integraciones externas
 
-- **Archivo de base de datos y semilla reproducible:** El estado completo se genera y respalda en `data/agavealerta.db` mediante `npm run seed`.
-- **Monitoreo de errores 500 durante las pruebas de campo:** Se verificaron los registros de la tabla `bitacora` (`GET /api/bitacora`) y la salida del servidor durante los 34 escenarios de prueba: **0 errores `500 Internal Server Error`** no controlados; todas las violaciones de reglas de negocio (`RN-01` a `RN-13`) responden con códigos semánticos `400`, `403`, `409` o `422`.
+| Servicio | SRS v1.0 | Versión entregada |
+| :--- | :--- | :--- |
+| Autenticación | Supabase Auth (correo / OTP) + JWT validado en cada petición | `POST /api/auth/login` de demostración: no valida contraseña ni OTP y el token no se verifica en las demás rutas |
+| Notificaciones push | FCM / APNs | Simuladas: el despachador registra estados, reintentos y respaldo, sin enviar al teléfono |
+| SMS de respaldo | Twilio | Simulado (se registra el envío en la tabla `notificacion`) |
+| Ruta y ETA | Google Directions | Estimación propia con distancia y velocidad promedio; respaldo en línea recta (RN-09) |
+| Ubicación en vivo | Supabase Realtime | Consulta a `GET /api/inspecciones/:id/seguimiento` cada vez que la app se refresca (sin canal en tiempo real) |
+| Fotos y reportes | Supabase Storage + PDF | URLs de imagen y reporte en HTML (`/api/inspecciones/:id/reporte-html`) |
+
+---
+
+## 4. Respaldo, pruebas y monitoreo
+
+- **Datos reproducibles:** `npm run seed` regenera `data/agavealerta.db` con los datos de prueba de San Antonio (4 zonas, 2 inspectores, 4 clientes y 12 inspecciones). No hay respaldo automático programado (RF-76 pendiente).
+- **Pruebas automatizadas:** `npm test` ejecuta 28 escenarios de E07 a E11; los 28 pasaron el 13 de noviembre de 2026.
+- **Manejo de errores:** las violaciones de reglas de negocio se responden con códigos `400`, `403` o `409`; los errores no previstos devuelven `500` con el mensaje del error. Se puede revisar la bitácora en `GET /api/bitacora`.
