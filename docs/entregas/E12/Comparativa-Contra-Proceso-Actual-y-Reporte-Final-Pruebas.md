@@ -56,8 +56,12 @@ Ejecutadas con `npm test` el **13 de noviembre de 2026** sobre una base recién 
 
 | App | Comando | Resultado |
 | :--- | :--- | :--- |
-| `app-inspector` | `flutter analyze` | _Por ejecutar y registrar (fecha y número de avisos)_ |
-| `app-cliente` | `flutter analyze` | _Por ejecutar y registrar (fecha y número de avisos)_ |
+| `app-inspector` | `flutter analyze` | **Sin avisos** ("No issues found!") — 15 nov 2026, rama `feat/mapa-gps-camara`, Flutter 3.35.1 |
+| `app-cliente` | `flutter analyze` | **Sin avisos** ("No issues found!") — 15 nov 2026, rama `feat/mapa-gps-camara`, Flutter 3.35.1 |
+
+Además, el 15 nov 2026 `npm test` siguió en **28 de 28** tras los cambios de mapa, GPS y cámara, y ambas apps compilan para el simulador de iOS (`flutter build ios --simulator --debug`).
+
+> `flutter test` falla en las dos apps porque `test/widget_test.dart` sigue siendo la plantilla del contador de Flutter (busca un botón "+" que no existe). Ya fallaba antes de estos cambios; ver PEND en §4.
 
 ### 2.4 Pruebas en teléfono real y de campo
 
@@ -65,7 +69,12 @@ El calendario (§1) pide pruebas en teléfono real y al menos una prueba de camp
 
 | Fecha | Dispositivo | Escenario | Resultado |
 | :--- | :--- | :--- | :--- |
-| | | | |
+| 15/nov/2026 | Simulador iPhone 16 Pro (iOS 18.5) | App del cliente: con la cita en camino se ve el mapa (OpenStreetMap) con domicilio, inspector y rastro; al llegar un punto nuevo, el mapa, la distancia y el ETA se actualizan solos en el siguiente ciclo de 15 s (4.5 km → 1.7 km sin tocar la app) | Aprobado |
+| 15/nov/2026 | Simulador iPhone 16 Pro (iOS 18.5) | App del cliente: sin puntos nuevos por más de 45 s muestra "Última ubicación conocida hace X min" (RF-48) | Aprobado |
+| 15/nov/2026 | Simulador iPhone 16 Pro (iOS 18.5) | App del cliente: al registrar la llegada el mapa se apaga y la cita pasa a "Llegó" | Aprobado |
+| 15/nov/2026 | API (curl) | Trayecto con coordenadas reales, punto GPS, llegada y resultado con 2 fotos en base64; reintento con el mismo `idLocal` no duplica; el reporte HTML muestra las 2 fotos; cuerpo > 15 MB → 413 | Aprobado |
+| 15/nov/2026 | Navegador (panel) | Monitor con Leaflet: marcadores de inspector y domicilio con línea; el refresco mueve el mismo marcador sin recrear el mapa; sin Leaflet aparece el aviso y la lista sigue | Aprobado |
+| _Pendiente_ | Teléfono real o emulador con GPS | App del inspector: "Voy en camino" con GPS real, envío cada 15 s, captura con 2 fotos de la cámara (el simulador de iOS no tiene cámara) | Por ejecutar |
 
 ---
 
@@ -88,7 +97,9 @@ Si no se logra aplicar con clientes reales, indicar aquí que la encuesta queda 
 | ID | Descripción | Severidad | Estado |
 | :--- | :--- | :--- | :--- |
 | PEND-01 | La API no valida token ni rol; las rutas aceptan `idCliente` / `idInspector` por parámetro | Alta | Trabajo futuro |
+| PEND-GPS-01 | La app del inspector envía la ubicación solo en primer plano; falta el envío en segundo plano y el disparo cada 50 m (RF-45) | Media | Trabajo futuro |
+| PEND-TEST-01 | `test/widget_test.dart` de ambas apps es la plantilla del contador y falla; hay que reemplazarlo por pruebas reales | Baja | Abierto |
 | PEND-02 | Push, SMS y ETA con Google Directions simulados | Media | Trabajo futuro |
-| PEND-03 | Apps Flutter sin GPS real, cámara ni cola sin conexión (sí están en el simulador web) | Alta | Trabajo futuro |
+| PEND-03 | Apps Flutter sin GPS real, cámara ni cola sin conexión (sí están en el simulador web) | Alta | GPS real (primer plano), cámara, mapa e `idLocal` estable: corregido (15 nov 2026). Cola sin conexión: trabajo futuro |
 | PEND-04 | Panel: botones Reasignar / Mover / Cancelar del detalle de cita sin acción; catálogos y fechas fijas en el código | Media | Corregido (13 nov 2026) |
 | PEND-05 | Reporte generado en HTML, no en PDF | Baja | Trabajo futuro |

@@ -446,6 +446,7 @@ Ver detalle y diagramas en `04_Diagramas_UML.md`.
 |---------|-------|-------|--------|
 | 1.0 | 17/sep/2026 | Mario (AN) / Marco (LP) | SRS validado y alcance congelado (ver `06_Acta_Congelacion_Alcance.md`). |
 | 1.1 | 13/nov/2026 | Marco (LP) | Se agrega esta sección para documentar las diferencias entre lo especificado y lo construido en la versión de demostración. **No se elimina ningún requerimiento**: los no implementados pasan al Product Backlog como trabajo futuro, según la condición 2 del acta de congelación. |
+| 1.2 | 15/nov/2026 | Marco (LP) | Mapa real, GPS y cámara en las apps Flutter y mapa real en el monitor del panel (rama `feat/mapa-gps-camara`). Se actualizan RF-08, RF-45, RF-46, RF-47, RF-48 y RF-54 en §5.3. |
 
 ### 5.2 Cambios de arquitectura y restricciones
 
@@ -457,7 +458,9 @@ La sección 2.1 describe la **arquitectura objetivo**. La versión entregada (Re
 | RES-04, RF-01, RNF-19 | Supabase Auth (correo / OTP) y JWT validado en cada petición | Inicio de sesión de demostración sin contraseña ni OTP; el token no se valida en las rutas |
 | RES-05, IU-05 | FCM / APNs para push; Twilio y Resend de respaldo | Envíos simulados: se registran estados, reintentos y respaldo, sin entrega real al teléfono |
 | IU-05, RN-09 | Google Directions para el ETA | Estimación propia con distancia y velocidad promedio, con respaldo en línea recta |
-| IU-06 | Supabase Realtime para la ubicación en vivo | Consulta al endpoint de seguimiento cuando la app se refresca |
+| IU-05 | Google Maps SDK para los mapas | OpenStreetMap: `flutter_map` en la app del cliente y Leaflet en el panel (sin llave de API) |
+| IU-06 | Supabase Realtime para la ubicación en vivo | Consulta periódica: la app del cliente pide `GET /inspecciones/:id/seguimiento` cada 15 s mientras la cita va en camino y el panel pide `GET /monitor-vivo` cada 15 s |
+| RES-01, IU-05 | Fotos en Supabase Storage | La API no recibe archivos: la app reduce cada foto a 1280 px / calidad 70 y la envía como `data:image/jpeg;base64,...` en `rutaArchivo` (cuerpo máximo 15 MB, error 413) |
 | RES-02, IU-03 | Panel en React desplegado en Vercel | Página única HTML + JavaScript + Tailwind (`panel/index.html`), ejecutada localmente |
 | RNF-30 | Distribución mediante EAS Build | No aplica: EAS es de Expo y las apps son Flutter. Se sustituye por `flutter build apk` |
 | — | — | Cada app móvil tiene un **simulador web** que se usa en la demostración para los flujos aún no portados a Flutter |
@@ -470,7 +473,7 @@ Leyenda: **Completo** = implementado en la API y en el cliente correspondiente �
 |--------|----------------|--------|-------|
 | 1. Seguridad | RF-01, RF-02, RF-03 | Parcial | Inicio de sesión y verificación de rol de demostración; no hay contraseña, OTP ni sesión persistente en las apps |
 | 1. Seguridad | RF-07 | Pendiente | Las rutas aceptan `idCliente` / `idInspector` por parámetro sin validar token |
-| 1. Seguridad | RF-08 | Pendiente | Las apps Flutter no solicitan permisos de notificaciones ni de ubicación |
+| 1. Seguridad | RF-08 | Parcial | La app del inspector explica para qué usa la ubicación y luego pide el permiso; si se niega o el GPS está apagado, lo dice con claridad y no deja iniciar el trayecto. Permiso solo "mientras se usa la app" (no en segundo plano). Ninguna app pide aún el permiso de notificaciones. La cámara y la galería piden su permiso al usarse |
 | 2. Catálogos | RF-09, RF-10, RF-12 | Parcial | Alta y baja lógica de clientes en el panel; domicilios e inspectores por API |
 | 2. Catálogos | RF-11 (prioridad M) | Simulado | Las coordenadas se asignan aleatoriamente cerca del centro de San Antonio; no hay geocodificación ni ajuste del pin |
 | 3. Agenda | RF-16 a RF-20, RF-22 | Completo | Folio, traslapes, reasignación, cambio de fecha y cancelación con motivo obligatorio, desde el detalle de la cita en el panel (corregido el 13 nov 2026) |
@@ -478,12 +481,15 @@ Leyenda: **Completo** = implementado en la API y en el cliente correspondiente �
 | 4. Notificaciones | RF-25 a RF-28, RF-31, RF-32 | Simulado | Motor completo en la API, sin envío real |
 | 5. Confirmación | RF-36 a RF-38, RF-40 a RF-43 | Completo | Confirmar desde la notificación solo se demuestra en el simulador web (RF-36); el paso a `SIN_CONFIRMAR` (RF-43) se ejecuta bajo demanda desde el panel, sin programador automático |
 | 6. Trayecto | RF-44, RF-49, RF-50, RF-51 | Completo | Bloqueo de doble trayecto y privacidad en la API; el cierre por tiempo máximo (RF-49) se ejecuta bajo demanda desde el panel |
-| 6. Trayecto | RF-45, RF-46, RF-47 | Simulado | GPS con avance simulado; el mapa del panel y del simulador es esquemático; la app Flutter del cliente muestra distancia y ETA sin mapa |
+| 6. Trayecto | RF-45 | Parcial | "Voy en camino" envía la posición real y la app publica latitud, longitud, precisión, velocidad y hora cada 15 s hasta registrar la llegada o la ausencia, con indicador "Compartiendo ubicación con el cliente". Solo con la app en primer plano (el segundo plano y el disparo cada 50 m quedan como trabajo futuro). El avance simulado sigue disponible tras el interruptor "Modo demo" del perfil |
+| 6. Trayecto | RF-46 | Completo | La app Flutter del cliente muestra un mapa (OpenStreetMap) con el pin del domicilio, el del inspector y su rastro, más ETA y distancia, actualizados cada 15 s solo mientras la cita va en camino y la pantalla está visible. El panel muestra el mismo seguimiento en un mapa Leaflet |
+| 6. Trayecto | RF-47 | Simulado | La API recalcula ETA y distancia restante cada 60 s con los puntos reales, pero con estimación propia en lugar del servicio de rutas (ver §5.2) |
+| 6. Trayecto | RF-48 (prioridad M) | Completo | "Actualizado hace X min"; si se pierde la señal, el mapa conserva el último punto con "Última ubicación conocida hace X min" |
 | 7. Ejecución | RF-53, RF-55, RF-56 | Completo | Validaciones RN-10 y RN-11 en la API |
-| 7. Ejecución | RF-54 | Parcial | Las fotos son URLs de ejemplo; las apps no usan la cámara |
-| 7. Ejecución | RF-57 | Parcial | Cola sin conexión e idempotencia en la API y el simulador web; no en la app Flutter |
+| 7. Ejecución | RF-54 | Completo | La app del inspector toma o elige de 1 a 5 fotos (cámara o galería), con miniaturas y opción de quitar; no deja enviar sin al menos una (RN-11). La descripción de cada foto se genera automáticamente. La captura es una pantalla por pasos (estado del techo → hallazgos → fotos → enviar). En "Cliente ausente" la foto de fachada y la nota son obligatorias (RN-10). El reporte HTML muestra las fotos |
+| 7. Ejecución | RF-57 | Parcial | La app Flutter genera el `idLocal` (UUID) una sola vez por operación y por foto y lo reúsa en cada reintento, así que reenviar no duplica (RN-12). Falta la cola local sin conexión con sincronización automática (sí existe en la API y el simulador web) |
 | 8. Comunicación | RF-61 | Parcial | Mensajería en la API y los simuladores web; no en las apps Flutter |
-| 9. Tablero | RF-65, RF-66, RF-70 | Completo | Indicadores con exportación CSV y monitor del día (mapa esquemático) |
+| 9. Tablero | RF-65, RF-66, RF-70 | Completo | Indicadores con exportación CSV y monitor del día con mapa real (Leaflet); si el mapa no carga por falta de internet, se avisa y la lista sigue funcionando |
 
 Los requerimientos de prioridad Media y Baja no listados quedan como trabajo futuro y se registran en el Product Backlog.
 

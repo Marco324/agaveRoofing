@@ -112,8 +112,8 @@ class ProximaCitaCard extends StatelessWidget {
                             ),
                             Text(
                               cita.folio.isNotEmpty ? cita.folio : '—',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
+                              softWrap: true,
                             ),
                           ],
                         ),
