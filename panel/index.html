@@ -6,11 +6,16 @@
   <title>AgaveAlerta — Panel de Administración (San Antonio, TX)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Mapa real del monitor en vivo (Leaflet + OpenStreetMap, sin llave de API) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     html, body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .marcador-monitor { background: transparent; border: none; }
+    .marcador-monitor .pin { width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 17px; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
   </style>
 </head>
 <body class="text-slate-800 antialiased">
@@ -482,15 +487,19 @@
                   —
                 </span>
               </div>
-              <div id="mapaSanAntonioCanvas" class="relative min-h-[18rem] h-auto bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-4 sm:p-6 overflow-hidden">
-                <!-- Vialidades esquemáticas de San Antonio -->
-                <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#38bdf8 1px, transparent 1px); background-size: 24px 24px;"></div>
-                <div class="relative z-10 mb-3 inline-block text-[10px] font-mono text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded border border-slate-700">
-                  Norte: Stone Oak (78258) · Noroeste: Medical Center (78229) · Este: Alamo Heights (78209)
+              <div class="relative">
+                <div id="mapaMonitorLeaflet" class="h-80 sm:h-[26rem] w-full bg-slate-800" role="region" aria-label="Mapa de inspectores en camino"></div>
+                <div id="avisoMapaMonitor" class="hidden absolute inset-x-3 top-3 z-[1000] bg-amber-50 border border-amber-300 text-amber-900 text-xs font-semibold rounded-lg px-3 py-2 shadow">
+                  No se pudo cargar el mapa (¿sin conexión a internet?). La lista de unidades en camino sigue funcionando abajo.
                 </div>
-                <div id="contenedorPinesMapa" class="relative z-10 w-full flex flex-col justify-center gap-3">
-                  <!-- Pines dinámicos -->
+                <div id="vacioMapaMonitor" class="hidden absolute inset-x-3 bottom-3 z-[1000] bg-slate-900/85 text-slate-200 text-xs rounded-lg px-3 py-2 text-center">
+                  Ningún inspector va en camino en este momento.
                 </div>
+              </div>
+              <div class="px-4 py-2 bg-slate-900 border-t border-slate-800 flex flex-wrap gap-4 text-[11px] text-slate-300">
+                <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full bg-cyan-500 border border-white"></span> Inspector (última posición)</span>
+                <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-full bg-emerald-500 border border-white"></span> Domicilio del cliente</span>
+                <span class="flex items-center gap-1.5"><span class="inline-block w-4 border-t-2 border-dashed border-cyan-400"></span> Distancia en línea recta</span>
               </div>
             </div>
 
@@ -1906,6 +1915,117 @@
     // =========================================================================
     // E10 — Funciones del Monitor en Vivo y Semáforo de Puntualidad
     // =========================================================================
+    // ---- Mapa real (Leaflet + OpenStreetMap) -------------------------------
+    // Se crea una sola vez; en cada refresco (15 s) solo se mueven los marcadores.
+    let mapaMonitor = null;
+    let claveEncuadreMonitor = '';
+    const capasMonitor = { inspectores: new Map(), destinos: new Map(), lineas: new Map() };
+
+    function avisoMapaMonitor(visible) {
+      document.getElementById('avisoMapaMonitor').classList.toggle('hidden', !visible);
+    }
+
+    function asegurarMapaMonitor() {
+      if (mapaMonitor) return true;
+      if (typeof L === 'undefined') {
+        avisoMapaMonitor(true);
+        return false;
+      }
+      // Vista inicial: área metropolitana de San Antonio, TX
+      mapaMonitor = L.map('mapaMonitorLeaflet', { scrollWheelZoom: false }).setView([29.4241, -98.4936], 11);
+      const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(mapaMonitor);
+      let erroresTiles = 0;
+      tiles.on('tileerror', () => { if (++erroresTiles >= 3) avisoMapaMonitor(true); });
+      tiles.on('tileload', () => { erroresTiles = 0; avisoMapaMonitor(false); });
+      return true;
+    }
+
+    function iconoMonitor(emoji, color) {
+      return L.divIcon({
+        className: 'marcador-monitor',
+        html: `<div class="pin" style="background:${color}">${emoji}</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+        popupAnchor: [0, -18]
+      });
+    }
+
+    function textoDistancia(m) {
+      if (!Number.isFinite(m)) return '—';
+      return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
+    }
+
+    function actualizarMapaMonitor(lista) {
+      document.getElementById('vacioMapaMonitor').classList.toggle('hidden', lista.length > 0);
+      if (!asegurarMapaMonitor()) return;
+      mapaMonitor.invalidateSize(); // por si la pestaña estaba oculta al crear el mapa
+
+      const vistos = new Set();
+      const puntos = [];
+      lista.forEach((item) => {
+        const id = item.idTrayecto;
+        const p = item.posicionActual || {};
+        const d = item.destino || {};
+        const tienePos = Number.isFinite(p.latitud) && Number.isFinite(p.longitud);
+        const tieneDest = Number.isFinite(d.latitud) && Number.isFinite(d.longitud);
+        if (!tienePos) return;
+        vistos.add(id);
+
+        const pos = [p.latitud, p.longitud];
+        puntos.push(pos);
+        const eta = Number.isFinite(item.etaMinutos) ? `${item.etaAproximado ? 'aprox. ' : ''}${item.etaMinutos} min` : '—';
+        const popup = `<strong>${esc(item.inspector?.nombre || '—')}</strong><br>${esc(item.folio)} → ${esc(item.cliente?.nombre || '—')}`
+          + `<br>Llega en ${eta} · ${textoDistancia(item.distanciaRestanteM)}`;
+
+        let marcador = capasMonitor.inspectores.get(id);
+        if (!marcador) {
+          marcador = L.marker(pos, { icon: iconoMonitor('🛻', '#0891b2'), title: item.inspector?.nombre || '', zIndexOffset: 500 })
+            .bindPopup(popup).addTo(mapaMonitor);
+          capasMonitor.inspectores.set(id, marcador);
+        } else {
+          marcador.setLatLng(pos).setPopupContent(popup);
+        }
+
+        if (tieneDest) {
+          const dest = [d.latitud, d.longitud];
+          puntos.push(dest);
+          const popupDest = `<strong>Domicilio</strong><br>${esc(d.direccion || '—')}<br>${esc(item.cliente?.nombre || '')}`;
+          let mDest = capasMonitor.destinos.get(id);
+          if (!mDest) {
+            mDest = L.marker(dest, { icon: iconoMonitor('🏠', '#059669'), title: d.direccion || '' })
+              .bindPopup(popupDest).addTo(mapaMonitor);
+            capasMonitor.destinos.set(id, mDest);
+          } else {
+            mDest.setLatLng(dest).setPopupContent(popupDest);
+          }
+          let linea = capasMonitor.lineas.get(id);
+          if (!linea) {
+            linea = L.polyline([pos, dest], { color: '#22d3ee', weight: 3, dashArray: '6 6' }).addTo(mapaMonitor);
+            capasMonitor.lineas.set(id, linea);
+          } else {
+            linea.setLatLngs([pos, dest]);
+          }
+        }
+      });
+
+      // Quitar los trayectos que ya terminaron
+      for (const tipo of ['inspectores', 'destinos', 'lineas']) {
+        for (const [id, capa] of capasMonitor[tipo]) {
+          if (!vistos.has(id)) { capa.remove(); capasMonitor[tipo].delete(id); }
+        }
+      }
+
+      // Reencuadrar solo cuando cambia el conjunto de trayectos (no en cada refresco)
+      const clave = [...vistos].sort().join(',');
+      if (clave !== claveEncuadreMonitor && puntos.length) {
+        mapaMonitor.fitBounds(L.latLngBounds(puntos), { padding: [40, 40], maxZoom: 15 });
+      }
+      claveEncuadreMonitor = clave;
+    }
+
     async function cargarMonitorVivo() {
       let data;
       try {
@@ -1926,50 +2046,32 @@
 
       document.getElementById('badgeTotalEnCamino').textContent = `${data.totalEnCamino} unidad(es) en camino`;
 
-      const pinesCont = document.getElementById('contenedorPinesMapa');
       const cardsCont = document.getElementById('contenedorTarjetasEnCamino');
-      pinesCont.innerHTML = '';
       cardsCont.innerHTML = '';
+      try {
+        actualizarMapaMonitor(data.inspectoresEnCamino || []);
+      } catch (err) {
+        console.error('Mapa del monitor:', err);
+        avisoMapaMonitor(true);
+      }
 
       if (!data.inspectoresEnCamino || data.inspectoresEnCamino.length === 0) {
-        pinesCont.innerHTML = '<div class="text-center text-slate-400 text-xs">Ningún inspector tiene trayecto activo en este momento (Privacidad RN-08).</div>';
         cardsCont.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-xs text-slate-500">Elige una cita en "Simular salida" para abrir un trayecto de demostración.</div>';
       } else {
         data.inspectoresEnCamino.forEach((item) => {
-          const pin = document.createElement('div');
-          pin.className = 'bg-slate-900/90 border border-cyan-500/50 rounded-xl p-3 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shadow-lg';
-          pin.innerHTML = `
-            <div class="flex items-start sm:items-center gap-3 min-w-0">
-              <div class="w-9 h-9 rounded-lg bg-cyan-600 flex items-center justify-center text-base font-bold shadow shrink-0">🛻</div>
-              <div class="min-w-0">
-                <div class="text-xs font-bold flex flex-wrap items-center gap-1.5 sm:gap-2">
-                  <span>${item.inspector.nombre}</span>
-                  <span class="text-[10px] font-mono bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300">${item.inspector.placaVehiculo || 'Sin placa'}</span>
-                  <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">${item.folio}</span>
-                </div>
-                <div class="text-[11px] text-slate-300 mt-0.5 break-words">
-                  GPS: <code class="text-cyan-300">${item.posicionActual.latitud.toFixed(5)}, ${item.posicionActual.longitud.toFixed(5)}</code> ➔ <strong>${item.destino.direccion}</strong>
-                </div>
-              </div>
-            </div>
-            <div class="sm:text-right flex sm:block items-center justify-between pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800 shrink-0">
-              <div class="text-sm sm:text-base font-extrabold text-cyan-300">ETA: ${item.etaMinutos} min</div>
-              <div class="text-[10px] text-slate-400">${item.distanciaRestanteM} m restantes ${item.etaAproximado ? '(Aprox RN-09)' : ''}</div>
-            </div>
-          `;
-          pinesCont.appendChild(pin);
-
           const card = document.createElement('div');
           card.className = 'bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3';
           card.innerHTML = `
             <div class="space-y-1 text-xs min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-mono font-bold text-slate-900">${item.folio}</span>
-                <span class="bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded text-[10px]">EN_CAMINO · GPS 15s</span>
+                <span class="bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded text-[10px]">En camino</span>
+                <span class="bg-slate-100 text-slate-800 font-bold px-2 py-0.5 rounded text-[10px]">Llega en ${Number.isFinite(item.etaMinutos) ? `${item.etaAproximado ? 'aprox. ' : ''}${item.etaMinutos} min` : '—'} · ${textoDistancia(item.distanciaRestanteM)}</span>
                 ${item.cliente.enCasa ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">🏠 Cliente en casa</span>' : ''}
               </div>
-              <div class="font-bold text-slate-800">${item.inspector.nombre} ➔ Cliente: ${item.cliente.nombre} (${item.cliente.telefono})</div>
-              <div class="text-slate-500 break-words">Destino: ${item.destino.direccion} · Ventana: ${item.ventana}</div>
+              <div class="font-bold text-slate-800">${esc(item.inspector.nombre)} ➔ Cliente: ${esc(item.cliente.nombre)} (${esc(item.cliente.telefono)})</div>
+              <div class="text-slate-500 break-words">Destino: ${esc(item.destino.direccion)} · Ventana: ${esc(item.ventana)}</div>
+              <div class="text-[11px] text-slate-400">Última posición: ${item.posicionActual?.capturadoEn ? new Date(item.posicionActual.capturadoEn).toLocaleTimeString('es-MX') : '—'}</div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 shrink-0">
               <button onclick="simularAvancePanel(${item.idInspeccion}, false)" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition text-center">
