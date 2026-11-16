@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../models/cita_cliente_model.dart';
+import '../../models/seguimiento_vivo_model.dart';
+import 'mapa_seguimiento_widget.dart';
 
 class ProximaCitaCard extends StatelessWidget {
   final CitaCliente cita;
+  final SeguimientoVivo? seguimiento;
   final VoidCallback onConfirmar;
   final VoidCallback onReprogramar;
   final VoidCallback onEstoyEnCasa;
 
   static const Color agaveEmerald = Color(0xFF059669);
 
+  /// Altura mínima de los botones principales (RNF-02).
+  static const Size _botonMinimo = Size.fromHeight(48);
+
   const ProximaCitaCard({
     super.key,
     required this.cita,
+    required this.seguimiento,
     required this.onConfirmar,
     required this.onReprogramar,
     required this.onEstoyEnCasa,
@@ -30,13 +37,46 @@ class ProximaCitaCard extends StatelessWidget {
       case 'COMPLETADA':
         return Colors.teal;
       default:
-        return Colors.indigo;
+        return Colors.blueGrey;
     }
+  }
+
+  String _textoDireccion() {
+    final d = cita.domicilio;
+    final partes = [d.direccionCompleta, d.colonia, d.ciudad].where((p) => p.trim().isNotEmpty).toList();
+    return partes.isEmpty ? '—' : partes.join(', ');
+  }
+
+  String _textoInspector(InspectorAsignado inspector) {
+    final placa = inspector.placaVehiculo;
+    final nombre = inspector.nombre.isNotEmpty ? inspector.nombre : '—';
+    return placa != null && placa.isNotEmpty ? '$nombre · Placas $placa' : nombre;
+  }
+
+  Widget _botonEstoyEnCasa({required bool principal}) {
+    final texto = cita.clienteEnCasa ? 'Ya avisaste que estás en casa' : 'Ya estoy en casa';
+    final estilo = ElevatedButton.styleFrom(
+      backgroundColor: cita.clienteEnCasa ? agaveEmerald : Colors.indigo,
+      foregroundColor: Colors.white,
+      minimumSize: _botonMinimo,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
+    return ElevatedButton.icon(
+      style: estilo,
+      onPressed: cita.clienteEnCasa ? null : onEstoyEnCasa,
+      icon: Icon(cita.clienteEnCasa ? Icons.check_circle : Icons.home, size: 22),
+      label: Text(
+        texto,
+        style: TextStyle(fontSize: principal ? 18 : 16, fontWeight: FontWeight.bold),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final estadoColor = _colorPorEstado(cita.estado);
+    final mostrarEnCasa =
+        cita.estado == 'EN_CAMINO' || cita.estado == 'CONFIRMADA' || cita.estado == 'EN_SITIO';
 
     return Card(
       elevation: 3,
@@ -58,7 +98,7 @@ class ProximaCitaCard extends StatelessWidget {
                           color: Colors.green.shade50,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.roofing, color: agaveEmerald, size: 24),
+                        child: const Icon(Icons.roofing, color: agaveEmerald, size: 26),
                       ),
                       const SizedBox(width: 10),
                       Flexible(
@@ -66,13 +106,13 @@ class ProximaCitaCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Próxima Inspección',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                              'Próxima inspección',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              cita.folio,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                              cita.folio.isNotEmpty ? cita.folio : '—',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -83,76 +123,43 @@ class ProximaCitaCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: estadoColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: estadoColor.withValues(alpha: 0.4)),
                   ),
                   child: Text(
-                    cita.estado,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: estadoColor),
+                    cita.etiquetaEstado,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: estadoColor),
                   ),
                 ),
               ],
             ),
-            // E10: Mapa / Tarjeta de Seguimiento en Vivo con ETA cuando el inspector va EN_CAMINO
-            if (cita.estado == 'EN_CAMINO' && cita.seguimientoVivo != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.indigo.shade400),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '🛰️ SEGUIMIENTO EN VIVO (E10)',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amberAccent),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Distancia: ${cita.seguimientoVivo!.distanciaMetros ?? 1200} m',
-                            style: const TextStyle(fontSize: 12, color: Colors.white),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: agaveEmerald,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        'ETA: ${cita.seguimientoVivo!.etaMinutos ?? 8} min',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
+            // Mapa en vivo mientras el inspector va en camino
+            if (cita.estaEnCamino) ...[
+              const SizedBox(height: 14),
+              Text(
+                cita.inspector != null && cita.inspector!.nombre.isNotEmpty
+                    ? '${cita.inspector!.nombre} va en camino a tu domicilio'
+                    : 'El inspector va en camino a tu domicilio',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo),
               ),
+              const SizedBox(height: 10),
+              MapaSeguimientoWidget(seguimiento: seguimiento),
+              const SizedBox(height: 14),
+              _botonEstoyEnCasa(principal: true),
             ],
-            const Divider(height: 24),
+            const Divider(height: 28),
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 18, color: Colors.indigo),
-                const SizedBox(width: 8),
+                const Icon(Icons.calendar_today_outlined, size: 20, color: Colors.indigo),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '${cita.fechaProgramada}  •  ${cita.ventanaInicio} - ${cita.ventanaFin}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
+                    '${cita.fechaProgramada.isNotEmpty ? cita.fechaProgramada : '—'}  •  '
+                    '${cita.ventanaInicio.isNotEmpty ? cita.ventanaInicio : '—'} - ${cita.ventanaFin.isNotEmpty ? cita.ventanaFin : '—'}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -161,12 +168,12 @@ class ProximaCitaCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on_outlined, size: 18, color: Colors.redAccent),
-                const SizedBox(width: 8),
+                const Icon(Icons.location_on_outlined, size: 20, color: Colors.redAccent),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '${cita.domicilio.direccionCompleta}, ${cita.domicilio.colonia}, ${cita.domicilio.ciudad} TX',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                    _textoDireccion(),
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
                   ),
                 ),
               ],
@@ -175,13 +182,12 @@ class ProximaCitaCard extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.person_pin, size: 18, color: Colors.blueGrey),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.person_pin, size: 20, color: Colors.blueGrey),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Inspector: ${cita.inspector!.nombre} (${cita.inspector!.placaVehiculo ?? "TX-ROOF"})',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade800, fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis,
+                      'Inspector: ${_textoInspector(cita.inspector!)}',
+                      style: TextStyle(fontSize: 16, color: Colors.grey.shade800, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
@@ -189,62 +195,38 @@ class ProximaCitaCard extends StatelessWidget {
             ],
             const SizedBox(height: 18),
             if (cita.puedeConfirmar) ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: agaveEmerald,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: onConfirmar,
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Confirmar asistencia (1 toque)', style: TextStyle(fontWeight: FontWeight.bold)),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: agaveEmerald,
+                  foregroundColor: Colors.white,
+                  minimumSize: _botonMinimo,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: onConfirmar,
+                icon: const Icon(Icons.check_circle_outline, size: 22),
+                label: const Text('Confirmar asistencia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (mostrarEnCasa && !cita.estaEnCamino) ...[
+              _botonEstoyEnCasa(principal: false),
+              const SizedBox(height: 10),
+            ],
+            if (cita.puedeReprogramar)
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.indigo,
+                  side: const BorderSide(color: Colors.indigo),
+                  minimumSize: _botonMinimo,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: onReprogramar,
+                icon: const Icon(Icons.edit_calendar, size: 22),
+                label: Text(
+                  'Cambiar horario (${3 - cita.vecesReprogramada} disponibles)',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
-              const SizedBox(height: 8),
-            ],
-            Row(
-              children: [
-                if (cita.puedeReprogramar)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.indigo,
-                        side: const BorderSide(color: Colors.indigo),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: onReprogramar,
-                      icon: const Icon(Icons.edit_calendar, size: 18),
-                      label: Text(
-                        'Mover cita (${3 - cita.vecesReprogramada} disp.)',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                if (cita.estado == 'EN_CAMINO' || cita.estado == 'CONFIRMADA' || cita.estado == 'EN_SITIO') ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: cita.clienteEnCasa ? agaveEmerald : Colors.indigo,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: onEstoyEnCasa,
-                      icon: const Icon(Icons.home, size: 18),
-                      label: Text(
-                        cita.clienteEnCasa ? 'En casa confirmado' : 'Ya estoy en casa',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
           ],
         ),
       ),

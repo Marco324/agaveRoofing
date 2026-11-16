@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/cita_cliente_model.dart';
 import '../models/horario_disponible_model.dart';
+import '../models/seguimiento_vivo_model.dart';
 
 class ClienteApiService {
   final String baseUrl;
@@ -95,5 +96,17 @@ class ClienteApiService {
       body: json.encode({}),
     );
     return response.statusCode == 200;
+  }
+
+  /// Seguimiento en vivo del inspector (mapa del cliente).
+  Future<SeguimientoVivo> getSeguimiento(int idInspeccion) async {
+    final uri = Uri.parse('$baseUrl/inspecciones/$idInspeccion/seguimiento');
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return SeguimientoVivo.fromJson(json.decode(response.body) as Map<String, dynamic>);
+    } else {
+      throw Exception('No se pudo consultar la ubicación del inspector (${response.statusCode})');
+    }
   }
 }

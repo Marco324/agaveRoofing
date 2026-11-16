@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/cita_cliente_model.dart';
 import '../../models/horario_disponible_model.dart';
+import '../../models/seguimiento_vivo_model.dart';
 import '../../presenters/contracts/mis_citas_contract.dart';
 import '../../presenters/mis_citas_presenter.dart';
 import '../widgets/proxima_cita_widget.dart';
@@ -20,12 +21,15 @@ class MisCitasScreen extends StatefulWidget {
   State<MisCitasScreen> createState() => _MisCitasScreenState();
 }
 
-class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasViewContract {
+class _MisCitasScreenState extends State<MisCitasScreen>
+    with WidgetsBindingObserver
+    implements MisCitasViewContract {
   late final MisCitasPresenter _presenter;
   bool _isLoading = false;
   int _idClienteActual = 1;
   CitaCliente? _proximaCita;
   List<CitaCliente> _historial = [];
+  SeguimientoVivo? _seguimiento;
 
   static const Color agaveEmerald = Color(0xFF059669);
 
@@ -33,8 +37,31 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
   void initState() {
     super.initState();
     _idClienteActual = widget.idCliente;
+    WidgetsBinding.instance.addObserver(this);
     _presenter = MisCitasPresenter(this);
     _presenter.cargarMisCitas(_idClienteActual);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _presenter.dispose();
+    super.dispose();
+  }
+
+  /// El mapa solo se actualiza mientras la app está en primer plano.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _presenter.reanudarSeguimiento();
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      _presenter.pausarSeguimiento();
+    }
+  }
+
+  @override
+  void showSeguimiento(SeguimientoVivo? seguimiento) {
+    if (mounted) setState(() => _seguimiento = seguimiento);
   }
 
   @override
@@ -105,26 +132,36 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
     );
   }
 
+  String _textoOGuion(String? texto) =>
+      texto == null || texto.trim().isEmpty ? '—' : texto.trim();
+
   void _mostrarReporteDialog(CitaCliente cita) {
     final res = cita.resultado;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Reporte ${cita.folio} (E11)'),
+        title: Text('Reporte ${cita.folio}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Estado del Techo: ${res?.estadoTecho ?? "REGULAR"}',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: agaveEmerald),
-            ),
-            const SizedBox(height: 8),
-            Text('Hallazgos: ${res?.hallazgos ?? "Inspección completada con evidencia fotográfica."}'),
-            const SizedBox(height: 8),
-            Text('Urgencia: ${res?.urgencia ?? "MEDIA"}'),
-            const SizedBox(height: 8),
-            Text('Recomendaciones: ${res?.recomendaciones ?? "Mantenimiento preventivo."}'),
+            if (res == null)
+              const Text(
+                'El reporte de esta visita todavía no está disponible.',
+                style: TextStyle(fontSize: 16),
+              )
+            else ...[
+              Text(
+                'Estado del techo: ${etiquetaEstadoTecho(res.estadoTecho)}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: agaveEmerald),
+              ),
+              const SizedBox(height: 8),
+              Text('Hallazgos: ${_textoOGuion(res.hallazgos)}', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 8),
+              Text('Urgencia: ${etiquetaUrgencia(res.urgencia)}', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 8),
+              Text('Recomendaciones: ${_textoOGuion(res.recomendaciones)}', style: const TextStyle(fontSize: 16)),
+            ],
           ],
         ),
         actions: [
@@ -147,29 +184,29 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Perfil OTP (E05/E06) y Piloto (E12)'),
+          title: const Text('Mi perfil y opinión'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Cliente #$_idClienteActual • Sesión OTP Activa (E05)',
+                  'Cliente #$_idClienteActual • Sesión activa',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: canalPreferido,
-                  decoration: const InputDecoration(labelText: 'Canal Preferido de Avisos (E06)'),
+                  decoration: const InputDecoration(labelText: 'Cómo prefieres recibir avisos'),
                   items: const [
-                    DropdownMenuItem(value: 'PUSH', child: Text('Notificación Push (FCM)')),
-                    DropdownMenuItem(value: 'SMS', child: Text('Mensaje de Texto (SMS Twilio)')),
+                    DropdownMenuItem(value: 'PUSH', child: Text('Notificación en la app')),
+                    DropdownMenuItem(value: 'SMS', child: Text('Mensaje de texto (SMS)')),
                   ],
                   onChanged: (v) => setDialogState(() => canalPreferido = v ?? 'PUSH'),
                 ),
                 const Divider(height: 24),
                 const Text(
-                  'Encuesta de Cliente Piloto (E12)',
+                  'Encuesta rápida',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: agaveEmerald),
                 ),
                 CheckboxListTile(
@@ -202,7 +239,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
               style: ElevatedButton.styleFrom(backgroundColor: agaveEmerald),
               onPressed: () {
                 Navigator.of(ctx).pop();
-                showSuccessMessage('Perfil ($canalPreferido) y opinión piloto E12 guardados.');
+                showSuccessMessage('¡Gracias! Guardamos tus preferencias y tu opinión.');
               },
               child: const Text('Guardar', style: TextStyle(color: Colors.white)),
             ),
@@ -235,7 +272,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
         actions: [
           IconButton(
             icon: const Icon(Icons.verified_user_outlined),
-            tooltip: 'Perfil OTP y Encuesta Piloto (E05/E06/E12)',
+            tooltip: 'Mi perfil y opinión',
             onPressed: _mostrarPerfilYEncuestaDialog,
           ),
           PopupMenuButton<int>(
@@ -245,9 +282,9 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
               _presenter.cargarMisCitas(idCli);
             },
             itemBuilder: (_) => const [
-              PopupMenuItem(value: 4, child: Text('Elena Rodriguez (EN_CAMINO E10)')),
-              PopupMenuItem(value: 1, child: Text('Robert Martinez (Reporte E11)')),
-              PopupMenuItem(value: 2, child: Text('Sarah Jenkins (EN_SITIO E11)')),
+              PopupMenuItem(value: 4, child: Text('Elena Rodriguez (inspector en camino)')),
+              PopupMenuItem(value: 1, child: Text('Robert Martinez (con reporte)')),
+              PopupMenuItem(value: 2, child: Text('Sarah Jenkins (inspector en sitio)')),
             ],
           ),
           IconButton(
@@ -266,6 +303,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
                   if (_proximaCita != null) ...[
                     ProximaCitaCard(
                       cita: _proximaCita!,
+                      seguimiento: _seguimiento,
                       onConfirmar: () => _presenter.confirmarAsistencia(
                         _proximaCita!.idInspeccion,
                         _idClienteActual,
@@ -288,7 +326,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
                         child: Center(
                           child: Text(
                             'No tienes citas de inspección activas.',
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
                           ),
                         ),
                       ),
@@ -301,8 +339,8 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Historial y Reportes PDF (${_historial.length})',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                          'Historial y reportes (${_historial.length})',
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.blueGrey),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -312,7 +350,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
                   if (_historial.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
-                      child: Text('No hay inspecciones previas registradas.', style: TextStyle(color: Colors.grey)),
+                      child: Text('No hay inspecciones previas registradas.', style: TextStyle(color: Colors.grey, fontSize: 16)),
                     )
                   else
                     ..._historial.map((c) => Card(
@@ -324,9 +362,10 @@ class _MisCitasScreenState extends State<MisCitasScreen> implements MisCitasView
                               backgroundColor: Colors.teal.shade50,
                               child: const Icon(Icons.picture_as_pdf, color: Colors.teal, size: 20),
                             ),
-                            title: Text('${c.folio}  •  ${c.estado}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            title: Text('${c.folio}  •  ${c.etiquetaEstado}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                             subtitle: Text(
-                              '${c.fechaProgramada} (${c.ventanaInicio} - ${c.ventanaFin})\nDictamen: ${c.resultado?.estadoTecho ?? "REGULAR"} • Toca para ver reporte',
+                              '${c.fechaProgramada} (${c.ventanaInicio} - ${c.ventanaFin})\nEstado del techo: ${etiquetaEstadoTecho(c.resultado?.estadoTecho)} • Toca para ver reporte',
+                              style: const TextStyle(fontSize: 16),
                             ),
                             isThreeLine: true,
                           ),

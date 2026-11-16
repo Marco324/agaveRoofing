@@ -1,3 +1,5 @@
+import 'seguimiento_vivo_model.dart';
+
 class DomicilioCliente {
   final String direccionCompleta;
   final String colonia;
@@ -47,46 +49,17 @@ class InspectorAsignado {
   }
 }
 
-class SeguimientoVivoCliente {
-  final bool activo;
-  final int? etaMinutos;
-  final bool etaAproximado;
-  final int? distanciaMetros;
-  final bool porLlegar;
-  final bool sinSenalGps;
-
-  SeguimientoVivoCliente({
-    required this.activo,
-    this.etaMinutos,
-    this.etaAproximado = false,
-    this.distanciaMetros,
-    this.porLlegar = false,
-    this.sinSenalGps = false,
-  });
-
-  factory SeguimientoVivoCliente.fromJson(Map<String, dynamic> json) {
-    return SeguimientoVivoCliente(
-      activo: json['activo'] == true,
-      etaMinutos: json['etaMinutos'],
-      etaAproximado: json['etaAproximado'] == true,
-      distanciaMetros: json['distanciaMetros'],
-      porLlegar: json['porLlegar'] == true,
-      sinSenalGps: json['sinSenalGps'] == true,
-    );
-  }
-}
-
 class ResultadoInspeccionCliente {
-  final String estadoTecho;
-  final String hallazgos;
+  final String? estadoTecho;
+  final String? hallazgos;
   final bool requiereReparacion;
   final String? urgencia;
   final String? recomendaciones;
   final String? urlReportePdf;
 
   ResultadoInspeccionCliente({
-    required this.estadoTecho,
-    required this.hallazgos,
+    this.estadoTecho,
+    this.hallazgos,
     required this.requiereReparacion,
     this.urgencia,
     this.recomendaciones,
@@ -95,8 +68,8 @@ class ResultadoInspeccionCliente {
 
   factory ResultadoInspeccionCliente.fromJson(Map<String, dynamic> json) {
     return ResultadoInspeccionCliente(
-      estadoTecho: json['estadoTecho'] ?? 'REGULAR',
-      hallazgos: json['hallazgos'] ?? '',
+      estadoTecho: json['estadoTecho'],
+      hallazgos: json['hallazgos'],
       requiereReparacion: json['requiereReparacion'] == true,
       urgencia: json['urgencia'],
       recomendaciones: json['recomendaciones'],
@@ -138,7 +111,7 @@ class CitaCliente {
   final bool clienteEnCasa;
   final DomicilioCliente domicilio;
   final InspectorAsignado? inspector;
-  final SeguimientoVivoCliente? seguimientoVivo;
+  final SeguimientoVivo? seguimientoVivo;
   final ResultadoInspeccionCliente? resultado;
   final List<EventoLineaTiempo> lineaDeTiempo;
 
@@ -160,6 +133,11 @@ class CitaCliente {
     required this.lineaDeTiempo,
   });
 
+  bool get estaEnCamino => estado == 'EN_CAMINO';
+
+  /// Texto para el cliente; nunca se muestra el código interno del estado.
+  String get etiquetaEstado => etiquetaDeEstado(estado);
+
   bool get estaConfirmada => estado == 'CONFIRMADA' || confirmadoEn != null;
   bool get puedeConfirmar => estado == 'NOTIFICADA' || estado == 'SIN_CONFIRMAR' || estado == 'PROGRAMADA';
   bool get puedeReprogramar =>
@@ -176,7 +154,7 @@ class CitaCliente {
       fechaProgramada: json['fechaProgramada'] ?? '',
       ventanaInicio: json['ventanaInicio'] ?? '',
       ventanaFin: json['ventanaFin'] ?? '',
-      estado: json['estado'] ?? 'PROGRAMADA',
+      estado: json['estado'] ?? '',
       motivoVisita: json['motivoVisita'],
       vecesReprogramada: json['vecesReprogramada'] ?? 0,
       confirmadoEn: json['confirmadoEn'],
@@ -184,7 +162,7 @@ class CitaCliente {
       domicilio: DomicilioCliente.fromJson(json['domicilio'] ?? {}),
       inspector: json['inspector'] != null ? InspectorAsignado.fromJson(json['inspector']) : null,
       seguimientoVivo: json['seguimientoVivo'] != null
-          ? SeguimientoVivoCliente.fromJson(json['seguimientoVivo'])
+          ? SeguimientoVivo.fromJson(json['seguimientoVivo'])
           : null,
       resultado: json['resultado'] != null
           ? ResultadoInspeccionCliente.fromJson(json['resultado'])
@@ -193,5 +171,65 @@ class CitaCliente {
           .map((item) => EventoLineaTiempo.fromJson(item))
           .toList(),
     );
+  }
+}
+
+/// Traduce el estado interno de una cita a una frase para el cliente.
+String etiquetaDeEstado(String estado) {
+  switch (estado) {
+    case 'PROGRAMADA':
+      return 'Programada';
+    case 'NOTIFICADA':
+      return 'Por confirmar';
+    case 'SIN_CONFIRMAR':
+      return 'Sin confirmar';
+    case 'CONFIRMADA':
+      return 'Confirmada';
+    case 'REPROGRAMADA':
+      return 'Cambio de horario';
+    case 'EN_CAMINO':
+      return 'En camino';
+    case 'EN_SITIO':
+      return 'Llegó';
+    case 'COMPLETADA':
+      return 'Completada';
+    case 'CLIENTE_AUSENTE':
+      return 'Visita no realizada';
+    case 'CANCELADA':
+      return 'Cancelada';
+    default:
+      return '—';
+  }
+}
+
+/// Traduce el estado del techo del reporte a una frase legible.
+String etiquetaEstadoTecho(String? estadoTecho) {
+  switch (estadoTecho) {
+    case 'BUENO':
+      return 'Bueno';
+    case 'REGULAR':
+      return 'Regular';
+    case 'MALO':
+      return 'Malo';
+    case 'CRITICO':
+      return 'Crítico';
+    default:
+      return '—';
+  }
+}
+
+/// Traduce la urgencia de reparación a una frase legible.
+String etiquetaUrgencia(String? urgencia) {
+  switch (urgencia) {
+    case 'BAJA':
+      return 'Baja';
+    case 'MEDIA':
+      return 'Media';
+    case 'ALTA':
+      return 'Alta';
+    case 'INMEDIATA':
+      return 'Inmediata';
+    default:
+      return '—';
   }
 }
