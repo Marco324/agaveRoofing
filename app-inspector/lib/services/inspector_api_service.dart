@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/ruta_parada_model.dart';
 
 class InspectorApiService {
   final String baseUrl;
 
-  InspectorApiService({this.baseUrl = 'http://localhost:4000/api'});
+  InspectorApiService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   Future<List<RutaParada>> getRutaDelDia({
     required int idInspector,

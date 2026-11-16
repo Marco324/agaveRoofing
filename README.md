@@ -48,16 +48,31 @@ Con la API corriendo, abre estos archivos directamente en el navegador (la API n
 Para usar otro puerto: `PORT=5000 npm run api` (y actualizar `API_URL` en el panel y los simuladores).
 
 ### 2. Ejecutar las Aplicaciones Móviles en Flutter
-Las apps apuntan a `http://localhost:4000/api` (`lib/services/*_api_service.dart`). En el emulador de Android usa `http://10.0.2.2:4000/api` y en un teléfono real la IP de la computadora en la red local.
+La URL de la API se lee de `--dart-define=API_URL` (`lib/config/api_config.dart`). Si no se indica:
+- **Emulador de Android:** `http://10.0.2.2:4000/api` (así ve el emulador a tu computadora).
+- **Simulador de iOS, web y escritorio:** `http://localhost:4000/api`.
+
 ```bash
-# App del Inspector
+# App del Inspector (emulador o simulador)
 cd app-inspector
 flutter run
 
-# App del Cliente
+# App del Cliente (emulador o simulador)
 cd ../app-cliente
 flutter run
 ```
+
+**En un teléfono real** (misma red Wi-Fi que la computadora), pasa la IP local de la computadora (en macOS: `ipconfig getifaddr en0`):
+```bash
+flutter run --dart-define=API_URL=http://192.168.1.50:4000/api
+```
+
+Notas de desarrollo:
+- Android permite HTTP sin TLS solo en compilaciones *debug* y *profile* (`android/app/src/debug|profile/AndroidManifest.xml`); *release* no incluye la excepción.
+- iOS tiene la excepción ATS `NSAllowsLocalNetworking` para la red local (solo desarrollo).
+- La app del inspector pide permiso de **ubicación** (al pulsar "Voy en camino") y de **cámara/fotos** (al capturar evidencia). En el emulador de Android puedes mover la ubicación desde *Extended controls → Location*; en el simulador de iOS, *Features → Location*.
+- La app del inspector envía su ubicación cada 15 s **solo con la app en primer plano**; el envío en segundo plano queda como trabajo futuro.
+- El botón de avance simulado del GPS está oculto por defecto; se activa en el perfil del inspector (icono de credencial → "Modo demo").
 
 ### 3. Ejecutar las Suites de Pruebas Automatizadas (`E07`, `E08/E09`, `E10/E11` — 28 escenarios)
 ```bash

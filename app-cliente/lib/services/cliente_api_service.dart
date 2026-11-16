@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/cita_cliente_model.dart';
 import '../models/horario_disponible_model.dart';
 
 class ClienteApiService {
   final String baseUrl;
 
-  ClienteApiService({this.baseUrl = 'http://localhost:4000/api'});
+  ClienteApiService({String? baseUrl}) : baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   Future<Map<String, dynamic>> getMisCitas(int idCliente) async {
     final uri = Uri.parse('$baseUrl/inspecciones/mias?idCliente=$idCliente');
