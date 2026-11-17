@@ -920,7 +920,24 @@
 
   <script>
     // Conexión con la API local
-    const API_URL = 'http://localhost:4000/api';
+    // Se puede cambiar sin editar el código:
+    //   panel/index.html?api=http://192.168.1.50:4000/api  (se recuerda en este navegador)
+    //   panel/index.html?api=                              (vuelve al valor por defecto)
+    const API_URL_DEFECTO = 'http://localhost:4000/api';
+    const API_URL = (() => {
+      const param = new URLSearchParams(location.search).get('api');
+      try {
+        if (param !== null) {
+          const limpio = param.trim().replace(/\/+$/, '');
+          if (limpio) localStorage.setItem('agave.apiUrl', limpio);
+          else localStorage.removeItem('agave.apiUrl');
+          return limpio || API_URL_DEFECTO;
+        }
+        return localStorage.getItem('agave.apiUrl') || API_URL_DEFECTO;
+      } catch (_) {
+        return (param && param.trim().replace(/\/+$/, '')) || API_URL_DEFECTO;
+      }
+    })();
 
     let citasData = [];
     let todasLasCitas = [];
@@ -1008,6 +1025,14 @@
       setTimeout(() => div.remove(), tipo === 'error' ? 9000 : 5000);
     }
 
+    // Cierra un modal al hacer clic en el fondo, solo si el clic empezó y terminó ahí
+    // (evita cerrarlo al arrastrar para seleccionar texto dentro del formulario)
+    function cerrarAlClicFuera(fondo, alCerrar) {
+      let empezoEnFondo = false;
+      fondo.addEventListener('mousedown', (e) => { empezoEnFondo = e.target === fondo; });
+      fondo.addEventListener('click', (e) => { if (empezoEnFondo && e.target === fondo) alCerrar(); });
+    }
+
     // Diálogo para pedir un texto obligatorio (reemplaza a prompt)
     function pedirTexto({ titulo, mensaje = '', placeholder = '', textoBoton = 'Aceptar', minimo = 5 }) {
       return new Promise((resolve) => {
@@ -1028,12 +1053,41 @@
         const area = fondo.querySelector('textarea');
         area.focus();
         const cerrar = (valor) => { fondo.remove(); resolve(valor); };
+        fondo._cerrarConEscape = () => cerrar(null);
+        cerrarAlClicFuera(fondo, () => cerrar(null));
         fondo.querySelector('[data-cancelar]').onclick = () => cerrar(null);
         fondo.querySelector('[data-aceptar]').onclick = () => {
           const v = area.value.trim();
           if (v.length < minimo) { fondo.querySelector('[data-error]').classList.remove('hidden'); return; }
           cerrar(v);
         };
+      });
+    }
+
+    // Diálogo de confirmación para acciones peligrosas (reemplaza a confirm)
+    function confirmar({ titulo, mensaje = '', textoBoton = 'Confirmar', peligro = true }) {
+      return new Promise((resolve) => {
+        const fondo = document.createElement('div');
+        fondo.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[55] flex items-center justify-center p-4';
+        const colorBoton = peligro ? 'bg-rose-600 hover:bg-rose-700' : 'bg-slate-900 hover:bg-slate-800';
+        fondo.innerHTML = `
+          <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-5 space-y-3" role="alertdialog" aria-modal="true">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              ${peligro ? '<i class="fa-solid fa-triangle-exclamation text-rose-600"></i>' : ''}${esc(titulo)}
+            </h3>
+            ${mensaje ? `<p class="text-xs text-slate-600 whitespace-pre-line">${esc(mensaje)}</p>` : ''}
+            <div class="flex justify-end gap-2 pt-1">
+              <button data-cancelar class="px-3 py-2 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium">Volver</button>
+              <button data-aceptar class="px-3 py-2 text-xs ${colorBoton} text-white rounded-lg font-semibold">${esc(textoBoton)}</button>
+            </div>
+          </div>`;
+        document.body.appendChild(fondo);
+        const cerrar = (valor) => { fondo.remove(); resolve(valor); };
+        fondo._cerrarConEscape = () => cerrar(false);
+        cerrarAlClicFuera(fondo, () => cerrar(false));
+        fondo.querySelector('[data-cancelar]').onclick = () => cerrar(false);
+        fondo.querySelector('[data-aceptar]').onclick = () => cerrar(true);
+        fondo.querySelector('[data-cancelar]').focus();
       });
     }
 
@@ -1048,7 +1102,7 @@
         });
       } catch (_) {
         marcarEstadoApi(false);
-        throw new Error('No hay conexión con la API (http://localhost:4000). Ejecuta "npm run api" en la raíz del proyecto y vuelve a intentar.');
+        throw new Error(`No hay conexión con la API (${API_URL}). Ejecuta "npm run api" en la raíz del proyecto y vuelve a intentar.`);
       }
       marcarEstadoApi(true);
       let data = {};
@@ -1449,6 +1503,21 @@
       document.getElementById('modalDetalleCita').classList.add('hidden');
       cerrarFormularioAccion();
     };
+
+    // Cerrar modales con clic en el fondo oscuro y con la tecla Esc
+    cerrarAlClicFuera(document.getElementById('modalNuevaInspeccion'), () => document.getElementById('btnCloseModalNueva').click());
+    cerrarAlClicFuera(document.getElementById('modalDetalleCita'), () => document.getElementById('btnCloseModalDetalle').click());
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      // Primero el diálogo que esté encima (confirmar / pedirTexto), luego los modales
+      const dialogos = [...document.querySelectorAll('body > div')].filter(d => d._cerrarConEscape);
+      if (dialogos.length) { dialogos[dialogos.length - 1]._cerrarConEscape(); return; }
+      if (!document.getElementById('modalDetalleCita').classList.contains('hidden')) {
+        document.getElementById('btnCloseModalDetalle').click();
+      } else if (!document.getElementById('modalNuevaInspeccion').classList.contains('hidden')) {
+        document.getElementById('btnCloseModalNueva').click();
+      }
+    });
 
     function mostrarErrorNueva(mensaje, titulo = 'No se pudo programar la inspección:') {
       document.getElementById('tituloErrorNueva').textContent = titulo;
@@ -1875,6 +1944,13 @@
     }
 
     async function ejecutarBarridoSinConfirmar() {
+      const ok = await confirmar({
+        titulo: '¿Ejecutar la revisión de citas sin respuesta?',
+        mensaje: 'Las citas notificadas que el cliente no haya confirmado pasarán a SIN_CONFIRMAR (RN-07).',
+        textoBoton: 'Ejecutar revisión',
+        peligro: false
+      });
+      if (!ok) return;
       try {
         await api('/temporizadores/sin-confirmar', { method: 'POST', body: {} });
         await Promise.all([cargarReprogramacionesYSinConfirmar(), cargarCitasDesdeApi()]);
@@ -2139,6 +2215,12 @@
     }
 
     async function cerrarTrayectosOlvidadosPanel() {
+      const ok = await confirmar({
+        titulo: '¿Cerrar trayectos olvidados?',
+        mensaje: 'Se cancelarán los trayectos EN_CAMINO que rebasen el tiempo máximo configurado. Los inspectores afectados dejarán de compartir ubicación.',
+        textoBoton: 'Cerrar trayectos'
+      });
+      if (!ok) return;
       try {
         const data = await api('/temporizadores/cerrar-trayectos', { method: 'POST', body: {} });
         await cargarMonitorVivo();
@@ -2265,6 +2347,12 @@
     }
 
     async function purgarPuntosPanel() {
+      const ok = await confirmar({
+        titulo: '¿Purgar puntos GPS antiguos?',
+        mensaje: 'Se eliminarán de forma permanente los puntos GPS con más de 30 días (RN-17). Esta acción no se puede deshacer.',
+        textoBoton: 'Purgar puntos'
+      });
+      if (!ok) return;
       try {
         const data = await api('/mantenimiento/purgar-puntos', { method: 'POST', body: { diasRetencion: 30 } });
         toast(`Purga completada: ${data.puntosEliminados} punto(s) GPS con más de ${data.diasRetencion} días eliminados (RN-17).`);
@@ -2365,6 +2453,13 @@
     }
 
     async function bajaLogicaClientePanel(idCliente) {
+      const cliente = (catalogos.clientes || []).find(c => c.id_cliente === idCliente);
+      const ok = await confirmar({
+        titulo: `¿Dar de baja a ${cliente ? cliente.nombre : 'este cliente'}?`,
+        mensaje: 'Ya no aparecerá al programar nuevas inspecciones. Su historial de inspecciones se conserva (RN-15).',
+        textoBoton: 'Dar de baja'
+      });
+      if (!ok) return;
       try {
         await api(`/clientes/${idCliente}/baja`, { method: 'PATCH', body: { motivo: 'Baja lógica desde el panel' } });
         await Promise.all([cargarCatalogosYSeguridad(), cargarCatalogosBase()]);
