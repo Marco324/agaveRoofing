@@ -6,6 +6,7 @@ import '../../presenters/contracts/ruta_inspector_contract.dart';
 import '../../presenters/ruta_inspector_presenter.dart';
 import '../../utils/formato_fecha.dart';
 import '../widgets/parada_card_widget.dart';
+import '../widgets/selector_dias_widget.dart';
 import 'capturar_resultado_screen.dart';
 import 'cliente_ausente_screen.dart';
 
@@ -49,13 +50,93 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     WidgetsBinding.instance.addObserver(this);
     _presenter = RutaInspectorPresenter(this);
     _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada);
+    _cargarConteosDeSemana(fechaDesdeIso(_fechaSeleccionada)!);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _presenter.dispose();
+    _paradasPorDia.dispose();
     super.dispose();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Calendario
+  // ---------------------------------------------------------------------------
+
+  /// Paradas por día de los meses ya consultados.
+  final ValueNotifier<Map<String, int>> _paradasPorDia = ValueNotifier({});
+
+  /// Meses ya consultados (`2026-11`), para no repetir la petición.
+  final Set<String> _mesesConConteo = {};
+
+  @override
+  void showParadasPorDia(Map<String, int> conteo) {
+    if (!mounted) return;
+    _paradasPorDia.value = {..._paradasPorDia.value, ...conteo};
+    setState(() {});
+  }
+
+  /// Pide los conteos del mes (o los dos meses) que toca la semana de [dia].
+  void _cargarConteosDeSemana(DateTime dia) {
+    final lunes = inicioDeSemana(dia);
+    final domingo = DateTime(lunes.year, lunes.month, lunes.day + 6);
+    for (final f in {lunes, domingo}) {
+      final clave = fechaIso(f).substring(0, 7);
+      if (_mesesConConteo.add(clave)) {
+        _presenter.cargarParadasPorDia(
+          _idInspectorActual,
+          fechaIso(DateTime(f.year, f.month, 1)),
+          fechaIso(DateTime(f.year, f.month + 1, 0)),
+        );
+      }
+    }
+  }
+
+  /// Vuelve a pedir los conteos (al cambiar de inspector o recargar).
+  void _reiniciarConteos() {
+    _mesesConConteo.clear();
+    _paradasPorDia.value = {};
+    _cargarConteosDeSemana(fechaDesdeIso(_fechaSeleccionada)!);
+  }
+
+  void _seleccionarDia(DateTime dia) {
+    final fecha = fechaIso(dia);
+    _cargarConteosDeSemana(dia);
+    if (fecha == _fechaSeleccionada) return;
+    // Se marca de inmediato para que la tira responda sin esperar a la API.
+    setState(() {
+      _fechaSeleccionada = fecha;
+      _paradas = [];
+    });
+    _presenter.cargarRuta(_idInspectorActual, fecha);
+  }
+
+  Future<void> _abrirCalendario() async {
+    final elegido = await mostrarCalendarioMes(
+      context,
+      seleccionada: fechaDesdeIso(_fechaSeleccionada)!,
+      paradasPorDia: _paradasPorDia,
+      cargarMes: (inicio, fin) {
+        final clave = fechaIso(
+          DateTime(inicio.year, inicio.month, inicio.day + 7),
+        ).substring(0, 7);
+        if (_mesesConConteo.add(clave)) {
+          _presenter.cargarParadasPorDia(
+            _idInspectorActual,
+            fechaIso(inicio),
+            fechaIso(fin),
+          );
+        }
+      },
+    );
+    if (elegido != null) _seleccionarDia(elegido);
+  }
+
+  Future<void> _recargar() async {
+    _reiniciarConteos();
+    await _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada);
   }
 
   /// La ubicación se envía solo con la app en primer plano.
@@ -231,7 +312,9 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
       }
     } catch (_) {
       if (mounted) {
-        showError('No se pudo abrir ${esquema == 'tel' ? 'el marcador' : 'los mensajes'}.');
+        showError(
+          'No se pudo abrir ${esquema == 'tel' ? 'el marcador' : 'los mensajes'}.',
+        );
       }
     }
   }
@@ -260,9 +343,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
               label: const Text('Llamar'),
             ),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
             onPressed: () => Navigator.pop(ctx, 'registrar'),
             child: const Text('Registrar ausencia'),
           ),
@@ -753,7 +834,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
             ),
             Text(
-              '$_nombreInspectorActual  •  ${fechaCorta(_fechaSeleccionada)}',
+              _nombreInspectorActual,
               style: const TextStyle(fontSize: 12),
               overflow: TextOverflow.ellipsis,
             ),
@@ -773,6 +854,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
                     ? 'Carlos Garza'
                     : 'David Vance';
               });
+              _reiniciarConteos();
               _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada);
             },
             itemBuilder: (_) => const [
@@ -791,37 +873,26 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
             tooltip: 'Perfil y modo demo',
             onPressed: _mostrarPerfilYSesionDialog,
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.calendar_month),
-            onSelected: (fecha) =>
-                _presenter.cargarRuta(_idInspectorActual, fecha),
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: '2026-11-12',
-                child: Text('Jueves 12 de noviembre'),
-              ),
-              PopupMenuItem(
-                value: '2026-11-05',
-                child: Text('Jueves 5 de noviembre'),
-              ),
-              PopupMenuItem(
-                value: '2026-10-29',
-                child: Text('Jueves 29 de octubre'),
-              ),
-            ],
-          ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () =>
-                _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada),
+            tooltip: 'Actualizar',
+            onPressed: _recargar,
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(SelectorSemanaWidget.alto),
+          child: SelectorSemanaWidget(
+            seleccionada: fechaDesdeIso(_fechaSeleccionada)!,
+            paradasPorDia: _paradasPorDia.value,
+            onSeleccionar: _seleccionarDia,
+            onAbrirCalendario: _abrirCalendario,
+          ),
+        ),
       ),
       body: _isLoading && _paradas.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () =>
-                  _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada),
+              onRefresh: _recargar,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -953,8 +1024,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
                         onCapturarResultado: () =>
                             _abrirCapturaResultado(parada),
                         onMarcarAusente: () => _confirmarAusente(parada),
-                        onLlamarCliente: () =>
-                            _contactarCliente(parada, 'tel'),
+                        onLlamarCliente: () => _contactarCliente(parada, 'tel'),
                         onMensajeCliente: () =>
                             _contactarCliente(parada, 'sms'),
                       );

@@ -80,3 +80,26 @@ String ventanaHoraria(String inicio, String fin) {
 /// `1` → `1 parada`, `3` → `3 paradas`.
 String plural(int n, String singular, [String? pluralForma]) =>
     '$n ${n == 1 ? singular : (pluralForma ?? '${singular}s')}';
+
+/// `DateTime` → `2026-11-12`.
+String fechaIso(DateTime f) =>
+    '${f.year.toString().padLeft(4, '0')}-'
+    '${f.month.toString().padLeft(2, '0')}-'
+    '${f.day.toString().padLeft(2, '0')}';
+
+/// `2026-11-12` → `DateTime` (solo fecha). `null` si no es válida.
+DateTime? fechaDesdeIso(String fechaIso) => _parsear(fechaIso);
+
+/// `noviembre 2026`.
+String mesAnio(DateTime f) => '${_meses[f.month - 1]} ${f.year}';
+
+/// Inicial del día de la semana: L, M, M, J, V, S, D.
+String inicialDia(DateTime f) =>
+    const ['L', 'M', 'M', 'J', 'V', 'S', 'D'][f.weekday - 1];
+
+/// Lunes de la semana de [f].
+DateTime inicioDeSemana(DateTime f) =>
+    DateTime(f.year, f.month, f.day - (f.weekday - 1));
+
+bool mismoDia(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;

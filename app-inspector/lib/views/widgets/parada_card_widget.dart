@@ -147,7 +147,7 @@ class ParadaCardWidget extends StatelessWidget {
                 ),
               ],
             ),
-            if (parada.clienteEnCasa) ...[
+            if (parada.clienteEnCasa && !parada.estaCompletada) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(

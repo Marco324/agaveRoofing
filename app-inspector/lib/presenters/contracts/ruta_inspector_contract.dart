@@ -4,6 +4,9 @@ abstract class RutaInspectorViewContract {
   void showLoading();
   void hideLoading();
   void showRuta(List<RutaParada> paradas, String fecha);
+
+  /// Paradas por día (`2026-11-12` → 2) para marcar el calendario.
+  void showParadasPorDia(Map<String, int> conteo);
   void showError(String message);
   void showSuccessMessage(String message);
 

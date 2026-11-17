@@ -83,6 +83,33 @@ class InspectorApiService {
     }
   }
 
+  /// Cuántas paradas tiene el inspector en cada día del rango
+  /// (`2026-11-12` → 2). Las canceladas no cuentan.
+  Future<Map<String, int>> getParadasPorDia({
+    required int idInspector,
+    required String fechaInicio,
+    required String fechaFin,
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl/inspecciones?idInspector=$idInspector'
+      '&fechaInicio=$fechaInicio&fechaFin=$fechaFin',
+    );
+    final response = await http.get(uri).timeout(_tiempoMaximo);
+    if (response.statusCode != 200) {
+      throw _error(response, 'No se pudo obtener el calendario');
+    }
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    final conteo = <String, int>{};
+    for (final i in data['inspecciones'] as List<dynamic>? ?? const []) {
+      final fila = i as Map<String, dynamic>;
+      if (fila['estado'] == 'CANCELADA') continue;
+      final fecha = fila['fecha_programada'] as String?;
+      if (fecha == null) continue;
+      conteo[fecha] = (conteo[fecha] ?? 0) + 1;
+    }
+    return conteo;
+  }
+
   /// "Voy en camino" con la posición real. Devuelve el `id_trayecto` abierto.
   Future<int> iniciarTrayecto(
     int idInspeccion, {

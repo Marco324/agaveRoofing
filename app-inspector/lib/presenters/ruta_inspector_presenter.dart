@@ -52,6 +52,25 @@ class RutaInspectorPresenter {
     }
   }
 
+  /// Carga cuántas paradas hay cada día del rango. Si falla, el calendario
+  /// simplemente se muestra sin marcas.
+  Future<void> cargarParadasPorDia(
+    int idInspector,
+    String fechaInicio,
+    String fechaFin,
+  ) async {
+    try {
+      final conteo = await apiService.getParadasPorDia(
+        idInspector: idInspector,
+        fechaInicio: fechaInicio,
+        fechaFin: fechaFin,
+      );
+      view.showParadasPorDia(conteo);
+    } catch (_) {
+      // Opcional: sin conteos no se bloquea la ruta.
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Trayecto y GPS real (RF-08)
   // ---------------------------------------------------------------------------
