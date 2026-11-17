@@ -4,6 +4,7 @@ import '../../models/horario_disponible_model.dart';
 import '../../models/seguimiento_vivo_model.dart';
 import '../../presenters/contracts/mis_citas_contract.dart';
 import '../../presenters/mis_citas_presenter.dart';
+import '../../utils/formato_fecha.dart';
 import '../widgets/proxima_cita_widget.dart';
 import '../widgets/reprogramar_dialog.dart';
 
@@ -27,6 +28,14 @@ class _MisCitasScreenState extends State<MisCitasScreen>
   late final MisCitasPresenter _presenter;
   bool _isLoading = false;
   int _idClienteActual = 1;
+  late String _nombreCliente;
+
+  /// Clientes de la base demo, para el selector del encabezado.
+  static const Map<int, String> _clientesDemo = {
+    4: 'Elena Rodriguez',
+    1: 'Robert B. Martinez',
+    2: 'Sarah Jenkins',
+  };
   CitaCliente? _proximaCita;
   List<CitaCliente> _historial = [];
   SeguimientoVivo? _seguimiento;
@@ -37,6 +46,7 @@ class _MisCitasScreenState extends State<MisCitasScreen>
   void initState() {
     super.initState();
     _idClienteActual = widget.idCliente;
+    _nombreCliente = widget.nombreCliente;
     WidgetsBinding.instance.addObserver(this);
     _presenter = MisCitasPresenter(this);
     _presenter.cargarMisCitas(_idClienteActual);
@@ -257,13 +267,13 @@ class _MisCitasScreenState extends State<MisCitasScreen>
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'AgaveAlerta',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-            ),
             Text(
-              'San Antonio, TX • Cliente #$_idClienteActual',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              'Hola, ${_nombreCliente.split(' ').first}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            ),
+            const Text(
+              'AgaveAlerta · San Antonio, TX',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -276,9 +286,13 @@ class _MisCitasScreenState extends State<MisCitasScreen>
             onPressed: _mostrarPerfilYEncuestaDialog,
           ),
           PopupMenuButton<int>(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.switch_account),
+            tooltip: 'Cambiar cliente (demo)',
             onSelected: (idCli) {
-              setState(() => _idClienteActual = idCli);
+              setState(() {
+                _idClienteActual = idCli;
+                _nombreCliente = _clientesDemo[idCli] ?? _nombreCliente;
+              });
               _presenter.cargarMisCitas(idCli);
             },
             itemBuilder: (_) => const [
@@ -289,6 +303,7 @@ class _MisCitasScreenState extends State<MisCitasScreen>
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar',
             onPressed: () => _presenter.cargarMisCitas(_idClienteActual),
           ),
         ],
@@ -353,23 +368,39 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                       child: Text('No hay inspecciones previas registradas.', style: TextStyle(color: Colors.grey, fontSize: 16)),
                     )
                   else
-                    ..._historial.map((c) => Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          child: ListTile(
-                            onTap: () => _mostrarReporteDialog(c),
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.teal.shade50,
-                              child: const Icon(Icons.picture_as_pdf, color: Colors.teal, size: 20),
+                    ..._historial.map((c) {
+                      final tieneReporte = c.resultado != null;
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: ListTile(
+                          // Sin reporte no hay nada que abrir.
+                          onTap: tieneReporte ? () => _mostrarReporteDialog(c) : null,
+                          leading: CircleAvatar(
+                            backgroundColor: tieneReporte ? Colors.teal.shade50 : Colors.grey.shade200,
+                            child: Icon(
+                              tieneReporte ? Icons.description_outlined : Icons.event_note_outlined,
+                              color: tieneReporte ? Colors.teal : Colors.grey.shade600,
+                              size: 20,
                             ),
-                            title: Text('${c.folio}  •  ${c.etiquetaEstado}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            subtitle: Text(
-                              '${c.fechaProgramada} (${c.ventanaInicio} - ${c.ventanaFin})\nEstado del techo: ${etiquetaEstadoTecho(c.resultado?.estadoTecho)} • Toca para ver reporte',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            isThreeLine: true,
                           ),
-                        )),
+                          title: Text(
+                            fechaLarga(c.fechaProgramada),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          subtitle: Text(
+                            tieneReporte
+                                ? 'Techo: ${etiquetaEstadoTecho(c.resultado!.estadoTecho)} · Ver reporte'
+                                : '${c.etiquetaEstado} · Sin reporte',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: tieneReporte ? Colors.teal.shade800 : Colors.grey.shade700,
+                            ),
+                          ),
+                          trailing: tieneReporte ? const Icon(Icons.chevron_right) : null,
+                        ),
+                      );
+                    }),
                 ],
               ),
             ),

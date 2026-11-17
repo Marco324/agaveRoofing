@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/ruta_parada_model.dart';
 import '../../presenters/contracts/ruta_inspector_contract.dart';
 import '../../presenters/ruta_inspector_presenter.dart';
+import '../../utils/formato_fecha.dart';
 import '../widgets/parada_card_widget.dart';
 import 'capturar_resultado_screen.dart';
 import 'cliente_ausente_screen.dart';
@@ -206,6 +207,74 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
         _ultimoEnvioFallo = ultimoEnvioFallo;
       }
     });
+  }
+
+  int _paradasTerminadas() => _paradas
+      .where((p) => p.estaCompletada || p.estado == 'CLIENTE_AUSENTE')
+      .length;
+
+  /// Abre el marcador o la app de mensajes con el teléfono del cliente.
+  Future<void> _contactarCliente(RutaParada parada, String esquema) async {
+    final numero = parada.cliente.telefono.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (numero.isEmpty) {
+      showError('Este cliente no tiene teléfono registrado.');
+      return;
+    }
+    try {
+      final abierto = await launchUrl(Uri(scheme: esquema, path: numero));
+      if (!abierto && mounted) {
+        showError(
+          esquema == 'tel'
+              ? 'Este dispositivo no puede hacer llamadas ($numero).'
+              : 'Este dispositivo no puede enviar SMS ($numero).',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        showError('No se pudo abrir ${esquema == 'tel' ? 'el marcador' : 'los mensajes'}.');
+      }
+    }
+  }
+
+  /// Antes de registrar la ausencia, sugiere llamar al cliente.
+  Future<void> _confirmarAusente(RutaParada parada) async {
+    final opcion = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.person_off_outlined, color: Colors.red.shade700),
+        title: const Text('¿El cliente no está?'),
+        content: Text(
+          'Antes de registrar la ausencia, intenta llamar a '
+          '${parada.cliente.nombre}. Después necesitarás una foto de la '
+          'fachada y una nota.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          if (parada.cliente.telefono.isNotEmpty)
+            TextButton.icon(
+              onPressed: () => Navigator.pop(ctx, 'llamar'),
+              icon: const Icon(Icons.call, size: 18),
+              label: const Text('Llamar'),
+            ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+            ),
+            onPressed: () => Navigator.pop(ctx, 'registrar'),
+            child: const Text('Registrar ausencia'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (opcion == 'llamar') {
+      await _contactarCliente(parada, 'tel');
+    } else if (opcion == 'registrar') {
+      await _abrirClienteAusente(parada);
+    }
   }
 
   Future<void> _abrirClienteAusente(RutaParada parada) async {
@@ -680,12 +749,13 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ruta del Día — Agave Roofing',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              'Mi ruta',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
             ),
             Text(
-              '$_nombreInspectorActual  •  $_fechaSeleccionada',
+              '$_nombreInspectorActual  •  ${fechaCorta(_fechaSeleccionada)}',
               style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -778,13 +848,26 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: Text(
-                                  '${_paradas.length} paradas ($_fechaSeleccionada)',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${plural(_paradas.length, 'parada')} · ${fechaLarga(_fechaSeleccionada)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (_paradas.isNotEmpty)
+                                      Text(
+                                        '${_paradasTerminadas()} de ${_paradas.length} terminadas',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -869,7 +952,11 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
                         ),
                         onCapturarResultado: () =>
                             _abrirCapturaResultado(parada),
-                        onMarcarAusente: () => _abrirClienteAusente(parada),
+                        onMarcarAusente: () => _confirmarAusente(parada),
+                        onLlamarCliente: () =>
+                            _contactarCliente(parada, 'tel'),
+                        onMensajeCliente: () =>
+                            _contactarCliente(parada, 'sms'),
                       );
                     }),
                 ],

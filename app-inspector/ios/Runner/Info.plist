@@ -62,6 +62,8 @@
 		<string>comgooglemaps</string>
 		<string>waze</string>
 		<string>maps</string>
+		<string>tel</string>
+		<string>sms</string>
 	</array>
 </dict>
 </plist>

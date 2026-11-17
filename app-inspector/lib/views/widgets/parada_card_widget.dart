@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/ruta_parada_model.dart';
+import '../../utils/formato_fecha.dart';
 
 class ParadaCardWidget extends StatelessWidget {
   final RutaParada parada;
@@ -12,6 +13,8 @@ class ParadaCardWidget extends StatelessWidget {
   final VoidCallback onRegistrarLlegada;
   final VoidCallback? onCapturarResultado;
   final VoidCallback onMarcarAusente;
+  final VoidCallback? onLlamarCliente;
+  final VoidCallback? onMensajeCliente;
 
   /// Este teléfono está enviando la ubicación de esta cita al cliente.
   final bool compartiendoUbicacion;
@@ -30,6 +33,8 @@ class ParadaCardWidget extends StatelessWidget {
     required this.onRegistrarLlegada,
     this.onCapturarResultado,
     required this.onMarcarAusente,
+    this.onLlamarCliente,
+    this.onMensajeCliente,
     this.compartiendoUbicacion = false,
   });
 
@@ -178,7 +183,7 @@ class ParadaCardWidget extends StatelessWidget {
                 const Icon(Icons.schedule, size: 16, color: Colors.blueGrey),
                 const SizedBox(width: 6),
                 Text(
-                  '${parada.ventanaInicio} - ${parada.ventanaFin}',
+                  ventanaHoraria(parada.ventanaInicio, parada.ventanaFin),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -196,14 +201,44 @@ class ParadaCardWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(
-                    '${parada.cliente.nombre} (${parada.cliente.telefono})',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        parada.cliente.nombre,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (parada.cliente.telefono.isNotEmpty)
+                        Text(
+                          parada.cliente.telefono,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
+                if (onLlamarCliente != null &&
+                    parada.cliente.telefono.isNotEmpty) ...[
+                  IconButton.filledTonal(
+                    tooltip: 'Llamar al cliente',
+                    onPressed: onLlamarCliente,
+                    icon: const Icon(Icons.call, size: 20),
+                  ),
+                ],
+                if (onMensajeCliente != null &&
+                    parada.cliente.telefono.isNotEmpty) ...[
+                  const SizedBox(width: 4),
+                  IconButton.filledTonal(
+                    tooltip: 'Enviar SMS al cliente',
+                    onPressed: onMensajeCliente,
+                    icon: const Icon(Icons.sms_outlined, size: 20),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 6),
@@ -600,41 +635,39 @@ class ParadaCardWidget extends StatelessWidget {
                 ],
               ),
             ] else if (parada.estaEnSitio) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple.shade700,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: onCapturarResultado,
-                      icon: const Icon(Icons.assignment_turned_in, size: 20),
-                      label: const Text(
-                        'Capturar resultado',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple.shade700,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 48),
-                    ),
-                    onPressed: onMarcarAusente,
-                    child: const Text(
-                      'Ausente',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                  onPressed: onCapturarResultado,
+                  icon: const Icon(Icons.assignment_turned_in, size: 20),
+                  label: const Text(
+                    'Capturar resultado',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red.shade700,
+                    minimumSize: const Size(0, 44),
+                  ),
+                  onPressed: onMarcarAusente,
+                  icon: const Icon(Icons.person_off_outlined, size: 18),
+                  label: const Text(
+                    'El cliente no está (registrar ausencia)',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
               ),
             ] else if (parada.estaCompletada) ...[
               Container(

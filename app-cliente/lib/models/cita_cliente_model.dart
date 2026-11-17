@@ -190,7 +190,7 @@ String etiquetaDeEstado(String estado) {
     case 'EN_CAMINO':
       return 'En camino';
     case 'EN_SITIO':
-      return 'Llegó';
+      return 'Inspector llegó';
     case 'COMPLETADA':
       return 'Completada';
     case 'CLIENTE_AUSENTE':

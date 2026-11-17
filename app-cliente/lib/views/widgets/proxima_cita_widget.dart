@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/cita_cliente_model.dart';
 import '../../models/seguimiento_vivo_model.dart';
+import '../../utils/formato_fecha.dart';
 import 'mapa_seguimiento_widget.dart';
 
 class ProximaCitaCard extends StatelessWidget {
@@ -54,7 +55,14 @@ class ProximaCitaCard extends StatelessWidget {
   }
 
   Widget _botonEstoyEnCasa({required bool principal}) {
-    final texto = cita.clienteEnCasa ? 'Ya avisaste que estás en casa' : 'Ya estoy en casa';
+    final String texto;
+    if (cita.clienteEnCasa) {
+      texto = 'Ya avisaste que estás en casa';
+    } else if (cita.estado == 'EN_SITIO') {
+      texto = 'Ya voy a abrir';
+    } else {
+      texto = 'Avisar que estoy en casa';
+    }
     final estilo = ElevatedButton.styleFrom(
       backgroundColor: cita.clienteEnCasa ? agaveEmerald : Colors.indigo,
       foregroundColor: Colors.white,
@@ -150,16 +158,53 @@ class ProximaCitaCard extends StatelessWidget {
               const SizedBox(height: 14),
               _botonEstoyEnCasa(principal: true),
             ],
+            // Aviso claro cuando el inspector ya está en el domicilio
+            if (cita.estado == 'EN_SITIO') ...[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.purple.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.purple.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.door_front_door_outlined, color: Colors.purple.shade700, size: 26),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        cita.inspector != null && cita.inspector!.nombre.isNotEmpty
+                            ? '${cita.inspector!.nombre} ya está en tu domicilio'
+                            : 'Tu inspector ya está en tu domicilio',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.purple.shade800),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const Divider(height: 28),
             Row(
               children: [
                 const Icon(Icons.calendar_today_outlined, size: 20, color: Colors.indigo),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    '${cita.fechaProgramada.isNotEmpty ? cita.fechaProgramada : '—'}  •  '
-                    '${cita.ventanaInicio.isNotEmpty ? cita.ventanaInicio : '—'} - ${cita.ventanaFin.isNotEmpty ? cita.ventanaFin : '—'}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cita.fechaProgramada.isNotEmpty ? fechaLarga(cita.fechaProgramada) : '—',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        cita.ventanaInicio.isNotEmpty && cita.ventanaFin.isNotEmpty
+                            ? ventanaHoraria(cita.ventanaInicio, cita.ventanaFin)
+                            : '—',
+                        style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
+                      ),
+                    ],
                   ),
                 ),
               ],
