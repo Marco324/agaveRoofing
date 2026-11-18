@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 import 'services/push_service.dart';
 import 'services/sesion_service.dart';
 import 'views/screens/arranque_screen.dart';
@@ -31,7 +32,10 @@ class _AgaveClienteAppState extends State<AgaveClienteApp> {
     _subExpirada = SesionService.instancia.alExpirar.listen((_) {
       _navegador.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => const LoginScreen(aviso: 'Tu sesión terminó. Vuelve a entrar con tu teléfono y contraseña.'),
+          builder: (_) => const LoginScreen(
+            aviso:
+                'Tu sesión terminó. Vuelve a entrar con tu teléfono y contraseña.',
+          ),
         ),
         (_) => false,
       );
@@ -50,19 +54,7 @@ class _AgaveClienteAppState extends State<AgaveClienteApp> {
       navigatorKey: _navegador,
       title: 'AgaveAlerta — Cliente',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF059669), // Emerald Agave
-          primary: const Color(0xFF059669),
-          secondary: const Color(0xFF4F46E5), // Indigo
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        appBarTheme: const AppBarTheme(
-          centerTitle: false,
-          elevation: 0,
-        ),
-      ),
+      theme: agaveTheme(),
       home: const ArranqueScreen(),
     );
   }

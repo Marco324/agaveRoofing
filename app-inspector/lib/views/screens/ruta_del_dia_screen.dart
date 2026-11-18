@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/ruta_parada_model.dart';
@@ -439,9 +440,15 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
           style: const TextStyle(fontSize: 16),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Cerrar sesión'),
           ),
@@ -904,15 +911,8 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Image.asset(
-            'assets/branding/agave_logo_blanco.png',
-            semanticLabel: 'Agave Roofing',
-          ),
-        ),
+        leading: const AgaveBrand(),
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -960,8 +960,20 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
           : RefreshIndicator(
               onRefresh: _recargar,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.sizeOf(context).width > 680
+                      ? (MediaQuery.sizeOf(context).width - 640) / 2
+                      : 20,
+                  vertical: 24,
+                ),
                 children: [
+                  const AgaveIntro(
+                    eyebrow: 'Trabajo de campo',
+                    title: 'Visitas del día',
+                    subtitle:
+                        'Consulta tu siguiente parada y registra cada visita.',
+                  ),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -1007,7 +1019,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
                                               ? FontWeight.bold
                                               : FontWeight.normal,
                                           color: _paradasSinCerrar() > 0
-                                              ? const Color(0xFFA21CAF)
+                                              ? const Color(0xFF996A24)
                                               : Colors.grey.shade700,
                                         ),
                                       ),

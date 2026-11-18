@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 
 import '../../models/sesion_model.dart';
 import '../../presenters/contracts/login_contract.dart';
@@ -16,9 +17,8 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> implements LoginViewContract {
-  static const Color agaveEmerald = Color(0xFF059669);
-
+class _LoginScreenState extends State<LoginScreen>
+    implements LoginViewContract {
   late final LoginPresenter _presenter;
   final _telefonoCtrl = TextEditingController();
   final _contrasenaCtrl = TextEditingController();
@@ -43,7 +43,10 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
   void _entrar() {
     FocusScope.of(context).unfocus();
     setState(() => _error = null);
-    _presenter.iniciarSesion(telefono: _telefonoCtrl.text, contrasena: _contrasenaCtrl.text);
+    _presenter.iniciarSesion(
+      telefono: _telefonoCtrl.text,
+      contrasena: _contrasenaCtrl.text,
+    );
   }
 
   @override
@@ -61,7 +64,10 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => MisCitasScreen(idCliente: sesion.idCliente!, nombreCliente: sesion.nombre),
+        builder: (_) => MisCitasScreen(
+          idCliente: sesion.idCliente!,
+          nombreCliente: sesion.nombre,
+        ),
       ),
     );
   }
@@ -69,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -82,12 +87,12 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                   children: [
                     Center(
                       child: Container(
-                        width: 84,
-                        height: 84,
+                        width: 64,
+                        height: 64,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: const Color(0xFF04949C),
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Image.asset(
                           'assets/branding/agave_logo_blanco.png',
@@ -97,15 +102,18 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'Bienvenido a AgaveAlerta',
+                      'AgaveAlerta',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Entra con el teléfono que registraste en Agave Roofing para ver y confirmar tu inspección.',
+                      'Entra para consultar y confirmar tus inspecciones.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                      style: TextStyle(fontSize: 15, color: Color(0xFF687A70)),
                     ),
                     const SizedBox(height: 28),
                     TextField(
@@ -114,11 +122,11 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.telephoneNumber],
-                      style: const TextStyle(fontSize: 18),
+                      style: const TextStyle(fontSize: 16),
                       decoration: const InputDecoration(
                         labelText: 'Teléfono',
                         hintText: '210 555 0201',
-                        prefixIcon: Icon(Icons.phone),
+                        prefixIcon: Icon(Icons.phone_outlined),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -130,15 +138,22 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
                       onSubmitted: (_) => _entrar(),
-                      style: const TextStyle(fontSize: 18),
+                      style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
                         labelText: 'Contraseña',
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          tooltip: _verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña',
-                          icon: Icon(_verContrasena ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _verContrasena = !_verContrasena),
+                          tooltip: _verContrasena
+                              ? 'Ocultar contraseña'
+                              : 'Mostrar contraseña',
+                          icon: Icon(
+                            _verContrasena
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () =>
+                              setState(() => _verContrasena = !_verContrasena),
                         ),
                       ),
                     ),
@@ -153,32 +168,46 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                         ),
                         child: Text(
                           _error!,
-                          style: TextStyle(fontSize: 16, color: Colors.red.shade800),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.red.shade800,
+                          ),
                         ),
                       ),
                     ],
                     const SizedBox(height: 24),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: agaveEmerald,
+                        backgroundColor: agaveGreen,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: _cargando ? null : _entrar,
                       child: _cargando
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
                             )
-                          : const Text('Entrar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          : const Text(
+                              'Entrar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
                       '¿No tienes contraseña? Llama a Agave Roofing y te la damos de alta.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 15, color: Colors.black54),
+                      style: TextStyle(fontSize: 13, color: Color(0xFF687A70)),
                     ),
                   ],
                 ),

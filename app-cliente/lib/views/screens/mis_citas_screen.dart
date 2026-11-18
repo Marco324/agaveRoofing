@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 import '../../models/cita_cliente_model.dart';
 import '../../models/horario_disponible_model.dart';
 import '../../models/seguimiento_vivo_model.dart';
@@ -58,7 +59,9 @@ class _MisCitasScreenState extends State<MisCitasScreen>
   void _alRecibirPush(AvisoPush aviso) {
     if (!mounted) return;
     _presenter.cargarMisCitas(_idClienteActual);
-    if (aviso.abiertaDesdeNotificacion) return; // Ya la vio en la barra de notificaciones.
+    if (aviso.abiertaDesdeNotificacion) {
+      return; // Ya la vio en la barra de notificaciones.
+    }
     final texto = [aviso.titulo, aviso.cuerpo].whereType<String>().join(' — ');
     if (texto.isEmpty) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -90,7 +93,8 @@ class _MisCitasScreenState extends State<MisCitasScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _presenter.reanudarSeguimiento();
-    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
       _presenter.pausarSeguimiento();
     }
   }
@@ -198,29 +202,63 @@ class _MisCitasScreenState extends State<MisCitasScreen>
     }
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.indigo,
-          foregroundColor: Colors.white,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: agaveGreen,
           minimumSize: const Size.fromHeight(46),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         onPressed: () => _presenter.abrirModalReprogramacion(c.idInspeccion),
         icon: const Icon(Icons.edit_calendar, size: 20),
         label: const Text(
           'Agendar nueva visita',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ),
     );
   }
+
+  Widget _datoReporte(String etiqueta, String valor) => Text.rich(
+    TextSpan(
+      children: [
+        TextSpan(
+          text: '$etiqueta\n',
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF687A70),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        TextSpan(text: valor),
+      ],
+    ),
+    style: const TextStyle(fontSize: 15, height: 1.5, color: agaveInk),
+  );
 
   void _mostrarReporteDialog(CitaCliente cita) {
     final res = cita.resultado;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Reporte ${cita.folio}'),
+        scrollable: true,
+        title: Text.rich(
+          TextSpan(
+            children: [
+              const TextSpan(text: 'Reporte de inspección\n'),
+              TextSpan(
+                text: cita.folio,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF687A70),
+                  height: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,16 +269,19 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                 style: TextStyle(fontSize: 16),
               )
             else ...[
-              Text(
-                'Estado del techo: ${etiquetaEstadoTecho(res.estadoTecho)}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: agaveEmerald),
+              _datoReporte(
+                'Estado del techo',
+                etiquetaEstadoTecho(res.estadoTecho),
               ),
-              const SizedBox(height: 8),
-              Text('Hallazgos: ${_textoOGuion(res.hallazgos)}', style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 8),
-              Text('Urgencia: ${etiquetaUrgencia(res.urgencia)}', style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 8),
-              Text('Recomendaciones: ${_textoOGuion(res.recomendaciones)}', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 18),
+              _datoReporte('Hallazgos', _textoOGuion(res.hallazgos)),
+              const SizedBox(height: 18),
+              _datoReporte('Urgencia', etiquetaUrgencia(res.urgencia)),
+              const SizedBox(height: 18),
+              _datoReporte(
+                'Recomendaciones',
+                _textoOGuion(res.recomendaciones),
+              ),
             ],
           ],
         ),
@@ -272,7 +313,10 @@ class _MisCitasScreenState extends State<MisCitasScreen>
               children: [
                 Text(
                   _nombreCliente,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 if (SesionService.instancia.actual?.telefono != null)
                   Text(
@@ -282,35 +326,60 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: canalPreferido,
-                  decoration: const InputDecoration(labelText: 'Cómo prefieres recibir avisos'),
+                  decoration: const InputDecoration(
+                    labelText: 'Cómo prefieres recibir avisos',
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'PUSH', child: Text('Notificación en la app')),
-                    DropdownMenuItem(value: 'SMS', child: Text('Mensaje de texto (SMS)')),
+                    DropdownMenuItem(
+                      value: 'PUSH',
+                      child: Text('Notificación en la app'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'SMS',
+                      child: Text('Mensaje de texto (SMS)'),
+                    ),
                   ],
-                  onChanged: (v) => setDialogState(() => canalPreferido = v ?? 'PUSH'),
+                  onChanged: (v) =>
+                      setDialogState(() => canalPreferido = v ?? 'PUSH'),
                 ),
                 const Divider(height: 24),
                 const Text(
                   'Encuesta rápida',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: agaveEmerald),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: agaveEmerald,
+                  ),
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('¿Entendiste la notificación?', style: TextStyle(fontSize: 12)),
+                  title: const Text(
+                    '¿Entendiste la notificación?',
+                    style: TextStyle(fontSize: 12),
+                  ),
                   value: entendioNotif,
-                  onChanged: (v) => setDialogState(() => entendioNotif = v ?? true),
+                  onChanged: (v) =>
+                      setDialogState(() => entendioNotif = v ?? true),
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('¿Fue fácil confirmar (≤3 toques)?', style: TextStyle(fontSize: 12)),
+                  title: const Text(
+                    '¿Fue fácil confirmar (≤3 toques)?',
+                    style: TextStyle(fontSize: 12),
+                  ),
                   value: facilConfirmar,
-                  onChanged: (v) => setDialogState(() => facilConfirmar = v ?? true),
+                  onChanged: (v) =>
+                      setDialogState(() => facilConfirmar = v ?? true),
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('¿Te sirvió ver el mapa en vivo?', style: TextStyle(fontSize: 12)),
+                  title: const Text(
+                    '¿Te sirvió ver el mapa en vivo?',
+                    style: TextStyle(fontSize: 12),
+                  ),
                   value: sirvioMapa,
-                  onChanged: (v) => setDialogState(() => sirvioMapa = v ?? true),
+                  onChanged: (v) =>
+                      setDialogState(() => sirvioMapa = v ?? true),
                 ),
               ],
             ),
@@ -333,9 +402,14 @@ class _MisCitasScreenState extends State<MisCitasScreen>
               style: ElevatedButton.styleFrom(backgroundColor: agaveEmerald),
               onPressed: () {
                 Navigator.of(ctx).pop();
-                showSuccessMessage('¡Gracias! Guardamos tus preferencias y tu opinión.');
+                showSuccessMessage(
+                  '¡Gracias! Guardamos tus preferencias y tu opinión.',
+                );
               },
-              child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Guardar',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -353,9 +427,15 @@ class _MisCitasScreenState extends State<MisCitasScreen>
           style: TextStyle(fontSize: 16),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Cerrar sesión'),
           ),
@@ -377,15 +457,8 @@ class _MisCitasScreenState extends State<MisCitasScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Image.asset(
-            'assets/branding/agave_logo_blanco.png',
-            semanticLabel: 'Agave Roofing',
-          ),
-        ),
+        leading: const AgaveBrand(),
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,8 +473,7 @@ class _MisCitasScreenState extends State<MisCitasScreen>
             ),
           ],
         ),
-        backgroundColor: agaveEmerald,
-        foregroundColor: Colors.white,
+
         actions: [
           IconButton(
             icon: const Icon(Icons.verified_user_outlined),
@@ -420,8 +492,19 @@ class _MisCitasScreenState extends State<MisCitasScreen>
           : RefreshIndicator(
               onRefresh: () => _presenter.cargarMisCitas(_idClienteActual),
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.sizeOf(context).width > 680
+                      ? (MediaQuery.sizeOf(context).width - 640) / 2
+                      : 20,
+                  vertical: 24,
+                ),
                 children: [
+                  const AgaveIntro(
+                    eyebrow: '',
+                    title: 'Mis inspecciones',
+                    subtitle: 'Tu próxima visita y los reportes de tu techo.',
+                  ),
                   if (_proximaCita != null) ...[
                     ProximaCitaCard(
                       cita: _proximaCita!,
@@ -442,7 +525,9 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                   ] else ...[
                     Card(
                       elevation: 1,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: const Padding(
                         padding: EdgeInsets.all(24.0),
                         child: Center(
@@ -457,12 +542,20 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                   ],
                   Row(
                     children: [
-                      const Icon(Icons.history, color: Colors.blueGrey, size: 20),
+                      const Icon(
+                        Icons.history,
+                        color: Colors.blueGrey,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Historial y reportes (${_historial.length})',
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                          'Inspecciones anteriores (${_historial.length})',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                            color: agaveInk,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -472,28 +565,44 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                   if (_historial.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(16.0),
-                      child: Text('No hay inspecciones previas registradas.', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                      child: Text(
+                        'No hay inspecciones previas registradas.',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
                     )
                   else
                     ..._historial.map((c) {
                       final tieneReporte = c.resultado != null;
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         child: ListTile(
                           // Sin reporte no hay nada que abrir.
-                          onTap: tieneReporte ? () => _mostrarReporteDialog(c) : null,
+                          onTap: tieneReporte
+                              ? () => _mostrarReporteDialog(c)
+                              : null,
                           leading: CircleAvatar(
-                            backgroundColor: tieneReporte ? Colors.teal.shade50 : Colors.grey.shade200,
+                            backgroundColor: tieneReporte
+                                ? Colors.teal.shade50
+                                : Colors.grey.shade200,
                             child: Icon(
-                              tieneReporte ? Icons.description_outlined : Icons.event_note_outlined,
-                              color: tieneReporte ? Colors.teal : Colors.grey.shade600,
+                              tieneReporte
+                                  ? Icons.description_outlined
+                                  : Icons.event_note_outlined,
+                              color: tieneReporte
+                                  ? Colors.teal
+                                  : Colors.grey.shade600,
                               size: 20,
                             ),
                           ),
                           title: Text(
                             fechaLarga(c.fechaProgramada),
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,10 +612,10 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                                     ? 'Techo: ${etiquetaEstadoTecho(c.resultado!.estadoTecho)} · Ver reporte'
                                     : _detalleSinReporte(c),
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   color: tieneReporte
                                       ? Colors.teal.shade800
-                                      : (c.estado == 'NO_REALIZADA' ? Colors.red.shade800 : Colors.grey.shade700),
+                                      : const Color(0xFF687A70),
                                 ),
                               ),
                               if (c.estado == 'NO_REALIZADA') ...[
@@ -515,7 +624,9 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                               ],
                             ],
                           ),
-                          trailing: tieneReporte ? const Icon(Icons.chevron_right) : null,
+                          trailing: tieneReporte
+                              ? const Icon(Icons.chevron_right)
+                              : null,
                         ),
                       );
                     }),

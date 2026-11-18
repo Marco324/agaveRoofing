@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 import 'services/sesion_service.dart';
 import 'views/screens/arranque_screen.dart';
 import 'views/screens/login_screen.dart';
@@ -27,7 +28,10 @@ class _AgaveInspectorAppState extends State<AgaveInspectorApp> {
     _subExpirada = SesionService.instancia.alExpirar.listen((_) {
       _navegador.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => const LoginScreen(aviso: 'Tu sesión terminó. Vuelve a entrar con tu correo y contraseña.'),
+          builder: (_) => const LoginScreen(
+            aviso:
+                'Tu sesión terminó. Vuelve a entrar con tu correo y contraseña.',
+          ),
         ),
         (_) => false,
       );
@@ -46,16 +50,7 @@ class _AgaveInspectorAppState extends State<AgaveInspectorApp> {
       navigatorKey: _navegador,
       title: 'AgaveAlerta — Inspector',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0F172A), // Slate 900
-          primary: const Color(0xFF0F172A),
-          secondary: const Color(0xFF059669), // Emerald
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF1F5F9),
-        appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
-      ),
+      theme: agaveTheme(),
       home: const ArranqueScreen(),
     );
   }

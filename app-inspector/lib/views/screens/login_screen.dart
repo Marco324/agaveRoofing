@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 
 import '../../models/sesion_model.dart';
 import '../../presenters/contracts/login_contract.dart';
@@ -16,9 +17,8 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> implements LoginViewContract {
-  static const Color pizarra = Color(0xFF0F172A);
-
+class _LoginScreenState extends State<LoginScreen>
+    implements LoginViewContract {
   late final LoginPresenter _presenter;
   final _correoCtrl = TextEditingController();
   final _contrasenaCtrl = TextEditingController();
@@ -43,7 +43,10 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
   void _entrar() {
     FocusScope.of(context).unfocus();
     setState(() => _error = null);
-    _presenter.iniciarSesion(correo: _correoCtrl.text, contrasena: _contrasenaCtrl.text);
+    _presenter.iniciarSesion(
+      correo: _correoCtrl.text,
+      contrasena: _contrasenaCtrl.text,
+    );
   }
 
   @override
@@ -61,7 +64,10 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => RutaDelDiaScreen(idInspector: sesion.idInspector!, nombreInspector: sesion.nombre),
+        builder: (_) => RutaDelDiaScreen(
+          idInspector: sesion.idInspector!,
+          nombreInspector: sesion.nombre,
+        ),
       ),
     );
   }
@@ -69,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -82,12 +87,12 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                   children: [
                     Center(
                       child: Container(
-                        width: 84,
-                        height: 84,
+                        width: 64,
+                        height: 64,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: const Color(0xFF04949C),
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Image.asset(
                           'assets/branding/agave_logo_blanco.png',
@@ -97,15 +102,18 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'AgaveAlerta · Inspectores',
+                      'AgaveAlerta',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Entra con tu correo de Agave Roofing para ver tu ruta del día.',
+                      'Entra con tu correo para consultar tu ruta.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                      style: TextStyle(fontSize: 15, color: Color(0xFF687A70)),
                     ),
                     const SizedBox(height: 28),
                     TextField(
@@ -114,8 +122,11 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autocorrect: false,
-                      autofillHints: const [AutofillHints.email, AutofillHints.username],
-                      style: const TextStyle(fontSize: 18),
+                      autofillHints: const [
+                        AutofillHints.email,
+                        AutofillHints.username,
+                      ],
+                      style: const TextStyle(fontSize: 16),
                       decoration: const InputDecoration(
                         labelText: 'Correo',
                         hintText: 'nombre@agaveroofing.com',
@@ -131,15 +142,22 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
                       onSubmitted: (_) => _entrar(),
-                      style: const TextStyle(fontSize: 18),
+                      style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
                         labelText: 'Contraseña',
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          tooltip: _verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña',
-                          icon: Icon(_verContrasena ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _verContrasena = !_verContrasena),
+                          tooltip: _verContrasena
+                              ? 'Ocultar contraseña'
+                              : 'Mostrar contraseña',
+                          icon: Icon(
+                            _verContrasena
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () =>
+                              setState(() => _verContrasena = !_verContrasena),
                         ),
                       ),
                     ),
@@ -154,32 +172,46 @@ class _LoginScreenState extends State<LoginScreen> implements LoginViewContract 
                         ),
                         child: Text(
                           _error!,
-                          style: TextStyle(fontSize: 16, color: Colors.red.shade800),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.red.shade800,
+                          ),
                         ),
                       ),
                     ],
                     const SizedBox(height: 24),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: pizarra,
+                        backgroundColor: agaveGreen,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: _cargando ? null : _entrar,
                       child: _cargando
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
                             )
-                          : const Text('Entrar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          : const Text(
+                              'Entrar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
                       '¿Olvidaste tu contraseña? Pídela a la oficina.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 15, color: Colors.black54),
+                      style: TextStyle(fontSize: 13, color: Color(0xFF687A70)),
                     ),
                   ],
                 ),

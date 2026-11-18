@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 import '../../models/ruta_parada_model.dart';
 import '../../utils/formato_fecha.dart';
 
@@ -15,18 +16,9 @@ class ParadaCardWidget extends StatelessWidget {
   final VoidCallback onMarcarAusente;
   final VoidCallback? onLlamarCliente;
   final VoidCallback? onMensajeCliente;
-
-  /// La parada es de hoy: solo hoy se puede salir hacia el domicilio.
   final bool esDeHoy;
-
-  /// La parada es de un día que ya pasó.
   final bool esPasada;
-
-  /// Este teléfono está enviando la ubicación de esta cita al cliente.
   final bool compartiendoUbicacion;
-
-  static const Color agaveEmerald = Color(0xFF059669);
-
   const ParadaCardWidget({
     super.key,
     required this.parada,
@@ -46,765 +38,218 @@ class ParadaCardWidget extends StatelessWidget {
     this.compartiendoUbicacion = false,
   });
 
-  static String _distancia(int? metros) {
-    if (metros == null) return '—';
-    return metros < 1000
-        ? '$metros m'
-        : '${(metros / 1000).toStringAsFixed(1)} km';
-  }
-
-  static String _coordenadas(double? lat, double? lng) =>
-      lat == null || lng == null
-      ? '—'
-      : '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
-
-  Color _colorPorEstado(String estado) {
-    switch (estado) {
-      case 'CONFIRMADA':
-        return agaveEmerald;
-      case 'EN_CAMINO':
-        return Colors.indigo;
-      case 'EN_SITIO':
-        return Colors.purple;
-      case 'SIN_CONFIRMAR':
-        return Colors.amber.shade800;
-      case 'COMPLETADA':
-        return Colors.teal;
-      case 'CLIENTE_AUSENTE':
-        return Colors.red.shade700;
-      case 'PENDIENTE_CIERRE':
-        return const Color(0xFFC026D3); // fuchsia
-      case 'NO_REALIZADA':
-        return Colors.grey.shade700;
-      default:
-        return Colors.blueGrey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final estadoColor = _colorPorEstado(parada.estado);
-
+    final theme = Theme.of(context);
+    final activa = parada.estaEnCamino || parada.estaEnSitio;
+    final trayecto = parada.trayectoActivo;
     return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 14,
-                        backgroundColor: Colors.blueGrey.shade800,
-                        child: Text(
-                          '$orden',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          parada.folio,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: estadoColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: estadoColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (parada.estaConfirmada) ...[
-                        Icon(Icons.check, size: 12, color: estadoColor),
-                        const SizedBox(width: 3),
-                      ],
-                      Text(
-                        parada.etiquetaEstado,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: estadoColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (parada.clienteEnCasa && !parada.estaCompletada) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: agaveEmerald),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.home, size: 16, color: agaveEmerald),
-                    SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        '¡El cliente confirmó que ya está en su casa esperándote!',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: agaveEmerald,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const Divider(height: 18),
-            Row(
-              children: [
-                const Icon(Icons.schedule, size: 16, color: Colors.blueGrey),
-                const SizedBox(width: 6),
-                Text(
-                  ventanaHoraria(parada.ventanaInicio, parada.ventanaFin),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(
-                  Icons.person_outline,
-                  size: 16,
-                  color: Colors.blueGrey,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        parada.cliente.nombre,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (parada.cliente.telefono.isNotEmpty)
-                        Text(
-                          parada.cliente.telefono,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                if (onLlamarCliente != null &&
-                    parada.cliente.telefono.isNotEmpty) ...[
-                  IconButton.filledTonal(
-                    tooltip: 'Llamar al cliente',
-                    onPressed: onLlamarCliente,
-                    icon: const Icon(Icons.call, size: 20),
-                  ),
-                ],
-                if (onMensajeCliente != null &&
-                    parada.cliente.telefono.isNotEmpty) ...[
-                  const SizedBox(width: 4),
-                  IconButton.filledTonal(
-                    tooltip: 'Enviar SMS al cliente',
-                    onPressed: onMensajeCliente,
-                    icon: const Icon(Icons.sms_outlined, size: 20),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
-                  color: Colors.redAccent,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '${parada.domicilio.direccionCompleta}, ${parada.domicilio.colonia}, ${parada.domicilio.ciudad} TX',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                  ),
-                ),
-              ],
-            ),
-            if (onVerMapaRuta != null || onAbrirAppMapas != null) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  if (onVerMapaRuta != null)
-                    InkWell(
-                      onTap: onVerMapaRuta,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.map_outlined,
-                              size: 14,
-                              color: Colors.blue.shade800,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Ver Mapa Interno',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue.shade800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (onAbrirAppMapas != null)
-                    InkWell(
-                      onTap: onAbrirAppMapas,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: agaveEmerald.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.open_in_new,
-                              size: 14,
-                              color: agaveEmerald,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Abrir en App de Mapas',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: agaveEmerald,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 14),
-            if (parada.puedeIniciarTrayecto && !esDeHoy) ...[
-              _AvisoParada(
-                icono: esPasada ? Icons.history : Icons.event,
-                color: Colors.blueGrey.shade700,
-                fondo: Colors.blueGrey.shade50,
-                texto: esPasada
-                    ? 'Esta visita es de un día anterior y no se inició.'
-                    : 'Podrás salir hacia este domicilio el día de la visita.',
-              ),
-            ] else if (parada.puedeIniciarTrayecto) ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo.shade700,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: onIniciarTrayecto,
-                  icon: const Icon(Icons.navigation, size: 20),
-                  label: const Text(
-                    'Voy en camino',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ] else if (parada.estaEnCamino) ...[
-              // Mapa de Ruta del Trayecto Activo (E10)
-              Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.cyan.shade600, width: 1.5),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Icon(
-                                compartiendoUbicacion
-                                    ? Icons.share_location
-                                    : Icons.location_disabled,
-                                size: 18,
-                                color: compartiendoUbicacion
-                                    ? Colors.cyanAccent
-                                    : Colors.orangeAccent,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  compartiendoUbicacion
-                                      ? 'Compartiendo ubicación con el cliente'
-                                      : 'Ubicación sin enviar desde este teléfono',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: compartiendoUbicacion
-                                        ? Colors.cyanAccent
-                                        : Colors.orangeAccent,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.cyan.shade900,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            parada.trayectoActivo?.etaMinutos != null
-                                ? 'Llegas en ${parada.trayectoActivo!.etaMinutos} min'
-                                : 'Llegas en —',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Representación visual de la ruta Inspector -> Domicilio
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.cyan.shade600,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.local_shipping,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: Divider(
-                                    color: Colors.cyanAccent,
-                                    thickness: 2,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                _distancia(
-                                  parada.trayectoActivo?.distanciaRestanteM,
-                                ),
-                                style: const TextStyle(
-                                  color: Colors.cyanAccent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                ),
-                              ),
-                              const Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: Divider(
-                                    color: agaveEmerald,
-                                    thickness: 2,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: agaveEmerald,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.home_work,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Mi posición: ${_coordenadas(parada.trayectoActivo?.latitudActual, parada.trayectoActivo?.longitudActual)}',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 10,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  'Destino: ${parada.domicilio.colonia}',
-                                  textAlign: TextAlign.right,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (onSimularAvanceGps != null ||
-                        onAcercarUnKm != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          if (onSimularAvanceGps != null)
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.cyanAccent,
-                                  side: const BorderSide(
-                                    color: Colors.cyanAccent,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                    horizontal: 8,
-                                  ),
-                                ),
-                                onPressed: onSimularAvanceGps,
-                                icon: const Icon(Icons.my_location, size: 14),
-                                label: const Text(
-                                  'Demo: avanzar',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          if (onAcercarUnKm != null) ...[
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.amberAccent,
-                                  side: const BorderSide(
-                                    color: Colors.amberAccent,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                    horizontal: 8,
-                                  ),
-                                ),
-                                onPressed: onAcercarUnKm,
-                                icon: const Icon(Icons.near_me, size: 14),
-                                label: const Text(
-                                  'Demo: a menos de 1 km',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: agaveEmerald,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: onRegistrarLlegada,
-                      icon: const Icon(Icons.place, size: 20),
-                      label: const Text(
-                        'Llegué',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red.shade700,
-                      side: BorderSide(color: Colors.red.shade400),
-                      minimumSize: const Size(0, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: onMarcarAusente,
-                    icon: const Icon(Icons.person_off, size: 18),
-                    label: const Text(
-                      'Ausente',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ] else if (parada.estaEnSitio) ...[
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple.shade700,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: onCapturarResultado,
-                  icon: const Icon(Icons.assignment_turned_in, size: 20),
-                  label: const Text(
-                    'Capturar resultado',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red.shade700,
-                    minimumSize: const Size(0, 44),
-                  ),
-                  onPressed: onMarcarAusente,
-                  icon: const Icon(Icons.person_off_outlined, size: 18),
-                  label: const Text(
-                    'El cliente no está (registrar ausencia)',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
-            ] else if (parada.estaPendienteCierre) ...[
-              const _AvisoParada(
-                icono: Icons.pending_actions,
-                color: Color(0xFFA21CAF),
-                fondo: Color(0xFFFDF4FF),
-                texto:
-                    'Esta visita quedó sin cerrar. Captura el resultado o registra que el cliente no estaba.',
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple.shade700,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: onCapturarResultado,
-                  icon: const Icon(Icons.assignment_turned_in, size: 20),
-                  label: const Text(
-                    'Cerrar con resultado',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red.shade700,
-                    minimumSize: const Size(0, 44),
-                  ),
-                  onPressed: onMarcarAusente,
-                  icon: const Icon(Icons.person_off_outlined, size: 18),
-                  label: const Text(
-                    'El cliente no estaba (registrar ausencia)',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
-            ] else if (parada.estaNoRealizada) ...[
-              _AvisoParada(
-                icono: Icons.event_busy,
-                color: Colors.grey.shade800,
-                fondo: Colors.grey.shade100,
-                texto:
-                    'No se realizó en su fecha. La oficina le asignará una nueva.',
-              ),
-            ] else if (parada.estaCompletada) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Inspección completada • Estado del techo: ${etiquetaEstadoTecho(parada.estadoTechoResultado)}',
-                  style: const TextStyle(
-                    color: Colors.teal,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ],
+      margin: const EdgeInsets.only(bottom: 18),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(
+          color: activa ? const Color(0xFF7FB29A) : theme.dividerColor,
         ),
       ),
-    );
-  }
-}
-
-/// Aviso de una línea con ícono, para explicar por qué no hay acciones.
-class _AvisoParada extends StatelessWidget {
-  final IconData icono;
-  final Color color;
-  final Color fondo;
-  final String texto;
-
-  const _AvisoParada({
-    required this.icono,
-    required this.color,
-    required this.fondo,
-    required this.texto,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: fondo,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(icono, size: 20, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              texto,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            color: const Color(0xFFF0F5F2),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  '$orden'.padLeft(2, '0'),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: agaveGreen,
+                  ),
+                ),
+                Text(
+                  ventanaHoraria(parada.ventanaInicio, parada.ventanaFin),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                AgaveStateChip(parada.estado),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  parada.cliente.nombre,
+                  style: theme.textTheme.titleMedium?.copyWith(fontSize: 19),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${parada.domicilio.direccionCompleta}\n${parada.domicilio.colonia}, ${parada.domicilio.ciudad}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                if (parada.clienteEnCasa && !parada.estaCerrada) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'El cliente está en casa',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: agaveGreen,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                if (parada.puedeIniciarTrayecto && esDeHoy)
+                  ElevatedButton.icon(
+                    onPressed: onIniciarTrayecto,
+                    icon: const Icon(Icons.navigation_outlined, size: 19),
+                    label: const Text('Voy en camino'),
+                  ),
+                if (parada.puedeIniciarTrayecto && !esDeHoy)
+                  _Aviso(
+                    esPasada
+                        ? 'La visita corresponde a un día anterior. La oficina puede actualizar su fecha.'
+                        : 'Podrás iniciar el trayecto el día de la visita.',
+                  ),
+                if (parada.estaEnCamino) ...[
+                  Text(
+                    compartiendoUbicacion
+                        ? 'Compartiendo ubicación durante el trayecto'
+                        : 'Trayecto activo',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  if (trayecto?.etaMinutos != null)
+                    Text(
+                      'Llegada estimada: ${trayecto!.etaMinutos} min${trayecto.etaAproximado ? ' aprox.' : ''}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: onRegistrarLlegada,
+                    icon: const Icon(Icons.place_outlined, size: 19),
+                    label: const Text('Registrar llegada'),
+                  ),
+                ],
+                if (parada.estaEnSitio)
+                  ElevatedButton.icon(
+                    onPressed: onCapturarResultado,
+                    icon: const Icon(Icons.assignment_outlined, size: 19),
+                    label: const Text('Capturar resultado'),
+                  ),
+                if (parada.estaPendienteCierre) ...[
+                  const _Aviso(
+                    'Esta visita quedó sin cerrar. Captura el resultado o registra que el cliente no estaba.',
+                  ),
+                  const SizedBox(height: 14),
+                  ElevatedButton.icon(
+                    onPressed: onCapturarResultado,
+                    icon: const Icon(Icons.assignment_outlined, size: 19),
+                    label: const Text('Cerrar con resultado'),
+                  ),
+                ],
+                if (activa || parada.estaPendienteCierre)
+                  TextButton(
+                    onPressed: onMarcarAusente,
+                    child: Text(
+                      parada.estaPendienteCierre
+                          ? 'El cliente no estaba'
+                          : 'El cliente no está',
+                    ),
+                  ),
+                if (parada.estaNoRealizada)
+                  const _Aviso(
+                    'No se realizó en su fecha. La oficina le asignará una nueva.',
+                  ),
+                if (parada.estaCompletada)
+                  AgaveDetail(
+                    Icons.task_alt,
+                    'Inspección completada · Techo ${etiquetaEstadoTecho(parada.estadoTechoResultado)}',
+                  ),
+                if (onVerMapaRuta != null) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: onVerMapaRuta,
+                    icon: const Icon(Icons.map_outlined, size: 19),
+                    label: const Text('Ver ruta'),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: const EdgeInsets.only(bottom: 16),
+                  title: Text(
+                    'Contacto y detalles',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  children: [
+                    if (parada.cliente.telefono.isNotEmpty)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          parada.cliente.telefono,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (onLlamarCliente != null)
+                              IconButton(
+                                tooltip: 'Llamar al cliente',
+                                onPressed: onLlamarCliente,
+                                icon: const Icon(Icons.call_outlined),
+                              ),
+                            if (onMensajeCliente != null)
+                              IconButton(
+                                tooltip: 'Enviar SMS al cliente',
+                                onPressed: onMensajeCliente,
+                                icon: const Icon(Icons.sms_outlined),
+                              ),
+                          ],
+                        ),
+                      ),
+                    AgaveDetail(Icons.tag, parada.folio),
+                    if (parada.motivoVisita?.isNotEmpty == true)
+                      AgaveDetail(Icons.notes_outlined, parada.motivoVisita!),
+                    if (parada.domicilio.referencias?.isNotEmpty == true)
+                      AgaveDetail(
+                        Icons.info_outline,
+                        parada.domicilio.referencias!,
+                      ),
+                    if (onAbrirAppMapas != null)
+                      TextButton.icon(
+                        onPressed: onAbrirAppMapas,
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                        label: const Text('Abrir en app de mapas'),
+                      ),
+                    if (parada.estaEnCamino && onSimularAvanceGps != null)
+                      TextButton(
+                        onPressed: onSimularAvanceGps,
+                        child: const Text('Demo: avanzar ubicación'),
+                      ),
+                    if (parada.estaEnCamino && onAcercarUnKm != null)
+                      TextButton(
+                        onPressed: onAcercarUnKm,
+                        child: const Text('Demo: acercar a menos de 1 km'),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _Aviso extends StatelessWidget {
+  final String text;
+  const _Aviso(this.text);
+  @override
+  Widget build(BuildContext context) =>
+      Text(text, style: Theme.of(context).textTheme.bodyMedium);
 }

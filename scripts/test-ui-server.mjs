@@ -1,0 +1,12 @@
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+const temp=mkdtempSync(path.join(tmpdir(),'agave-ui-'));
+process.env.AGAVE_DB_PATH=path.join(temp,'ui.db');
+process.env.FECHA_HOY='2026-11-12';
+process.env.PORT='4110';process.env.WEB_PORT='3110';
+const {runSeed}=await import('../api/src/seed.ts');
+runSeed({conCitas:true});
+const {db}=await import('../api/src/db.ts');
+process.on('exit',()=>{db.close();if(path.resolve(temp).startsWith(path.resolve(tmpdir())+path.sep) && path.basename(temp).startsWith('agave-ui-'))rmSync(temp,{recursive:true,force:true});});
+await import('./dev.mjs');

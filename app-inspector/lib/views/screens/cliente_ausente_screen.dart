@@ -81,12 +81,17 @@ class _ClienteAusenteScreenState extends State<ClienteAusenteScreen>
       canPop: !_enviando,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Cliente ausente · ${widget.parada.folio}'),
-          backgroundColor: Colors.red.shade800,
+          title: const Text('Registrar ausencia'),
+          backgroundColor: const Color(0xFF142C32),
           foregroundColor: Colors.white,
         ),
         body: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.sizeOf(context).width > 680
+                ? (MediaQuery.sizeOf(context).width - 640) / 2
+                : 22,
+            vertical: 24,
+          ),
           children: [
             const Text(
               'Para marcar la visita como no realizada necesitas una foto de la fachada o la puerta y una nota de lo que pasó.',

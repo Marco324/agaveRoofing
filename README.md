@@ -3,6 +3,8 @@
 **Materia:** Proyecto Integrador I — UANL  
 **Estado del Proyecto:** Release 1.0 de demostración (`E01` a `E12` · Sprints 0 a 6)
 
+**Interfaz actualizada:** esta copia integra el rediseño del panel y las dos apps sobre la versión nueva. Para abrir las tres vistas locales, ejecuta `npm install`, `npm run build:ui` y `npm run preview`. Consulta [diseño, capturas y verificación](docs/diseno/README.md).
+
 ---
 
 ## 👥 Equipo de Desarrollo

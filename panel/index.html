@@ -6,7 +6,7 @@
   <link rel="icon" href="assets/favicon.ico">
   <link rel="apple-touch-icon" href="assets/agave_logo.png">
   <title>AgaveAlerta — Panel de Administración (San Antonio, TX)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../shared/ui/utilities.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Mapa real del monitor en vivo (Leaflet + OpenStreetMap, sin llave de API) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -19,73 +19,27 @@
     .marcador-monitor { background: transparent; border: none; }
     .marcador-monitor .pin { width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 17px; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
   </style>
+  <link rel="stylesheet" href="assets/design.css">
+  <script src="assets/design.js" defer></script>
 </head>
-<body class="text-slate-800 antialiased">
+<body class="agave-panel text-slate-800 antialiased">
   <div id="app" class="min-h-screen flex flex-col">
-    <!-- Navbar Responsivo de 2 Niveles -->
-    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 border-b border-slate-800">
-      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <!-- Nivel 1: Marca, Estado API, Accesos Rápidos y Perfil -->
-        <div class="min-h-[3.75rem] py-2 flex items-center justify-between gap-2">
-          <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#04949C] flex items-center justify-center shadow shrink-0 p-1.5">
-              <img src="assets/agave_logo_blanco.png" alt="Agave Roofing" class="w-full h-full object-contain">
-            </div>
-            <div class="min-w-0">
-              <h1 class="text-sm sm:text-lg font-bold tracking-tight text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span>AgaveAlerta</span>
-                <span class="text-[10px] sm:text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30 whitespace-nowrap">San Antonio, TX</span>
-              </h1>
-              <div class="flex items-center gap-1.5 mt-0.5">
-                <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block animate-pulse shrink-0"></span>
-                <span id="apiStatusText" class="text-[10px] sm:text-[11px] text-rose-300 font-medium truncate">API Desconectada (Modo Offline)</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- Usuario de la sesión y cierre de sesión -->
-          <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
-            <div class="text-right hidden sm:block">
-              <div id="nombreUsuarioPanel" class="text-xs font-semibold text-slate-200 leading-tight">—</div>
-              <div class="text-[10px] text-slate-400">Administrador</div>
-            </div>
-            <div id="inicialesUsuarioPanel" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-700 flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-emerald-500 shrink-0">
-              —
-            </div>
-            <button type="button" onclick="cerrarSesionPanel()" class="text-[11px] bg-slate-800 hover:bg-rose-700 text-slate-200 border border-slate-700 px-2.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap" title="Cerrar sesión">
-              <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Salir</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Nivel 2: Barra de Pestañas (Scrollable en móvil/tablet y completa en escritorio) -->
-        <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 border-t border-slate-800/90 -mx-3 px-3 sm:mx-0 sm:px-0">
-          <button id="tabBtnAgenda" onclick="cambiarTab('agenda')" class="shrink-0 whitespace-nowrap bg-slate-800 text-emerald-400 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 border-b-2 border-emerald-500 transition">
-            <i class="fa-regular fa-calendar-days"></i> <span>Agenda (E07)</span>
-          </button>
-          <button id="tabBtnNotificaciones" onclick="cambiarTab('notificaciones')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-bell"></i> <span>Push / SMS (E08)</span>
-          </button>
-          <button id="tabBtnReprogramaciones" onclick="cambiarTab('reprogramaciones')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-clock-rotate-left"></i> <span>Reprogramaciones (E09)</span>
-            <span id="badgeReprogCount" class="text-[10px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full">1</span>
-          </button>
-          <button id="tabBtnMonitor" onclick="cambiarTab('monitor')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-satellite-dish text-cyan-400"></i> <span>Monitor en Vivo (E10)</span>
-          </button>
-          <button id="tabBtnTablero" onclick="cambiarTab('tablero')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-chart-pie text-emerald-400"></i> <span>Tablero KPI (E11)</span>
-          </button>
-          <button id="tabBtnCatalogos" onclick="cambiarTab('catalogos')" class="shrink-0 whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-shield-halved text-amber-400"></i> <span>Catálogos y Seguridad (E05–E12)</span>
-          </button>
-        </nav>
-      </div>
+    <a href="#mainContent" class="skip-link">Ir al contenido</a>
+    <header class="workspace-header">
+      <div class="workspace-top"><div class="workspace-brand"><img src="assets/agave_logo_blanco.png" alt="Agave Roofing"><div><h1>AgaveAlerta <span>/ Operaciones</span></h1><p>San Antonio, Texas</p></div></div><div class="workspace-user"><span class="connection"><span id="apiStatusDot" class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span><span id="apiStatusText">Conectando…</span></span><span id="nombreUsuarioPanel">—</span><span id="inicialesUsuarioPanel" class="user-avatar">—</span><button type="button" onclick="cerrarSesionPanel()" class="logout" title="Cerrar sesión"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i><span>Salir</span></button></div></div>
+      <nav class="workspace-nav" aria-label="Secciones del panel" role="tablist">
+        <button id="tabBtnAgenda" onclick="cambiarTab('agenda')" role="tab" aria-selected="true" aria-controls="viewAgenda"><i class="fa-regular fa-calendar-days" aria-hidden="true"></i>Agenda</button>
+        <button id="tabBtnNotificaciones" onclick="cambiarTab('notificaciones')" role="tab" aria-selected="false" aria-controls="viewNotificaciones"><i class="fa-regular fa-bell" aria-hidden="true"></i>Notificaciones</button>
+        <button id="tabBtnReprogramaciones" onclick="cambiarTab('reprogramaciones')" role="tab" aria-selected="false" aria-controls="viewReprogramaciones"><i class="fa-regular fa-clock" aria-hidden="true"></i>Reprogramaciones<span id="badgeReprogCount" class="nav-count"></span></button>
+        <button id="tabBtnMonitor" onclick="cambiarTab('monitor')" role="tab" aria-selected="false" aria-controls="viewMonitor"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>En ruta</button>
+        <button id="tabBtnTablero" onclick="cambiarTab('tablero')" role="tab" aria-selected="false" aria-controls="viewTablero"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Indicadores</button>
+        <button id="tabBtnCatalogos" onclick="cambiarTab('catalogos')" role="tab" aria-selected="false" aria-controls="viewCatalogos"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Administración</button>
+      </nav>
     </header>
+    <main id="mainContent" tabindex="-1" class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-
+      <div class="page-heading"><div><span class="eyebrow">CENTRO DE OPERACIONES</span><h2 id="sectionTitle">Agenda de inspecciones</h2><p id="sectionDescription">Organiza las visitas y mantén a tu equipo al día.</p></div><div class="location-note">Agave Roofing<br>San Antonio, TX</div></div>
       <!-- Banner Global: Alerta de Cliente No Alcanzado (E08) -->
       <div id="bannerClienteNoAlcanzado" class="hidden mb-5 sm:mb-6 bg-rose-50 border-2 border-rose-300 rounded-xl p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 shadow-sm">
         <div class="flex items-start gap-3">
@@ -108,81 +62,29 @@
         </div>
       </div>
 
-      <!-- Bandeja: visitas pasadas que requieren atención de la oficina -->
-      <div id="bannerRequierenAtencion" class="hidden mb-5 sm:mb-6 bg-fuchsia-50 border-2 border-fuchsia-300 rounded-xl p-3.5 sm:p-4 shadow-sm">
-        <div class="flex items-start gap-3">
-          <div class="w-9 h-9 rounded-lg bg-fuchsia-600 text-white flex items-center justify-center shrink-0 mt-0.5">
-            <i class="fa-solid fa-clipboard-question"></i>
-          </div>
-          <div class="text-xs min-w-0 flex-1">
-            <div class="font-bold text-fuchsia-900 text-xs sm:text-sm">Visitas que requieren atención</div>
-            <p id="textoRequierenAtencion" class="text-fuchsia-800 mt-0.5 leading-relaxed"></p>
-          </div>
-        </div>
-        <div id="listaRequierenAtencion" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-2"></div>
-        <button id="btnVerTodasAtencion" class="hidden mt-2 text-xs font-semibold text-fuchsia-800 hover:underline"></button>
-      </div>
+
+      <details id="bannerRequierenAtencion" class="attention-inbox hidden">
+        <summary><span class="attention-icon"><i class="fa-regular fa-flag" aria-hidden="true"></i></span><span><strong>Visitas que requieren atención</strong><span id="textoRequierenAtencion"></span></span><span class="attention-open">Revisar <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span></summary>
+        <div class="attention-body"><div id="listaRequierenAtencion"></div><button id="btnVerTodasAtencion" class="hidden"></button></div>
+      </details>
 
       <!-- ================================================================== -->
       <!-- SECCIÓN 1: VISTA DE AGENDA Y CALENDARIO (E07 / E09)                -->
       <!-- ================================================================== -->
       <div id="viewAgenda">
       <!-- Top Action & Filter Bar -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 mb-5 sm:mb-6">
-        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-          
-          <!-- Date Navigator + Quick Milestone Buttons -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between xl:justify-start gap-3">
-            <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
-              <button id="btnPrevDay" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition shrink-0">
-                <i class="fa-solid fa-chevron-left"></i>
-              </button>
-              <div class="text-center flex-1 sm:flex-initial">
-                <span id="currentDateDisplay" class="text-sm sm:text-lg font-bold text-slate-900 block leading-tight">Cargando…</span>
-                <span id="currentSprintLabel" class="text-[11px] sm:text-xs text-slate-500 font-medium block mt-0.5">Agenda de inspecciones — San Antonio, TX</span>
-              </div>
-              <button id="btnNextDay" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition shrink-0">
-                <i class="fa-solid fa-chevron-right"></i>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-2 sm:flex items-center gap-1.5 sm:gap-2">
-              <button id="btnHoy" class="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition text-center whitespace-nowrap">
-                Hoy
-              </button>
-              <input type="date" id="inputFechaAgenda" aria-label="Elegir fecha de la agenda" class="px-2 py-1.5 text-[11px] sm:text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-700">
-              <select id="selectFechasConCitas" aria-label="Ir a un día con citas" class="col-span-2 sm:col-span-1 px-2 py-1.5 text-[11px] sm:text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-700">
-                <option value="">Días con citas…</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Filters -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-wrap items-end gap-3 pt-2 xl:pt-0 border-t xl:border-t-0 border-slate-100">
-            <!-- Inspector Filter -->
-            <div class="w-full sm:w-auto flex-1 lg:flex-initial">
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Inspector</label>
-              <select id="selectInspectorFilter" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2">
-                <option value="">Todos los inspectores</option>
-              </select>
-            </div>
-
-            <!-- Zone Filter -->
-            <div class="w-full sm:w-auto flex-1 lg:flex-initial">
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Zona (San Antonio)</label>
-              <select id="selectZonaFilter" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2">
-                <option value="">Todas las zonas</option>
-              </select>
-            </div>
-
-            <!-- Action Button -->
-            <div class="w-full sm:w-auto">
-              <button id="btnNuevaInspeccion" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 transition whitespace-nowrap">
-                <i class="fa-solid fa-plus"></i> Nueva Inspección
-              </button>
-            </div>
-          </div>
-
+      <div class="agenda-toolbar">
+        <div class="agenda-date">
+          <button id="btnPrevDay" aria-label="Día anterior" class="day-arrow"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+          <div class="agenda-current"><span id="currentDateDisplay">Cargando…</span><span id="currentSprintLabel">Agenda de inspecciones</span></div>
+          <button id="btnNextDay" aria-label="Día siguiente" class="day-arrow"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+          <button id="btnHoy">Hoy</button>
+          <details class="date-options"><summary><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Elegir fecha</span></summary><div><label for="inputFechaAgenda">Fecha</label><input type="date" id="inputFechaAgenda" aria-label="Elegir fecha de la agenda"><select id="selectFechasConCitas" aria-label="Ir a un día con citas"><option value="">Días con citas…</option></select></div></details>
+        </div>
+        <div class="agenda-filters">
+          <div><label for="selectInspectorFilter">Inspector</label><select id="selectInspectorFilter"><option value="">Todos los inspectores</option></select></div>
+          <div><label for="selectZonaFilter">Zona</label><select id="selectZonaFilter"><option value="">Todas las zonas</option></select></div>
+          <button id="btnNuevaInspeccion" class="bg-emerald-600 text-white"><i class="fa-solid fa-plus" aria-hidden="true"></i>Nueva inspección</button>
         </div>
       </div>
 
@@ -203,7 +105,7 @@
         <div class="lg:col-span-4 space-y-6">
           
           <!-- Summary Card -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <div class="day-summary bg-white rounded-xl shadow-sm border border-slate-200 p-5">
             <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
               <i class="fa-solid fa-chart-simple text-emerald-600"></i> Resumen del Día
             </h3>
@@ -227,61 +129,7 @@
             </div>
           </div>
 
-          <!-- Status Legend Card -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-            <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-              <i class="fa-solid fa-tags text-slate-500"></i> Máquina de Estados (RN-01)
-            </h3>
-            <div class="space-y-2 text-xs">
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> PROGRAMADA</span>
-                <span class="text-slate-400">Inicio</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> NOTIFICADA</span>
-                <span class="text-slate-400">Aviso enviado</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> CONFIRMADA</span>
-                <span class="text-slate-400">Acuse cliente</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> EN_CAMINO</span>
-                <span class="text-slate-400">GPS activo</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-600"></span> EN_SITIO</span>
-                <span class="text-slate-400">En domicilio</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span> COMPLETADA</span>
-                <span class="text-slate-400">Terminal</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> CLIENTE_AUSENTE</span>
-                <span class="text-slate-400">Cobro fallido</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-700"></span> NO_REALIZADA</span>
-                <span class="text-slate-400">Fecha pasada sin visita</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></span> PENDIENTE_CIERRE</span>
-                <span class="text-slate-400">Visita sin cerrar</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Business Rule Notice -->
-          <div class="bg-amber-50 rounded-xl p-4 border border-amber-200 text-xs text-amber-900 space-y-1">
-            <div class="font-bold flex items-center gap-1.5">
-              <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Reglas Activas (RN-02, RN-05, RN-06, RN-07)
-            </div>
-            <p class="text-slate-600">
-              Validación de traslapes por inspector, límite de 3 reprogramaciones conservando el folio y alerta automática de citas <strong>SIN_CONFIRMAR</strong>.
-            </p>
-          </div>
-
+          <details class="state-guide"><summary>Guía de estados</summary><dl><dt>Programada</dt><dd>Visita registrada</dd><dt>Aviso enviado</dt><dd>El cliente recibió la notificación</dd><dt>Confirmada</dt><dd>El cliente aceptó el horario</dd><dt>En camino</dt><dd>El inspector inició el trayecto</dd><dt>En domicilio</dt><dd>Inspección en curso</dd><dt>Completada</dt><dd>Reporte disponible</dd><dt>Sin cerrar</dt><dd>Falta registrar el resultado de una visita anterior</dd></dl></details>
         </div>
 
       </div>
@@ -291,18 +139,18 @@
       <!-- SECCIÓN 2: VISTA DE NOTIFICACIONES PUSH Y BITÁCORA R4 (E08)        -->
       <!-- ================================================================== -->
       <div id="viewNotificaciones" class="hidden space-y-5 sm:space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="section-toolbar bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-              <i class="fa-solid fa-bell text-emerald-600"></i> Motor de Notificaciones Push y Respaldo SMS (E08)
+              <i class="fa-solid fa-bell text-emerald-600"></i> Centro de notificaciones
             </h2>
             <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
-              Seguimiento del Riesgo R4 (Entregabilidad), horario de silencio (21:00–07:00 RN-14), reintentos y respaldo Twilio SMS.
+              Consulta los avisos enviados, sus reintentos y los mensajes pendientes.
             </p>
           </div>
           <div class="flex flex-wrap gap-2 w-full sm:w-auto">
             <button onclick="ejecutarDespachadorPanel()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
-              <i class="fa-solid fa-paper-plane"></i> Ejecutar Temporizadores y Despachador
+              <i class="fa-solid fa-paper-plane"></i> Procesar avisos pendientes
             </button>
           </div>
         </div>
@@ -326,7 +174,7 @@
             <div id="kpiNotifFallidas" class="text-xl sm:text-2xl font-bold text-rose-800 mt-1">1</div>
           </div>
           <div class="col-span-2 sm:col-span-2 lg:col-span-1 bg-slate-900 text-white p-3.5 sm:p-4 rounded-xl shadow-sm">
-            <div class="text-xs text-emerald-300 font-medium">Tasa Entregabilidad R4</div>
+            <div class="text-xs text-emerald-300 font-medium">Tasa de entrega</div>
             <div id="kpiNotifTasa" class="text-xl sm:text-2xl font-bold text-white mt-1">86%</div>
           </div>
         </div>
@@ -335,9 +183,9 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="px-4 sm:px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
             <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Bitácora de Notificaciones por Inspección (RN-13 / RN-14)
+              Bitácora de Notificaciones por Inspección
             </h3>
-            <span class="text-[11px] text-slate-500">El botón "Reenviar" activa <code>reenvio_manual = true</code></span>
+            <span class="text-[11px] text-slate-500">Reenvía un aviso cuando sea necesario</span>
           </div>
           <!-- Vista de Tabla para Tablet/Escritorio -->
           <div class="hidden md:block overflow-x-auto">
@@ -375,10 +223,10 @@
             <div class="px-4 sm:px-5 py-4 bg-slate-900 text-white flex justify-between items-center">
               <div>
                 <h2 class="text-sm font-bold flex items-center gap-2">
-                  <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Bandeja de Solicitudes de Reprogramación (E09)
+                  <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Solicitudes de cambio
                 </h2>
                 <p class="text-[11px] text-slate-400 mt-0.5">
-                  Al aprobar, la cita cambia de horario conservando su folio original (RN-06) y notifica al cliente.
+                  Al aprobar, la cita cambia de horario conservando su folio original y notifica al cliente.
                 </p>
               </div>
             </div>
@@ -393,14 +241,14 @@
               <div class="px-4 sm:px-5 py-4 bg-amber-50 border-b border-amber-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
                   <h2 class="text-sm font-bold text-amber-950 flex items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Alerta de Citas SIN_CONFIRMAR (RN-07)
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Citas sin confirmar
                   </h2>
                   <p class="text-[11px] text-amber-800 mt-0.5">
                     Citas cuyo plazo venció sin respuesta. No se cancelan solas; confirma por llamada o cancela.
                   </p>
                 </div>
                 <button onclick="ejecutarBarridoSinConfirmar()" class="w-full sm:w-auto text-[11px] bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-2 sm:py-1.5 rounded-lg transition text-center shrink-0">
-                  Correr Temporizador
+                  Actualizar pendientes
                 </button>
               </div>
               <div id="contenedorSinConfirmar" class="p-4 space-y-3">
@@ -411,19 +259,19 @@
             <!-- Reprogramación iniciada por la oficina -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 space-y-3">
               <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-building-user text-emerald-600"></i> Reprogramación Iniciada por Oficina
+                <i class="fa-solid fa-building-user text-emerald-600"></i> Cambio desde la oficina
               </h3>
               <p class="text-xs text-slate-600">
                 Si un inspector se reporta enfermo o hay lluvia intensa en San Antonio, mueve la cita aquí; el cliente recibirá el aviso automático del nuevo horario.
               </p>
               <form id="formMoverOficina" class="space-y-3 pt-1">
                 <div>
-                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Cita a Mover</label>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Cita</label>
                   <select id="selectCitaOficina" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2"></select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nueva Fecha</label>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nueva fecha</label>
                     <input type="date" id="inputNuevaFechaOficina" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
                   </div>
                   <div>
@@ -436,11 +284,11 @@
                   </div>
                 </div>
                 <div>
-                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Motivo de la Oficina</label>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Motivo del cambio</label>
                   <input type="text" id="inputMotivoOficina" placeholder="Ej. inspector incapacitado, lluvia intensa" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2">
                 </div>
                 <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2.5 rounded-lg transition">
-                  Mover Cita y Notificar al Cliente
+                  Guardar cambio de fecha
                 </button>
               </form>
             </div>
@@ -452,14 +300,14 @@
       <!-- SECCIÓN 4: MONITOR EN VIVO Y SEMÁFORO DE PUNTUALIDAD (E10)         -->
       <!-- ================================================================== -->
       <div id="viewMonitor" class="hidden space-y-5 sm:space-y-6">
-        <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="section-toolbar bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <div class="flex items-center gap-2">
               <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
-              <h2 class="text-base sm:text-lg font-bold text-white">Monitor en Vivo de Inspectores en Ruta — San Antonio, TX (E10)</h2>
+              <h2 class="text-base sm:text-lg font-bold text-white">Trayectos activos</h2>
             </div>
             <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              Seguimiento en tiempo real vía canal <code>inspeccion:{id}</code> (RN-08), ETA con Google Directions / respaldo en línea recta (RN-09) y alerta automática a menos de 1,000 m.
+              Consulta las ubicaciones disponibles y la hora estimada de llegada del equipo.
             </p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 lg:flex flex-wrap gap-2 w-full lg:w-auto">
@@ -470,7 +318,7 @@
               </button>
             </div>
             <button onclick="cerrarTrayectosOlvidadosPanel()" class="w-full sm:w-auto justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2.5 sm:py-2 rounded-lg transition flex items-center gap-1.5">
-              <i class="fa-solid fa-stopwatch"></i> Apagado Automático &gt;90m (R5)
+              <i class="fa-solid fa-stopwatch"></i> Cerrar trayectos vencidos
             </button>
             <button onclick="cargarMonitorVivo()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2.5 sm:py-2 rounded-lg transition flex items-center gap-1.5">
               <i class="fa-solid fa-rotate"></i> Actualizar
@@ -485,7 +333,7 @@
             <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-lg">
               <div class="px-4 py-3 bg-slate-900 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2 text-xs text-slate-300">
                 <span class="font-bold flex items-center gap-2">
-                  <i class="fa-solid fa-map-location-dot text-cyan-400"></i> Mapa Operativo en Vivo — San Antonio Metropolitan Area
+                  <i class="fa-solid fa-map-location-dot text-cyan-400"></i> Ubicación del equipo
                 </span>
                 <span id="badgeTotalEnCamino" class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap">
                   —
@@ -518,7 +366,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div class="px-4 sm:px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                  <i class="fa-solid fa-traffic-light text-amber-400"></i> Lista de "Hoy" con Semáforo
+                  <i class="fa-solid fa-traffic-light text-amber-400"></i> Visitas del día
                 </h3>
                 <span id="labelFechaMonitor" class="text-[11px] text-slate-400"></span>
               </div>
@@ -536,20 +384,20 @@
       <!-- ================================================================== -->
       <div id="viewTablero" class="hidden space-y-5 sm:space-y-6">
         <!-- Banner de Feature Freeze (Cierre Sprint 5 — E11) -->
-        <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-emerald-700/50 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+        <div class="section-toolbar bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-emerald-700/50 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
           <div class="flex items-start gap-3 sm:gap-3.5">
             <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-lg shrink-0 mt-0.5 shadow">
               ❄️
             </div>
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <h2 class="text-sm sm:text-base font-bold text-white">Tablero Ejecutivo de Indicadores (E11)</h2>
+                <h2 class="text-sm sm:text-base font-bold text-white">Resultados del periodo</h2>
                 <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold uppercase whitespace-nowrap">
-                  Feature Freeze Activo · 12 Nov 2026
+                  Resumen de actividad
                 </span>
               </div>
               <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-                Vistas SQL en vivo (<code>v_indicadores_semana</code>, <code>v_puntualidad_inspector</code>, <code>v_efectividad_notificacion</code>). Alcance funcional congelado al 100% para cierre de Sprint 5.
+                Consulta las inspecciones, la confirmación de citas y la puntualidad de tu equipo.
               </p>
             </div>
           </div>
@@ -585,7 +433,7 @@
               <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-check-double"></i></span>
             </div>
             <div id="kpiTabConfirmacion" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-2">—</div>
-            <div id="kpiTabConfirmacionMeta" class="text-[11px] text-slate-500 mt-1">Meta &ge; 80 % (Plan §11) · Antes: 0 %</div>
+            <div id="kpiTabConfirmacionMeta" class="text-[11px] text-slate-500 mt-1">Meta &ge; 80 % </div>
           </div>
           <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm flex flex-col justify-between">
             <div class="flex items-center justify-between">
@@ -627,10 +475,8 @@
           <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
             <div>
               <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-chart-bar text-emerald-600"></i> Distribución de Citas por Estado
-                </h3>
-                <span class="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">RN-01 Máquina de Estados</span>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">Citas por estado</h3>
+                <span class="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Visitas del periodo</span>
               </div>
               <div id="contenedorGraficaEstados" class="space-y-3 text-xs">
                 <!-- Populated dynamically -->
@@ -642,9 +488,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
             <div>
               <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-chart-line text-cyan-600"></i> Evolución Semanal (<code>v_indicadores_semana</code>)
-                </h3>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">Confirmaciones por semana</h3>
                 <span class="text-[10px] font-semibold bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-200">Tendencia Oct–Nov</span>
               </div>
               <div id="contenedorEvolucionSemanal" class="space-y-2.5 text-xs">
@@ -657,9 +501,7 @@
           <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
             <div>
               <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-medal text-amber-500"></i> Ranking de Puntualidad (<code>v_puntualidad_inspector</code>)
-                </h3>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">Puntualidad del equipo</h3>
                 <span class="text-[10px] font-semibold bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200">Llegada en Ventana</span>
               </div>
               <div id="contenedorRankingInspectores" class="space-y-3 text-xs">
@@ -672,11 +514,9 @@
           <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between">
             <div>
               <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-tower-broadcast text-purple-600"></i> Efectividad por Canal (<code>v_efectividad_notificacion</code>)
-                </h3>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">Efectividad por canal</h3>
                 <button onclick="purgarPuntosPanel()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-lg transition whitespace-nowrap">
-                  🧹 Purgar GPS &gt;30d (RN-17)
+                  🧹 Limpiar ubicaciones antiguas
                 </button>
               </div>
               <div id="contenedorEfectividadCanales" class="space-y-3 text-xs">
@@ -691,18 +531,16 @@
       <!-- SECCIÓN 6: CATÁLOGOS, SEGURIDAD Y PILOTO (E05 / E06 / E12)         -->
       <!-- ================================================================== -->
       <div id="viewCatalogos" class="hidden space-y-5 sm:space-y-6">
-        <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="section-toolbar bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-shield-halved text-amber-400"></i> Catálogos Operativos, Seguridad (E05/E06) y Piloto (E12)
-            </h2>
+            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">Clientes y cobertura</h2>
             <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              Gestión de Clientes (baja lógica RN-15), Domicilios geocodificados en San Antonio, TX, Zonas, Inspectores, Bitácora de Auditoría E05 y Opiniones de Clientes Piloto E12.
+              Administra clientes, domicilios, cobertura y acceso al sistema.
             </p>
           </div>
           <div class="flex flex-wrap gap-2 w-full sm:w-auto">
             <button onclick="cargarCatalogosYSeguridad()" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2.5 sm:py-2 rounded-lg transition flex items-center gap-1.5">
-              <i class="fa-solid fa-rotate"></i> Sincronizar Catálogos y Bitácora
+              <i class="fa-solid fa-rotate"></i> Actualizar registros
             </button>
           </div>
         </div>
@@ -713,23 +551,18 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div class="px-4 sm:px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Catálogo de Clientes (RN-15 Baja Lógica, sin borrado físico)
+                  Catálogo de Clientes
                 </h3>
                 <span id="badgeCountClientesCat" class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">—</span>
               </div>
               <div class="p-3.5 sm:p-4 border-b border-slate-100 bg-slate-50/50">
-                <form id="formNuevoClienteCat" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                  <input type="text" id="catCliNombre" placeholder="Nombre completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
-                  <input type="tel" id="catCliTel" placeholder="+1-210-555-0999" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
-                  <input type="password" id="catCliContrasena" placeholder="Contraseña para la app (mín. 6)" minlength="6" autocomplete="new-password" title="Opcional: con contraseña, el cliente puede entrar a la app con su teléfono" class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
-                  <select id="catCliCanal" class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
-                    <option value="PUSH">Canal: PUSH</option>
-                    <option value="SMS">Canal: SMS</option>
-                  </select>
-                  <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-3 py-2 sm:py-1.5 transition">
-                    + Alta Cliente
-                  </button>
-                </form>
+                <form id="formNuevoClienteCat" class="catalog-form">
+  <div><label for="catCliNombre">Nombre completo</label><input type="text" id="catCliNombre" placeholder="Nombre y apellidos" required></div>
+  <div><label for="catCliTel">Teléfono</label><input type="tel" id="catCliTel" placeholder="+1 210 555 0999" required></div>
+  <div><label for="catCliContrasena">Contraseña inicial (opcional)</label><input type="password" id="catCliContrasena" placeholder="Al menos 6 caracteres" minlength="6" autocomplete="new-password" title="Con una contraseña, el cliente podrá acceder a la app"></div>
+  <div><label for="catCliCanal">Cómo recibe los avisos</label><select id="catCliCanal"><option value="PUSH">Notificación en la app</option><option value="SMS">Mensaje de texto</option></select></div>
+  <button type="submit" class="bg-emerald-600 text-white">Registrar cliente</button>
+</form>
               </div>
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -739,7 +572,7 @@
                       <th class="py-2.5 px-3 sm:px-4">Teléfono / Correo</th>
                       <th class="py-2.5 px-3 sm:px-4">Canal</th>
                       <th class="py-2.5 px-3 sm:px-4">Estado</th>
-                      <th class="py-2.5 px-3 sm:px-4 text-right">RN-15</th>
+                      <th class="py-2.5 px-3 sm:px-4 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody id="tablaClientesCatBody" class="divide-y divide-slate-100"></tbody>
@@ -751,7 +584,7 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div class="px-4 sm:px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Domicilios con Geocodificación y Pin en Mapa (San Antonio, TX — E06)
+                  Domicilios registrados
                 </h3>
               </div>
               <div id="contenedorDomiciliosCat" class="p-3.5 sm:p-4 space-y-2.5 text-xs"></div>
@@ -763,9 +596,9 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div class="px-4 sm:px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <i class="fa-solid fa-lock text-amber-400"></i> Bitácora de Seguridad y Roles (E05)
+                  <i class="fa-solid fa-lock text-amber-400"></i> Actividad de acceso
                 </h3>
-                <span class="text-[10px] text-emerald-300 font-mono">JWT + RLS Activo</span>
+                <span class="text-[10px] text-emerald-300 font-mono">Acceso por rol</span>
               </div>
               <div id="contenedorBitacoraE05" class="p-3.5 sm:p-4 space-y-2 text-xs max-h-64 overflow-y-auto"></div>
             </div>
@@ -773,7 +606,7 @@
             <div class="bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
               <div class="px-4 sm:px-5 py-3.5 bg-emerald-900 text-white flex justify-between items-center">
                 <h3 class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <i class="fa-solid fa-star text-amber-300"></i> Opiniones de Clientes Piloto (E12)
+                  <i class="fa-solid fa-star text-amber-300"></i> Opiniones de clientes
                 </h3>
                 <span id="badgeEncuestas" class="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-full font-bold">—</span>
               </div>
@@ -790,7 +623,7 @@
       <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-150">
         <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <h3 class="text-base font-bold flex items-center gap-2">
-            <i class="fa-solid fa-calendar-plus text-emerald-400"></i> Programar Inspección de Techo
+            <i class="fa-solid fa-calendar-plus text-emerald-400"></i> Nueva inspección
           </h3>
           <button id="btnCloseModalNueva" class="text-slate-400 hover:text-white transition">
             <i class="fa-solid fa-xmark text-lg"></i>
@@ -808,7 +641,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente (San Antonio, TX)</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente</label>
             <select id="inputCliente" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500"></select>
           </div>
 
@@ -830,22 +663,22 @@
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Ventana Inicio</label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Hora de inicio</label>
               <input type="time" id="inputVentanaInicio" value="14:00" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Ventana Fin</label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Hora de fin</label>
               <input type="time" id="inputVentanaFin" value="16:00" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5">
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Motivo de la Visita</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Motivo de la visita</label>
             <input type="text" id="inputMotivo" placeholder="Ej. Revisión de tejas levantadas tras tormenta" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Notas Internas</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Notas internas</label>
             <textarea id="inputNotas" rows="2" placeholder="Referencias de portón, código de acceso..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5"></textarea>
           </div>
 
@@ -854,7 +687,7 @@
               Cancelar
             </button>
             <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">
-              Guardar Inspección
+              Guardar inspección
             </button>
           </div>
         </form>
@@ -883,12 +716,12 @@
               <span id="detClienteTelefono" class="text-slate-500 block">+1-210-555-0201</span>
             </div>
             <div>
-              <span class="text-slate-400 block font-medium">Inspector Asignado</span>
+              <span class="text-slate-400 block font-medium">Inspector asignado</span>
               <span id="detInspectorNombre" class="font-bold text-slate-800 text-sm">Carlos Garza</span>
               <span id="detInspectorPlacas" class="text-slate-500 block">Vehículo TX-ROOF-01</span>
             </div>
             <div class="col-span-2">
-              <span class="text-slate-400 block font-medium">Dirección en San Antonio, TX</span>
+              <span class="text-slate-400 block font-medium">Domicilio</span>
               <span id="detDireccion" class="font-semibold text-slate-800">19202 Stone Oak Pkwy, Stone Oak, San Antonio, Texas 78258</span>
               <span id="detReferencias" class="text-slate-500 block italic mt-0.5">Portón negro con interfono.</span>
             </div>
@@ -900,16 +733,16 @@
 
           <!-- Acciones de Gestión -->
           <div class="border-t border-slate-200 pt-4">
-            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Acciones de Agenda</h4>
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Gestionar visita</h4>
             <div class="flex flex-wrap gap-2">
               <button id="btnActionReasignar" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition flex items-center gap-1.5">
                 <i class="fa-solid fa-user-pen"></i> Reasignar
               </button>
               <button id="btnActionMover" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition flex items-center gap-1.5">
-                <i class="fa-regular fa-calendar"></i> Mover Fecha
+                <i class="fa-regular fa-calendar"></i> Cambiar fecha
               </button>
               <button id="btnActionCancelar" class="px-3 py-1.5 text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-medium transition flex items-center gap-1.5">
-                <i class="fa-solid fa-ban"></i> Cancelar Cita
+                <i class="fa-solid fa-ban"></i> Cancelar cita
               </button>
             </div>
             <p id="detAccionesAviso" class="hidden text-[11px] text-slate-500 mt-2"></p>
@@ -919,7 +752,7 @@
           <!-- Línea de Tiempo (Historial Inmutable) -->
           <div class="border-t border-slate-200 pt-4">
             <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <i class="fa-solid fa-clock-rotate-left text-slate-500"></i> Línea de Tiempo e Historial Auditado
+              <i class="fa-solid fa-clock-rotate-left text-slate-500"></i> Actividad de la visita
             </h4>
             <div id="detHistorialContainer" class="space-y-3 relative before:absolute before:inset-0 before:left-3 before:w-0.5 before:bg-slate-200 pl-6">
               <!-- Timeline items populated dynamically -->
@@ -1360,7 +1193,7 @@
 
     function columnaInspectorHtml(titulo, subtitulo, avatar, colorAvatar, citas) {
       const col = document.createElement('div');
-      col.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden';
+      col.className = 'inspector-column bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden';
       col.innerHTML = `
         <div class="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-2">
           <div class="flex items-center space-x-3 min-w-0">
@@ -1446,22 +1279,12 @@
 
     function createCard(cita) {
       const div = document.createElement('div');
-      div.className = 'p-3.5 bg-slate-50 hover:bg-white rounded-lg border border-slate-200 hover:border-emerald-300 hover:shadow-sm cursor-pointer transition';
+      div.className = 'appointment-row';
+      div.tabIndex = 0; div.setAttribute('role', 'button');
+      div.setAttribute('aria-label', 'Ver inspección de ' + cita.cliente_nombre);
       div.onclick = () => abrirDetalle(cita);
-
-      div.innerHTML = `
-        <div class="flex items-center justify-between mb-1.5">
-          <div class="flex items-center space-x-2">
-            <span class="font-mono font-bold text-xs text-slate-700">${cita.folio}</span>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded border ${getEstadoBadge(cita.estado)}">${cita.estado}</span>
-          </div>
-          <span class="text-xs font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
-            <i class="fa-regular fa-clock text-slate-400 mr-1"></i>${cita.ventana_inicio} - ${cita.ventana_fin}
-          </span>
-        </div>
-        <div class="font-semibold text-xs text-slate-900">${cita.cliente_nombre}</div>
-        <div class="text-[11px] text-slate-500 truncate"><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i>${cita.calle} #${cita.numero}, ${cita.colonia} (${cita.ciudad}, TX)</div>
-      `;
+      div.onkeydown = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); abrirDetalle(cita); } };
+      div.innerHTML = `<div class="appointment-time">${esc(cita.ventana_inicio)}<small>a ${esc(cita.ventana_fin)}</small></div><div class="appointment-info"><strong>${esc(cita.cliente_nombre)}</strong><p>${esc(cita.calle)} #${esc(cita.numero)}, ${esc(cita.colonia)}</p><small>${esc(cita.folio)}</small></div><div class="appointment-end"><span class="state-chip ${getEstadoBadge(cita.estado)}">${esc(estadoLegible(cita.estado))}</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></div>`;
       return div;
     }
 
@@ -1484,7 +1307,7 @@
       selectedCita = cita;
       document.getElementById('detFolioBadge').textContent = cita.folio;
       const badgeEstado = document.getElementById('detEstadoBadge');
-      badgeEstado.textContent = cita.estado;
+      badgeEstado.textContent = estadoLegible(cita.estado);
       document.getElementById('detClienteNombre').textContent = cita.cliente_nombre || '';
       document.getElementById('detClienteTelefono').textContent = cita.cliente_telefono || '';
       document.getElementById('detInspectorNombre').textContent = cita.inspector_nombre || 'Sin asignar';
@@ -1503,10 +1326,10 @@
       if (!bloqueada && sinReprog) { bMover.disabled = true; bMover.classList.add('opacity-50', 'cursor-not-allowed'); }
       const aviso = document.getElementById('detAccionesAviso');
       if (bloqueada) {
-        aviso.textContent = `La cita está en estado ${cita.estado}: ya no se puede reasignar, mover ni cancelar desde la agenda.`;
+        aviso.textContent = `La cita está ${estadoLegible(cita.estado).toLowerCase()}: ya no se puede reasignar, mover ni cancelar desde la agenda.`;
         aviso.classList.remove('hidden');
       } else if (sinReprog) {
-        aviso.textContent = 'La cita ya alcanzó el límite de 3 reprogramaciones (RN-06).';
+        aviso.textContent = 'La cita ya alcanzó el límite de 3 reprogramaciones.';
         aviso.classList.remove('hidden');
       } else {
         aviso.classList.add('hidden');
@@ -1727,7 +1550,7 @@
         cargarFechasConCitas();
         toast(`Inspección ${data.inspeccion.folio} programada para el ${fecha} (${vInicio} - ${vFin}).`);
       } catch (err) {
-        mostrarErrorNueva(err.message, err.codigo === 'TRASLAPE_INSPECTOR_RN02' ? 'Horario traslapado (RN-02):' : 'No se pudo programar la inspección:');
+        mostrarErrorNueva(err.message, err.codigo === 'TRASLAPE_INSPECTOR_RN02' ? 'Horario traslapado:' : 'No se pudo programar la inspección:');
       }
     };
 
@@ -1763,6 +1586,18 @@
     document.getElementById('btnNextDay').onclick = () => irAFecha(sumarDias(fechaFiltro, 1));
 
     function cambiarTab(tab) {
+      const copy = {
+        agenda: ['Agenda de inspecciones', 'Organiza las visitas y mantén a tu equipo al día.'],
+        notificaciones: ['Notificaciones', 'Revisa las entregas y los avisos que necesitan seguimiento.'],
+        reprogramaciones: ['Cambios de cita', 'Resuelve las solicitudes y confirma los nuevos horarios.'],
+        monitor: ['Equipo en ruta', 'Consulta los trayectos activos y las próximas llegadas.'],
+        tablero: ['Indicadores', 'Una vista clara de la operación y sus resultados.'],
+        catalogos: ['Administración', 'Gestiona clientes, cobertura y acceso al sistema.'],
+      }[tab];
+      document.getElementById('sectionTitle').textContent = copy[0];
+      document.getElementById('sectionDescription').textContent = copy[1];
+      document.querySelectorAll('.workspace-nav button').forEach(button => button.setAttribute('aria-selected', String(button.getAttribute('onclick').includes("'" + tab + "'"))));
+
       const vAgenda = document.getElementById('viewAgenda');
       const vNotif = document.getElementById('viewNotificaciones');
       const vReprog = document.getElementById('viewReprogramaciones');
@@ -1861,12 +1696,12 @@
             <div class="font-mono font-bold text-slate-800">${n.folio || 'Cita #' + n.id_inspeccion}</div>
             <div class="text-slate-500">${n.cliente_nombre || 'Cliente'}</div>
           </td>
-          <td class="py-3 px-4 font-semibold text-slate-700">${n.tipo} ${n.reenvio_manual ? '<span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded ml-1">Manual</span>' : ''}</td>
+          <td class="py-3 px-4 font-semibold text-slate-700">${esc(avisoLegible(n.tipo))} ${n.reenvio_manual ? '<span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded ml-1">Manual</span>' : ''}</td>
           <td class="py-3 px-4">
             <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeCanal}">${n.canal}</span>
             <div class="text-[10px] text-slate-400 truncate max-w-[160px] mt-0.5">${n.destinatario}</div>
           </td>
-          <td class="py-3 px-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeEstado}">${n.estado}</span></td>
+          <td class="py-3 px-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeEstado}">${esc(estadoLegible(n.estado))}</span></td>
           <td class="py-3 px-4 font-mono">${n.intentos}/3</td>
           <td class="py-3 px-4 text-slate-500 max-w-xs">${n.error ? `<span class="text-rose-600 font-medium">${n.error}</span>` : (n.entregada_en || 'Entregada')}</td>
           <td class="py-3 px-4 text-right">
@@ -1886,11 +1721,11 @@
                 <span class="font-mono font-bold text-slate-900">${n.folio || 'Cita #' + n.id_inspeccion}</span>
                 <span class="text-slate-600 font-medium ml-1">· ${n.cliente_nombre || 'Cliente'}</span>
               </div>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeEstado}">${n.estado}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeEstado}">${esc(estadoLegible(n.estado))}</span>
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeCanal}">${n.canal}</span>
-              <span class="font-semibold text-slate-700">${n.tipo}</span>
+              <span class="font-semibold text-slate-700">${esc(avisoLegible(n.tipo))}</span>
               <span class="text-[11px] font-mono text-slate-500">(${n.intentos}/3 int.)</span>
             </div>
             <div class="text-[11px] text-slate-500 break-all">${n.error ? `<span class="text-rose-600 font-medium">${n.error}</span>` : `Entregada: ${n.entregada_en || 'OK'}`}</div>
@@ -1965,9 +1800,9 @@
             <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span class="font-mono font-bold text-xs text-slate-800">${sol.folio}</span>
               <span class="text-xs font-bold text-slate-900">${sol.cliente_nombre}</span>
-              <span class="text-[10px] text-slate-500">(Reprog. ${sol.veces_reprogramada || 1}/3 RN-06)</span>
+              <span class="text-[10px] text-slate-500">Cambio ${sol.veces_reprogramada || 1} de 3</span>
             </div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${badge}">${sol.estado}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${badge}">${esc(estadoLegible(sol.estado))}</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-lg border border-slate-200">
             <div>
@@ -1983,10 +1818,10 @@
           ${sol.estado === 'SOLICITADA' ? `
             <div class="flex flex-col sm:flex-row justify-end gap-2 pt-1">
               <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, true)" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 sm:py-1.5 rounded-lg transition text-center">
-                <i class="fa-solid fa-check mr-1"></i>Aprobar (Conservar Folio)
+                <i class="fa-solid fa-check mr-1"></i>Aprobar cambio
               </button>
               <button onclick="resolverSolicitudPanel(${sol.id_reprogramacion}, false)" class="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-2 sm:py-1.5 rounded-lg transition text-center">
-                <i class="fa-solid fa-xmark mr-1"></i>Rechazar con Motivo
+                <i class="fa-solid fa-xmark mr-1"></i>Rechazar solicitud
               </button>
             </div>
           ` : ''}
@@ -2003,7 +1838,7 @@
         return;
       }
       const muestra = lista.slice(0, 3).map(c => `${esc(c.folio)} (${esc(c.cliente_nombre)} · ${esc(c.cliente_telefono)})`).join(', ');
-      texto.innerHTML = `${lista.length === 1 ? 'Hay 1 cita' : `Hay ${lista.length} citas`} en <strong>SIN_CONFIRMAR</strong>: ${muestra}${lista.length > 3 ? ' y más' : ''}. Llama al cliente antes de enviar al inspector (RN-07).`;
+      texto.innerHTML = `${lista.length === 1 ? 'Hay 1 cita' : `Hay ${lista.length} citas`} en <strong>SIN_CONFIRMAR</strong>: ${muestra}${lista.length > 3 ? ' y más' : ''}. Llama al cliente antes de enviar al inspector.`;
       banner.classList.remove('hidden');
     }
 
@@ -2099,7 +1934,7 @@
     async function ejecutarBarridoSinConfirmar() {
       const ok = await confirmar({
         titulo: '¿Ejecutar la revisión de citas sin respuesta?',
-        mensaje: 'Las citas notificadas que el cliente no haya confirmado pasarán a SIN_CONFIRMAR (RN-07).',
+        mensaje: 'Las citas notificadas que el cliente no haya confirmado pasarán a SIN_CONFIRMAR.',
         textoBoton: 'Ejecutar revisión',
         peligro: false
       });
@@ -2107,7 +1942,7 @@
       try {
         await api('/temporizadores/sin-confirmar', { method: 'POST', body: {} });
         await Promise.all([cargarReprogramacionesYSinConfirmar(), cargarCitasDesdeApi()]);
-        toast('Revisión ejecutada: las citas notificadas sin respuesta pasaron a SIN_CONFIRMAR (RN-07).');
+        toast('Revisión ejecutada: las citas notificadas sin respuesta pasaron a SIN_CONFIRMAR.');
       } catch (err) {
         toast(err.message, 'error');
       }
@@ -2175,7 +2010,7 @@
     function iconoMonitor(emoji, color) {
       return L.divIcon({
         className: 'marcador-monitor',
-        html: `<div class="pin" style="background:${color}">${emoji}</div>`,
+        html: `<div class="pin" style="background:${color}"><i class="fa-solid ${emoji === '🏠' ? 'fa-house' : 'fa-truck-pickup'}" aria-hidden="true"></i></div>`,
         iconSize: [34, 34],
         iconAnchor: [17, 17],
         popupAnchor: [0, -18]
@@ -2296,7 +2131,7 @@
                 <span class="font-mono font-bold text-slate-900">${item.folio}</span>
                 <span class="bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded text-[10px]">En camino</span>
                 <span class="bg-slate-100 text-slate-800 font-bold px-2 py-0.5 rounded text-[10px]">Llega en ${Number.isFinite(item.etaMinutos) ? `${item.etaAproximado ? 'aprox. ' : ''}${item.etaMinutos} min` : '—'} · ${textoDistancia(item.distanciaRestanteM)}</span>
-                ${item.cliente.enCasa ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">🏠 Cliente en casa</span>' : ''}
+                ${item.cliente.enCasa ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-house mr-1" aria-hidden="true"></i>Cliente en casa</span>' : ''}
               </div>
               <div class="font-bold text-slate-800">${esc(item.inspector.nombre)} ➔ Cliente: ${esc(item.cliente.nombre)} (${esc(item.cliente.telefono)})</div>
               <div class="text-slate-500 break-words">Destino: ${esc(item.destino.direccion)} · Ventana: ${esc(item.ventana)}</div>
@@ -2304,10 +2139,10 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 shrink-0">
               <button onclick="simularAvancePanel(${item.idInspeccion}, false)" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition text-center">
-                ▶ Avanzar GPS (15s)
+                <i class="fa-solid fa-play mr-1" aria-hidden="true"></i>Avanzar GPS (15 s)
               </button>
               <button onclick="simularAvancePanel(${item.idInspeccion}, true)" class="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition text-center">
-                📍 Acercar &lt;1 km (POR_LLEGAR)
+                <i class="fa-solid fa-location-dot mr-1" aria-hidden="true"></i>Simular próxima llegada
               </button>
             </div>
           `;
@@ -2329,10 +2164,10 @@
               <span class="font-mono text-slate-500">${c.folio}</span>
             </div>
             <div class="text-slate-700 mt-0.5">${c.clienteNombre} (${c.colonia})</div>
-            <div class="text-[11px] text-slate-500">Insp: ${c.inspectorNombre} ${c.presenciaConfirmada ? '· <strong class="text-emerald-700">🏠 En casa</strong>' : ''}</div>
+            <div class="text-[11px] text-slate-500">Insp: ${c.inspectorNombre} ${c.presenciaConfirmada ? '· <strong class="text-emerald-700">En casa</strong>' : ''}</div>
           </div>
           <div class="text-right">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${getEstadoBadge(c.estado)}">${c.estado}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${getEstadoBadge(c.estado)}">${esc(estadoLegible(c.estado))}</span>
             <div class="text-[10px] text-slate-500 mt-1">${c.etiquetaSemaforo}</div>
           </div>
         `;
@@ -2400,7 +2235,7 @@
       const metaConf = document.getElementById('kpiTabConfirmacionMeta');
       const cumpleMeta = data.tarjetas.tasaConfirmacionPct >= 80;
       metaConf.className = `text-[11px] mt-1 ${cumpleMeta ? 'text-emerald-700' : 'text-amber-700'}`;
-      metaConf.textContent = `${cumpleMeta ? 'Cumple' : 'Debajo de'} la meta ≥ 80 % (Plan §11) · Antes: 0 %`;
+      metaConf.textContent = `${cumpleMeta ? 'Cumple' : 'Debajo de'} la meta ≥ 80 % `;
 
       document.getElementById('kpiTabTotal').textContent = data.tarjetas.totalCitas;
       document.getElementById('kpiTabConfirmacion').textContent = `${data.tarjetas.tasaConfirmacionPct}%`;
@@ -2421,11 +2256,11 @@
         const div = document.createElement('div');
         div.innerHTML = `
           <div class="flex justify-between mb-1">
-            <span class="font-semibold text-slate-700">${item.estado}</span>
+            <span class="font-semibold text-slate-700">${esc(estadoLegible(item.estado))}</span>
             <span class="font-mono font-bold text-slate-900">${item.total} (${pct}%)</span>
           </div>
           <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-            <div class="bg-emerald-600 h-full rounded-full" style="width: ${Math.max(8, pct)}%"></div>
+            <div class="bg-emerald-600 h-full rounded-full" style="width: ${Math.max(0, pct)}%"></div>
           </div>
         `;
         contEstados.appendChild(div);
@@ -2446,7 +2281,7 @@
             <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-lg">${sem.pct_confirmacion}% conf.</span>
           </div>
           <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div class="bg-cyan-600 h-full rounded-full" style="width: ${Math.max(8, sem.pct_confirmacion)}%"></div>
+            <div class="bg-cyan-600 h-full rounded-full" style="width: ${Math.max(0, sem.pct_confirmacion)}%"></div>
           </div>
           <div class="text-[11px] text-slate-500">Citas: ${sem.citas} · Confirmadas: ${sem.confirmadas} · Completadas: ${sem.completadas} · Fallidas: ${sem.visitas_fallidas}</div>
         `;
@@ -2490,7 +2325,7 @@
             <span class="text-xs font-extrabold ${can.pct_entrega >= 80 ? 'text-emerald-700 bg-emerald-100' : 'text-amber-700 bg-amber-100'} px-2.5 py-0.5 rounded-lg">${can.pct_entrega}% entrega</span>
           </div>
           <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div class="${can.pct_entrega >= 80 ? 'bg-emerald-600' : 'bg-amber-500'} h-full rounded-full" style="width: ${Math.max(6, can.pct_entrega)}%"></div>
+            <div class="${can.pct_entrega >= 80 ? 'bg-emerald-600' : 'bg-amber-500'} h-full rounded-full" style="width: ${Math.max(0, can.pct_entrega)}%"></div>
           </div>
         `;
         contCan.appendChild(div);
@@ -2520,13 +2355,13 @@
     async function purgarPuntosPanel() {
       const ok = await confirmar({
         titulo: '¿Purgar puntos GPS antiguos?',
-        mensaje: 'Se eliminarán de forma permanente los puntos GPS con más de 30 días (RN-17). Esta acción no se puede deshacer.',
+        mensaje: 'Se eliminarán de forma permanente los puntos GPS con más de 30 días. Esta acción no se puede deshacer.',
         textoBoton: 'Purgar puntos'
       });
       if (!ok) return;
       try {
         const data = await api('/mantenimiento/purgar-puntos', { method: 'POST', body: { diasRetencion: 30 } });
-        toast(`Purga completada: ${data.puntosEliminados} punto(s) GPS con más de ${data.diasRetencion} días eliminados (RN-17).`);
+        toast(`Purga completada: ${data.puntosEliminados} punto(s) GPS con más de ${data.diasRetencion} días eliminados.`);
       } catch (err) {
         toast(err.message, 'error');
       }
@@ -2564,7 +2399,7 @@
           <td class="py-2.5 px-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">${c.canal_preferido}</span></td>
           <td class="py-2.5 px-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${c.activo !== 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${c.activo !== 0 ? 'ACTIVO' : 'BAJA LÓGICA'}</span></td>
           <td class="py-2.5 px-4 text-right">
-            ${c.activo !== 0 ? `<button onclick="bajaLogicaClientePanel(${c.id_cliente})" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold px-2 py-1 rounded border border-rose-200 transition">Baja RN-15</button>` : '<span class="text-[10px] text-slate-400">Conservado</span>'}
+            ${c.activo !== 0 ? `<button onclick="bajaLogicaClientePanel(${c.id_cliente})" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold px-2 py-1 rounded border border-rose-200 transition">Desactivar</button>` : '<span class="text-[10px] text-slate-400">Conservado</span>'}
           </td>
         `;
         tbody.appendChild(tr);
@@ -2580,7 +2415,7 @@
             <div class="font-bold text-slate-900">${esc(d.direccion || textoDomicilio(d))} <span class="text-slate-500">(${esc(d.zona_nombre || d.colonia || '')})</span></div>
             <div class="text-[11px] text-slate-500">Cliente: ${d.cliente_nombre || 'Registrado'} · Pin GPS: <code>${d.latitud}, ${d.longitud}</code></div>
           </div>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700" title="Las coordenadas son aproximadas: aún no hay geocodificación real (RF-11)">📍 Pin aproximado</span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700" title="La ubicación es aproximada."><i class="fa-solid fa-location-dot mr-1" aria-hidden="true"></i>Ubicación aproximada</span>
         `;
         contDom.appendChild(div);
       });
@@ -2615,7 +2450,7 @@
         div.innerHTML = `
           <div class="flex justify-between items-center">
             <span class="font-bold text-slate-900">${esc(e.cliente_nombre)} <span class="font-mono text-[10px] text-slate-500">${e.id_inspeccion ? '(cita #' + e.id_inspeccion + ')' : ''}</span></span>
-            <span class="text-[10px] font-bold text-emerald-800">${e.entendio_notificacion ? '✅' : '❌'} Aviso · ${e.facil_confirmar ? '✅' : '❌'} Confirmar · ${e.util_mapa_vivo ? '✅' : '❌'} Mapa</span>
+            <span class="text-[10px] font-bold text-emerald-800">Aviso: ${e.entendio_notificacion ? 'sí' : 'no'} · Confirmar: ${e.facil_confirmar ? 'sí' : 'no'} · Mapa: ${e.util_mapa_vivo ? 'sí' : 'no'}</span>
           </div>
           ${e.comentario ? `<p class="text-[11px] text-slate-600 italic">"${esc(e.comentario)}"</p>` : ''}
         `;
@@ -2627,14 +2462,14 @@
       const cliente = (catalogos.clientes || []).find(c => c.id_cliente === idCliente);
       const ok = await confirmar({
         titulo: `¿Dar de baja a ${cliente ? cliente.nombre : 'este cliente'}?`,
-        mensaje: 'Ya no aparecerá al programar nuevas inspecciones. Su historial de inspecciones se conserva (RN-15).',
+        mensaje: 'Ya no aparecerá al programar nuevas inspecciones. Su historial de inspecciones se conserva.',
         textoBoton: 'Dar de baja'
       });
       if (!ok) return;
       try {
         await api(`/clientes/${idCliente}/baja`, { method: 'PATCH', body: { motivo: 'Baja lógica desde el panel' } });
         await Promise.all([cargarCatalogosYSeguridad(), cargarCatalogosBase()]);
-        toast('Cliente dado de baja. Su historial de inspecciones se conserva (RN-15).');
+        toast('Cliente dado de baja. Su historial de inspecciones se conserva.');
       } catch (err) {
         toast(err.message, 'error');
       }

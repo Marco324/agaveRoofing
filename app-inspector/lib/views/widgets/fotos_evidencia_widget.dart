@@ -33,7 +33,7 @@ class FotosEvidenciaWidget extends StatelessWidget {
           maxFotos == 1
               ? '${fotos.length} de 1 foto'
               : '${fotos.length} de $maxFotos fotos',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF687A70)),
         ),
         const SizedBox(height: 10),
         if (fotos.isEmpty)
@@ -41,13 +41,13 @@ class FotosEvidenciaWidget extends StatelessWidget {
             height: 110,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: const Color(0xFFF8FAF9),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: const Color(0xFFDCE4E4)),
             ),
             child: const Text(
-              'Todavía no hay fotos',
-              style: TextStyle(fontSize: 16, color: Colors.black54),
+              'Agrega una foto de la visita',
+              style: TextStyle(fontSize: 14, color: Color(0xFF687A70)),
             ),
           )
         else
@@ -74,8 +74,8 @@ class FotosEvidenciaWidget extends StatelessWidget {
                       right: -10,
                       child: IconButton.filled(
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.red.shade700,
-                          minimumSize: const Size(36, 36),
+                          backgroundColor: const Color(0xFF203439),
+                          minimumSize: const Size(44, 44),
                         ),
                         tooltip: 'Quitar foto ${i + 1}',
                         onPressed: habilitado ? () => onQuitar(i) : null,
@@ -99,8 +99,8 @@ class FotosEvidenciaWidget extends StatelessWidget {
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: puedeAgregar ? onTomarFoto : null,
-                icon: const Icon(Icons.photo_camera),
-                label: const Text('Tomar foto', style: TextStyle(fontSize: 16)),
+                icon: const Icon(Icons.photo_camera_outlined, size: 20),
+                label: const Text('Tomar foto', style: TextStyle(fontSize: 14)),
               ),
             ),
             const SizedBox(width: 10),
@@ -110,8 +110,8 @@ class FotosEvidenciaWidget extends StatelessWidget {
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: puedeAgregar ? onElegirDeGaleria : null,
-                icon: const Icon(Icons.photo_library),
-                label: const Text('Galería', style: TextStyle(fontSize: 16)),
+                icon: const Icon(Icons.photo_library_outlined, size: 20),
+                label: const Text('Galería', style: TextStyle(fontSize: 14)),
               ),
             ),
           ],

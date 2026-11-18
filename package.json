@@ -6,17 +6,25 @@
   "type": "module",
   "scripts": {
     "api": "node --experimental-strip-types --experimental-sqlite api/src/server.ts",
-    "api:demo": "FECHA_HOY=2026-11-12 node --experimental-strip-types --experimental-sqlite api/src/server.ts",
+    "api:demo": "node --experimental-strip-types --experimental-sqlite scripts/api-demo.mjs",
     "start": "node --experimental-strip-types --experimental-sqlite api/src/server.ts",
     "seed": "node --experimental-strip-types --experimental-sqlite api/src/seed.ts",
     "seed:demo": "node --experimental-strip-types --experimental-sqlite api/src/seed.ts --demo",
-    "test": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts && FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts && FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/citas_pasadas.test.ts && FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/fcm.test.ts && node --experimental-strip-types api/test/fecha_referencia.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/auth.test.ts",
-    "test:auth": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/auth.test.ts",
-    "test:fecha": "node --experimental-strip-types api/test/fecha_referencia.test.ts",
-    "test:e07": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts",
-    "test:e08-e09": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts",
-    "test:e10-e11": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts",
-    "test:fcm": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/fcm.test.ts",
-    "test:pasadas": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/citas_pasadas.test.ts"
+    "test": "node scripts/test-api.mjs",
+    "test:auth": "node scripts/test-api.mjs auth",
+    "test:fecha": "node scripts/test-api.mjs fecha_referencia",
+    "test:e07": "node scripts/test-api.mjs agenda",
+    "test:e08-e09": "node scripts/test-api.mjs e08_e09",
+    "test:e10-e11": "node scripts/test-api.mjs e10_e11",
+    "test:fcm": "node scripts/test-api.mjs fcm",
+    "test:pasadas": "node scripts/test-api.mjs citas_pasadas",
+    "dev": "node --experimental-strip-types --experimental-sqlite scripts/dev.mjs",
+    "preview": "node --experimental-strip-types --experimental-sqlite scripts/dev.mjs --preview",
+    "build:ui": "tailwindcss -i shared/ui/tailwind.css -o shared/ui/utilities.css --minify",
+    "test:ui": "playwright test"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19",
+    "@playwright/test": "^1.58.2"
   }
 }

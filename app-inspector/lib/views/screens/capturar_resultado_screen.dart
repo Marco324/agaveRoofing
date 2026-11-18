@@ -195,7 +195,7 @@ class _CapturarResultadoScreenState extends State<CapturarResultadoScreen>
       canPop: !_enviando,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Resultado · ${widget.parada.folio}'),
+          title: const Text('Registrar inspección'),
           backgroundColor: const Color(0xFF0F172A),
           foregroundColor: Colors.white,
         ),

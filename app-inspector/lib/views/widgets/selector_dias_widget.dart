@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../utils/formato_fecha.dart';
 
 const Color _agaveEmerald = Color(0xFF059669);
-const Color _slate = Color(0xFF0F172A);
+const Color _slate = Color(0xFF142C32);
 const Color _rojoSinCerrar = Color(0xFFDC2626);
 
 /// Paradas por día (`2026-11-12` → 2) y, de ellas, cuántas quedaron sin cerrar.

@@ -71,7 +71,9 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
 
   String _textoEta(SeguimientoVivo s) {
     if (s.etaMinutos == null) return '—';
-    return s.etaAproximado ? 'Aprox. ${s.etaMinutos} min' : '${s.etaMinutos} min';
+    return s.etaAproximado
+        ? 'Aprox. ${s.etaMinutos} min'
+        : '${s.etaMinutos} min';
   }
 
   String _textoHace(int? minutos) {
@@ -90,14 +92,14 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.indigo.shade200),
+        border: Border.all(color: const Color(0xFFD1E1D7)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            height: 240,
+            height: 210,
             child: centroInicial == null
                 ? Container(
                     color: Colors.grey.shade100,
@@ -123,8 +125,10 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.agaveroofing.agave_app_cliente',
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName:
+                              'com.agaveroofing.agave_app_cliente',
                         ),
                         if (_rastro.length >= 2)
                           PolylineLayer(
@@ -132,7 +136,7 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
                               Polyline(
                                 points: _rastro,
                                 strokeWidth: 5,
-                                color: Colors.indigo.withValues(alpha: 0.8),
+                                color: agaveEmerald.withValues(alpha: 0.8),
                               ),
                             ],
                           ),
@@ -144,7 +148,11 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
                                 width: 44,
                                 height: 44,
                                 alignment: Alignment.topCenter,
-                                child: const Icon(Icons.home, color: agaveEmerald, size: 40),
+                                child: const Icon(
+                                  Icons.home,
+                                  color: agaveEmerald,
+                                  size: 40,
+                                ),
                               ),
                             if (inspector != null)
                               Marker(
@@ -153,25 +161,41 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
                                 height: 44,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: s!.senalPerdida ? Colors.grey.shade600 : Colors.indigo,
+                                    color: s!.senalPerdida
+                                        ? Colors.grey.shade600
+                                        : agaveEmerald,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 3),
-                                    boxShadow: const [BoxShadow(blurRadius: 4, color: Colors.black26)],
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        blurRadius: 4,
+                                        color: Colors.black26,
+                                      ),
+                                    ],
                                   ),
-                                  child: const Icon(Icons.local_shipping, color: Colors.white, size: 22),
+                                  child: const Icon(
+                                    Icons.local_shipping,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
                                 ),
                               ),
                           ],
                         ),
                         const RichAttributionWidget(
-                          attributions: [TextSourceAttribution('© OpenStreetMap')],
+                          attributions: [
+                            TextSourceAttribution('© OpenStreetMap'),
+                          ],
                         ),
                       ],
                     ),
                   ),
           ),
           Container(
-            color: const Color(0xFFEEF2FF),
+            color: const Color(0xFFF0F6F2),
             padding: const EdgeInsets.all(14),
             child: s == null || !s.ubicacionVisible
                 ? const Text(
@@ -203,9 +227,14 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
                       Row(
                         children: [
                           Icon(
-                            s.senalPerdida ? Icons.signal_cellular_connected_no_internet_4_bar : Icons.update,
+                            s.senalPerdida
+                                ? Icons
+                                      .signal_cellular_connected_no_internet_4_bar
+                                : Icons.update,
                             size: 20,
-                            color: s.senalPerdida ? Colors.orange.shade800 : Colors.indigo,
+                            color: s.senalPerdida
+                                ? Colors.orange.shade800
+                                : agaveEmerald,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -215,8 +244,12 @@ class _MapaSeguimientoWidgetState extends State<MapaSeguimientoWidget> {
                                   : 'Actualizado hace ${_textoHace(s.minutosDesdeUltimoPunto)}',
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: s.senalPerdida ? FontWeight.bold : FontWeight.normal,
-                                color: s.senalPerdida ? Colors.orange.shade900 : Colors.black87,
+                                fontWeight: s.senalPerdida
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: s.senalPerdida
+                                    ? Colors.orange.shade900
+                                    : Colors.black87,
                               ),
                             ),
                           ),
@@ -242,14 +275,23 @@ class _Dato extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icono, size: 22, color: Colors.indigo),
+        Icon(icono, size: 20, color: const Color(0xFF047857)),
         const SizedBox(width: 8),
         Flexible(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(titulo, style: const TextStyle(fontSize: 16, color: Colors.black54)),
-              Text(valor, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                titulo,
+                style: const TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+              Text(
+                valor,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ),

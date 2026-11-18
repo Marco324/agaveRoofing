@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agave_ui/agave_ui.dart';
 import '../../models/horario_disponible_model.dart';
 
 class ReprogramarDialog extends StatefulWidget {
@@ -36,41 +37,46 @@ class _ReprogramarDialogState extends State<ReprogramarDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Row(
-        children: [
-          Icon(Icons.calendar_month, color: Colors.indigo),
-          SizedBox(width: 8),
-          Text('Mover cita'),
-        ],
-      ),
+      title: const Text('Cambiar horario'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Selecciona un nuevo horario disponible según la zona de tu domicilio:',
-              style: TextStyle(fontSize: 13, color: Colors.black87),
+              'Elige uno de los horarios disponibles para tu domicilio.',
+              style: TextStyle(fontSize: 14, color: Color(0xFF687A70)),
             ),
             const SizedBox(height: 12),
             if (widget.horarios.isEmpty)
               const Text(
-                'No hay horarios alternativos en este momento. Por favor llame a la oficina.',
-                style: TextStyle(color: Colors.red, fontSize: 13),
+                'No hay horarios disponibles. Contacta a la oficina para encontrar otra opción.',
+                style: TextStyle(color: Color(0xFF687A70), fontSize: 14),
               )
             else
               DropdownButtonFormField<HorarioDisponible>(
                 initialValue: _horarioSeleccionado,
                 isExpanded: true,
+                isDense: false,
+                itemHeight: 72,
+                menuMaxHeight: 288,
                 decoration: const InputDecoration(
                   labelText: 'Nuevo horario',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 items: widget.horarios.map((h) {
                   return DropdownMenuItem(
                     value: h,
-                    child: Text(h.etiqueta, style: const TextStyle(fontSize: 13)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        h.etiqueta.replaceFirst(' · ', '\n'),
+                        style: const TextStyle(fontSize: 14, height: 1.4),
+                      ),
+                    ),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -84,8 +90,7 @@ class _ReprogramarDialogState extends State<ReprogramarDialog> {
               controller: _motivoController,
               maxLines: 2,
               decoration: const InputDecoration(
-                labelText: 'Motivo del cambio (opcional)',
-                border: OutlineInputBorder(),
+                labelText: 'Motivo (opcional)',
                 hintText: 'Ej. Compromiso de trabajo en esa hora',
               ),
             ),
@@ -98,16 +103,23 @@ class _ReprogramarDialogState extends State<ReprogramarDialog> {
           child: const Text('Cancelar'),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+          style: ElevatedButton.styleFrom(backgroundColor: agaveGreen),
           onPressed: _horarioSeleccionado == null
               ? null
               : () {
                   final h = _horarioSeleccionado!;
                   final ventana = '${h.ventanaInicio} - ${h.ventanaFin}';
-                  widget.onConfirmar(h.fecha, ventana, _motivoController.text.trim());
+                  widget.onConfirmar(
+                    h.fecha,
+                    ventana,
+                    _motivoController.text.trim(),
+                  );
                   Navigator.of(context).pop();
                 },
-          child: const Text('Enviar solicitud', style: TextStyle(color: Colors.white)),
+          child: const Text(
+            'Enviar solicitud',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
       ],
     );
