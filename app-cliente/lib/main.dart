@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'services/push_service.dart';
 import 'views/screens/mis_citas_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Notificaciones push con Firebase (si el proyecto no está configurado, la app sigue sin push).
+  await PushService.instancia.inicializarFirebase();
   runApp(const AgaveClienteApp());
 }
 

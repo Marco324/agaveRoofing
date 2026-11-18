@@ -5,6 +5,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// E08: Firebase Cloud Messaging. Sin google-services.json la app compila y corre sin push.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.warn("⚠️  Falta android/app/google-services.json: la app se compila sin notificaciones push.")
+}
+
 android {
     namespace = "com.agaveroofing.agave_app_cliente"
     compileSdk = flutter.compileSdkVersion

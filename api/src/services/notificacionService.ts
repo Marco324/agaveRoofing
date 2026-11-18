@@ -10,6 +10,7 @@ import type {
   EncolarNotificacionDTO
 } from '../../../shared/src/types/dtos.ts';
 import { transicionar } from './maquinaEstadosService.ts';
+import { fcmHabilitado, enviarPushFcm } from './fcmService.ts';
 
 export class ErrorNotificacionDuplicadaRN13 extends Error {
   idInspeccion: number;
@@ -26,12 +27,21 @@ export class ErrorNotificacionDuplicadaRN13 extends Error {
 }
 
 /**
- * E08 — Registrar o actualizar un dispositivo móvil para Expo Push Notifications.
+ * E08 — Registrar o actualizar un dispositivo móvil con su token de Firebase Cloud Messaging.
  * POST /api/dispositivos
+ * La app del cliente puede mandar idCliente en lugar de idUsuario (aún no hay inicio de sesión real).
  */
 export function registrarDispositivo(dto: RegistrarDispositivoDTO) {
+  if (!dto.idUsuario && dto.idCliente) {
+    const cliente = db.prepare('SELECT id_usuario FROM cliente WHERE id_cliente = ?').get(dto.idCliente) as any;
+    if (!cliente?.id_usuario) {
+      throw new Error(`El cliente #${dto.idCliente} no existe o no tiene usuario para recibir notificaciones.`);
+    }
+    dto = { ...dto, idUsuario: cliente.id_usuario };
+  }
+
   if (!dto.idUsuario || !dto.tokenPush || !dto.plataforma) {
-    throw new Error('idUsuario, tokenPush y plataforma son obligatorios para registrar un dispositivo.');
+    throw new Error('idUsuario (o idCliente), tokenPush y plataforma son obligatorios para registrar un dispositivo.');
   }
 
   const existente = db.prepare('SELECT * FROM dispositivo WHERE token_push = ?').get(dto.tokenPush) as any;
@@ -253,11 +263,141 @@ export function encolarNotificacion(dto: EncolarNotificacionDTO & { forzarCanal?
   };
 }
 
+/** Notificaciones PUSH que ya salieron hacia FCM y esperan respuesta (evita enviarlas dos veces). */
+const pushEnVuelo = new Set<number>();
+
+const TIPOS_URGENTES = ['EN_CAMINO', 'POR_LLEGAR', 'LLEGADA', 'MENSAJE'];
+
+/**
+ * Marca una notificación como FALLIDA y, si era PUSH, crea y despacha el respaldo por SMS (Twilio, simulado).
+ * Devuelve el id de la notificación SMS de respaldo, o null.
+ */
+function marcarFallidaConRespaldoSms(notif: any, intentos: number, motivoError: string): number | null {
+  db.prepare(`
+    UPDATE notificacion
+    SET estado = 'FALLIDA',
+        intentos = ?,
+        error = ?
+    WHERE id_notificacion = ?
+  `).run(intentos, motivoError, notif.id_notificacion);
+
+  if (notif.canal !== 'PUSH') return null;
+
+  const respaldoSms = encolarNotificacion({
+    idInspeccion: notif.id_inspeccion,
+    tipo: notif.tipo as TipoNotificacion,
+    programadaPara: notif.programada_para,
+    reenvioManual: true, // Marcado para permitir el envío de respaldo sin chocar con el registro fallido
+    forzarCanal: CanalNotificacion.SMS
+  });
+
+  // Despachar el SMS de respaldo inmediatamente (Twilio sigue simulado en esta versión)
+  db.prepare(`
+    UPDATE notificacion
+    SET estado = 'ENTREGADA',
+        intentos = 1,
+        enviada_en = datetime('now'),
+        entregada_en = datetime('now')
+    WHERE id_notificacion = ?
+  `).run(respaldoSms.id_notificacion);
+
+  return respaldoSms.id_notificacion;
+}
+
+/** Espera antes del reintento N de un PUSH real: 2 s, 4 s, 8 s… (configurable para pruebas). */
+function esperaReintentoMs(intento: number): number {
+  const base = Number(process.env.FCM_REINTENTO_BASE_MS || 2000);
+  return base * 2 ** (intento - 1);
+}
+
+/**
+ * E08 — Envío real por Firebase Cloud Messaging. Se ejecuta en segundo plano: el despachador
+ * no espera la respuesta para no volver asíncronos a todos los servicios que lo llaman.
+ *   - FCM acepta el mensaje → ENVIADA (pasa a ENTREGADA cuando la app manda el acuse).
+ *   - Token no registrado → se apaga el dispositivo, FALLIDA y respaldo SMS.
+ *   - Error transitorio → sigue PENDIENTE y se reintenta con espera exponencial (máx. 3 intentos).
+ *   - Error permanente o 3 intentos → FALLIDA y respaldo SMS.
+ */
+async function enviarPushReal(notif: any): Promise<void> {
+  const id = notif.id_notificacion as number;
+  const nuevoIntento = (notif.intentos || 0) + 1;
+  pushEnVuelo.add(id);
+  let reintentar = false;
+
+  try {
+    const resultado = await enviarPushFcm({
+      token: notif.destinatario,
+      titulo: notif.titulo_renderizado,
+      cuerpo: notif.cuerpo_renderizado || '',
+      urgente: TIPOS_URGENTES.includes(notif.tipo),
+      datos: {
+        idNotificacion: String(id),
+        idInspeccion: String(notif.id_inspeccion),
+        tipo: String(notif.tipo)
+      }
+    });
+
+    // Si mientras tanto alguien la canceló o la cerró, no se pisa su estado.
+    const actual = db.prepare('SELECT estado FROM notificacion WHERE id_notificacion = ?').get(id) as any;
+    if (!actual || actual.estado !== 'PENDIENTE') return;
+
+    if (resultado.ok) {
+      db.prepare(`
+        UPDATE notificacion
+        SET estado = 'ENVIADA',
+            intentos = ?,
+            enviada_en = datetime('now'),
+            error = NULL
+        WHERE id_notificacion = ?
+      `).run(nuevoIntento, id);
+      return;
+    }
+
+    if (resultado.tipoError === 'TOKEN_INVALIDO') {
+      if (notif.id_dispositivo) {
+        db.prepare('UPDATE dispositivo SET activo = 0 WHERE id_dispositivo = ?').run(notif.id_dispositivo);
+      }
+      marcarFallidaConRespaldoSms(notif, nuevoIntento, `${resultado.error} (token vencido o app desinstalada)`);
+      return;
+    }
+
+    if (resultado.tipoError === 'PERMANENTE' || nuevoIntento >= 3) {
+      marcarFallidaConRespaldoSms(notif, nuevoIntento, resultado.error);
+      return;
+    }
+
+    db.prepare(`
+      UPDATE notificacion
+      SET intentos = ?,
+          error = ?
+      WHERE id_notificacion = ?
+    `).run(nuevoIntento, `Intento ${nuevoIntento}/3 fallido — ${resultado.error}`, id);
+    reintentar = true;
+  } catch (err: any) {
+    console.error(`❌ Error inesperado al enviar la notificación #${id} por FCM:`, err);
+  } finally {
+    pushEnVuelo.delete(id);
+  }
+
+  if (reintentar) {
+    const espera = setTimeout(() => {
+      const fila = db.prepare(
+        `SELECT * FROM notificacion WHERE id_notificacion = ? AND estado = 'PENDIENTE'`
+      ).get(id) as any;
+      if (fila && !pushEnVuelo.has(id)) void enviarPushReal(fila);
+    }, esperaReintentoMs(nuevoIntento));
+    espera.unref?.();
+  }
+}
+
 /**
  * E08 — Despachador de notificaciones con reintentos (máx. 3 intentos) y respaldo automático por SMS (Twilio).
+ * Con FCM configurado (ver fcmService.ts) los PUSH se envían de verdad; sin él, el envío se simula:
+ * los tokens que contienen INVALID/VENCIDO/FAIL fallan y el resto se dan por entregados.
  */
 export function despacharNotificacionesPendientes(ahoraISO?: string) {
   const ahora = ahoraISO || '9999-12-31T23:59:59Z';
+  const pushReal = fcmHabilitado();
 
   const pendientes = db.prepare(`
     SELECT * FROM notificacion
@@ -269,7 +409,21 @@ export function despacharNotificacionesPendientes(ahoraISO?: string) {
   const resultados: any[] = [];
 
   for (const notif of pendientes) {
+    if (pushEnVuelo.has(notif.id_notificacion)) continue;
+
     const nuevoIntento = (notif.intentos || 0) + 1;
+
+    if (pushReal && notif.canal === 'PUSH') {
+      void enviarPushReal(notif);
+      resultados.push({
+        idNotificacion: notif.id_notificacion,
+        estado: 'ENVIANDO',
+        canal: 'PUSH',
+        intentos: nuevoIntento
+      });
+      continue;
+    }
+
     const tokenFalla =
       notif.destinatario.includes('INVALID') ||
       notif.destinatario.includes('VENCIDO') ||
@@ -279,51 +433,23 @@ export function despacharNotificacionesPendientes(ahoraISO?: string) {
       const esTokenInvalido = notif.destinatario.includes('INVALID') || notif.destinatario.includes('VENCIDO');
 
       if (esTokenInvalido && notif.id_dispositivo) {
-        // Apagar dispositivo cuando Expo/FCM reporta DeviceNotRegistered
+        // Apagar dispositivo cuando FCM reporta que el token ya no está registrado
         db.prepare('UPDATE dispositivo SET activo = 0 WHERE id_dispositivo = ?').run(notif.id_dispositivo);
       }
 
       if (nuevoIntento >= 3 || esTokenInvalido) {
         const motivoError = esTokenInvalido
-          ? 'ExpoPushError: DeviceNotRegistered (Token vencido o app desinstalada)'
+          ? 'FCM: UNREGISTERED (token vencido o app desinstalada)'
           : 'Error de red tras 3 intentos con espera exponencial';
 
-        db.prepare(`
-          UPDATE notificacion
-          SET estado = 'FALLIDA',
-              intentos = ?,
-              error = ?
-          WHERE id_notificacion = ?
-        `).run(nuevoIntento, motivoError, notif.id_notificacion);
-
-        // Si falló una PUSH definitivamente, activar respaldo automático por SMS (Twilio)
-        let respaldoSmsCreado = null;
-        if (notif.canal === 'PUSH') {
-          respaldoSmsCreado = encolarNotificacion({
-            idInspeccion: notif.id_inspeccion,
-            tipo: notif.tipo as TipoNotificacion,
-            programadaPara: notif.programada_para,
-            reenvioManual: true, // Marcado para permitir el envío de respaldo sin chocar con el registro fallido
-            forzarCanal: CanalNotificacion.SMS
-          });
-
-          // Despachar el SMS de respaldo inmediatamente
-          db.prepare(`
-            UPDATE notificacion
-            SET estado = 'ENTREGADA',
-                intentos = 1,
-                enviada_en = datetime('now'),
-                entregada_en = datetime('now')
-            WHERE id_notificacion = ?
-          `).run(respaldoSmsCreado.id_notificacion);
-        }
+        const respaldoSmsId = marcarFallidaConRespaldoSms(notif, nuevoIntento, motivoError);
 
         resultados.push({
           idNotificacion: notif.id_notificacion,
           estado: 'FALLIDA',
           intentos: nuevoIntento,
           error: motivoError,
-          respaldoSmsId: respaldoSmsCreado?.id_notificacion || null
+          respaldoSmsId
         });
       } else {
         // Queda PENDIENTE para el siguiente reintento con espera creciente
@@ -341,7 +467,7 @@ export function despacharNotificacionesPendientes(ahoraISO?: string) {
         });
       }
     } else {
-      // Envío y acuse exitoso por Expo Push o Twilio SMS
+      // Envío y acuse exitoso simulados (PUSH sin FCM configurado, o SMS de Twilio)
       db.prepare(`
         UPDATE notificacion
         SET estado = 'ENTREGADA',
@@ -363,8 +489,33 @@ export function despacharNotificacionesPendientes(ahoraISO?: string) {
 
   return {
     procesadas: resultados.length,
+    modo: pushReal ? 'FCM' : 'SIMULADO',
     resultados
   };
+}
+
+/**
+ * E08 — Acuse de la app del cliente: la notificación llegó al teléfono (RECIBIDA) o el cliente la abrió (ABIERTA).
+ * POST /api/notificaciones/:id/acuse
+ */
+export function registrarAcuseNotificacion(idNotificacion: number) {
+  const notif = db.prepare('SELECT * FROM notificacion WHERE id_notificacion = ?').get(idNotificacion) as any;
+  if (!notif) {
+    throw new Error(`Notificación #${idNotificacion} no encontrada.`);
+  }
+
+  // Un acuse confirma la entrega aunque la respuesta de FCM no se haya procesado todavía.
+  if (notif.estado === 'ENVIADA' || notif.estado === 'PENDIENTE') {
+    db.prepare(`
+      UPDATE notificacion
+      SET estado = 'ENTREGADA',
+          enviada_en = COALESCE(enviada_en, datetime('now')),
+          entregada_en = datetime('now')
+      WHERE id_notificacion = ?
+    `).run(idNotificacion);
+  }
+
+  return db.prepare('SELECT * FROM notificacion WHERE id_notificacion = ?').get(idNotificacion) as any;
 }
 
 /**
@@ -513,7 +664,10 @@ export function listarNotificacionesPanel() {
   `).all() as any[];
 
   const total = notificaciones.length;
-  const entregadasPush = notificaciones.filter((n) => n.canal === 'PUSH' && n.estado === 'ENTREGADA').length;
+  // ENVIADA = aceptada por FCM; cuenta como entregada porque iOS no manda acuse si la app está cerrada.
+  const entregadasPush = notificaciones.filter(
+    (n) => n.canal === 'PUSH' && (n.estado === 'ENTREGADA' || n.estado === 'ENVIADA')
+  ).length;
   const entregadasSms = notificaciones.filter((n) => n.canal === 'SMS' && n.estado === 'ENTREGADA').length;
   const fallidas = notificaciones.filter((n) => n.estado === 'FALLIDA').length;
   const pendientes = notificaciones.filter((n) => n.estado === 'PENDIENTE').length;

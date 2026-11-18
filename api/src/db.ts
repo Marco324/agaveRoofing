@@ -365,10 +365,10 @@ export function initDatabase() {
       tipo,
       canal,
       COUNT(*) AS enviadas,
-      SUM(CASE WHEN estado = 'ENTREGADA' THEN 1 ELSE 0 END) AS entregadas,
+      SUM(CASE WHEN estado IN ('ENVIADA', 'ENTREGADA') THEN 1 ELSE 0 END) AS entregadas,
       SUM(CASE WHEN estado = 'FALLIDA' THEN 1 ELSE 0 END) AS fallidas,
       ROUND(
-        100.0 * SUM(CASE WHEN estado = 'ENTREGADA' THEN 1 ELSE 0 END)
+        100.0 * SUM(CASE WHEN estado IN ('ENVIADA', 'ENTREGADA') THEN 1 ELSE 0 END)
         / NULLIF(COUNT(*), 0),
         1
       ) AS pct_entrega

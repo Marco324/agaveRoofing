@@ -23,3 +23,10 @@ data/
 
 # Respaldos locales
 *.bak
+
+# Firebase: la cuenta de servicio es secreta y nunca se sube
+firebase-service-account*.json
+*-firebase-adminsdk-*.json
+# Configuración de Firebase de cada desarrollador (se descarga de la consola)
+app-cliente/android/app/google-services.json
+app-cliente/ios/Runner/GoogleService-Info.plist

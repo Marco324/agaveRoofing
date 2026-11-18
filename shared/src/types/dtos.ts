@@ -191,7 +191,9 @@ export interface CitaClienteDTO {
  * E08 — Registro de dispositivo móvil para Expo Push Notifications
  */
 export interface RegistrarDispositivoDTO {
-  idUsuario: string;
+  /** Obligatorio salvo que se mande idCliente (la API resuelve su usuario). */
+  idUsuario?: string;
+  idCliente?: number;
   tokenPush: string;
   plataforma: PlataformaDispositivo;
   versionApp?: string;

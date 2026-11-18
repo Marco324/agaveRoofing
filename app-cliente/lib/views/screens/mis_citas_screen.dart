@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../models/cita_cliente_model.dart';
 import '../../models/horario_disponible_model.dart';
 import '../../models/seguimiento_vivo_model.dart';
 import '../../presenters/contracts/mis_citas_contract.dart';
 import '../../presenters/mis_citas_presenter.dart';
+import '../../services/push_service.dart';
 import '../../utils/formato_fecha.dart';
 import '../widgets/proxima_cita_widget.dart';
 import '../widgets/reprogramar_dialog.dart';
@@ -29,6 +32,7 @@ class _MisCitasScreenState extends State<MisCitasScreen>
   bool _isLoading = false;
   int _idClienteActual = 1;
   late String _nombreCliente;
+  StreamSubscription<AvisoPush>? _subAvisosPush;
 
   /// Clientes de la base demo, para el selector del encabezado.
   static const Map<int, String> _clientesDemo = {
@@ -50,10 +54,36 @@ class _MisCitasScreenState extends State<MisCitasScreen>
     WidgetsBinding.instance.addObserver(this);
     _presenter = MisCitasPresenter(this);
     _presenter.cargarMisCitas(_idClienteActual);
+    _subAvisosPush = PushService.instancia.avisos.listen(_alRecibirPush);
+    PushService.instancia.registrarCliente(_idClienteActual);
+  }
+
+  /// E08 — Push recibido con la app abierta, o el cliente tocó la notificación.
+  void _alRecibirPush(AvisoPush aviso) {
+    if (!mounted) return;
+    _presenter.cargarMisCitas(_idClienteActual);
+    if (aviso.abiertaDesdeNotificacion) return; // Ya la vio en la barra de notificaciones.
+    final texto = [aviso.titulo, aviso.cuerpo].whereType<String>().join(' — ');
+    if (texto.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.notifications_active, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(child: Text(texto)),
+          ],
+        ),
+        backgroundColor: agaveEmerald,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 6),
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _subAvisosPush?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _presenter.dispose();
     super.dispose();
@@ -308,6 +338,14 @@ class _MisCitasScreenState extends State<MisCitasScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset(
+            'assets/branding/agave_logo_blanco.png',
+            semanticLabel: 'Agave Roofing',
+          ),
+        ),
+        titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -338,6 +376,7 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                 _nombreCliente = _clientesDemo[idCli] ?? _nombreCliente;
               });
               _presenter.cargarMisCitas(idCli);
+              PushService.instancia.registrarCliente(idCli);
             },
             itemBuilder: (_) => const [
               PopupMenuItem(value: 4, child: Text('Elena Rodriguez (inspector en camino)')),

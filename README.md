@@ -19,14 +19,14 @@
 
 ## 🏗️ Estructura del Monorepo
 
-- `api/` — API REST en Node.js 22 + TypeScript nativo (módulo `http`, sin Express) con SQLite en modo WAL (`node:sqlite`). Máquina de estados (`RN-01` a `RN-17`), notificaciones push/SMS **simuladas** con reintentos y respaldo (`E08`), reprogramaciones (`E09`), trayecto y ETA estimado (`E10`), ejecución, sincronización idempotente e indicadores (`E11`), catálogos y bitácora (`E05`/`E06`).
+- `api/` — API REST en Node.js 22 + TypeScript nativo (módulo `http`, sin Express) con SQLite en modo WAL (`node:sqlite`). Máquina de estados (`RN-01` a `RN-17`), notificaciones push reales con **Firebase Cloud Messaging** (simuladas si no hay credenciales) y SMS de respaldo simulado, con reintentos (`E08`), reprogramaciones (`E09`), trayecto y ETA estimado (`E10`), ejecución, sincronización idempotente e indicadores (`E11`), catálogos y bitácora (`E05`/`E06`).
 - `panel/` — Panel web de administración en una sola página (`panel/index.html`, HTML + JavaScript + Tailwind por CDN): agenda (`E07`), bitácora de notificaciones (`E08`), bandeja de reprogramaciones (`E09`), monitor en vivo (`E10`), tablero de indicadores con CSV (`E11`) y catálogos (`E05`/`E06`). Los archivos de `panel/src/pages/*.tsx` son prototipos en React que no forman parte de la versión entregada.
 - `app-inspector/` — App del inspector en **Flutter + Dart** (patrón MVP): ruta del día, "Voy en camino" con avance GPS simulado, llegada, resultado, cliente ausente y navegación a Maps/Waze. Su **simulador web** (`simulador_web/index.html`) agrega mensajería y cola sin conexión con sincronización idempotente (`RN-12`).
-- `app-cliente/` — App del cliente en **Flutter + Dart** (patrón MVP): próxima cita, confirmación, reprogramación (`RN-05`/`RN-06`), seguimiento con distancia y ETA, aviso *"Ya estoy en casa"*, reporte y encuesta piloto. Su **simulador web** agrega notificaciones simuladas, mapa esquemático y mensajería.
+- `app-cliente/` — App del cliente en **Flutter + Dart** (patrón MVP): próxima cita, confirmación, reprogramación (`RN-05`/`RN-06`), seguimiento con distancia y ETA, aviso *"Ya estoy en casa"*, reporte, encuesta piloto y notificaciones push con Firebase (`firebase_messaging`, por ahora solo Android). Su **simulador web** agrega notificaciones simuladas, mapa esquemático y mensajería.
 - `shared/` — Tipos de dominio, estados y DTOs compartidos.
 - `docs/` — Documentación normativa (`01` a `07`), manuales, casos y resultados de pruebas, y paquetes de entrega (`E03` a `E12`). Las diferencias entre el SRS y lo construido están en `docs/02_SRS_Requerimientos.md` §5.
 
-> **Alcance de esta versión:** Release 1.0 de demostración local. Autenticación real, push/SMS reales, Google Directions, GPS y cámara en Flutter, y migración a Supabase quedan como trabajo futuro (ver `docs/entregas/E12/ADR-001-Arquitectura-Final-y-Despliegue.md`).
+> **Alcance de esta versión:** Release 1.0 de demostración local. Autenticación real, push en iOS (requiere cuenta de Apple Developer), SMS real (Twilio), Google Directions, GPS y cámara en Flutter, y migración a Supabase quedan como trabajo futuro (ver `docs/entregas/E12/ADR-001-Arquitectura-Final-y-Despliegue.md`).
 
 ---
 
@@ -44,6 +44,8 @@ Con la API corriendo, abre estos archivos directamente en el navegador (la API n
 - **Simulador web app del inspector:** `app-inspector/simulador_web/index.html`
 - **Simulador web app del cliente:** `app-cliente/simulador_web/index.html`
 - **Healthcheck de la API:** `http://localhost:4000/api/salud`
+
+**Notificaciones push reales:** `FIREBASE_SERVICE_ACCOUNT=/ruta/cuenta-servicio.json npm run api`. Sin esa variable el envío PUSH se simula. Pasos completos en `docs/manual/Guia_Notificaciones_Firebase.md`.
 
 Para usar otro puerto: `PORT=5000 npm run api` (y actualizar `API_URL` en el panel y los simuladores).
 

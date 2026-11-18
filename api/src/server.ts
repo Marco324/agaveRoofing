@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { URL } from 'node:url';
+import { fcmHabilitado, proyectoFirebase } from './services/fcmService.ts';
 import { db, initDatabase } from './db.ts';
 import {
   crearInspeccion,
@@ -17,6 +18,7 @@ import { obtenerRutaDelDia } from './services/rutaInspectorService.ts';
 import { obtenerMisCitas } from './services/misCitasClienteService.ts';
 import {
   registrarDispositivo,
+  registrarAcuseNotificacion,
   encolarNotificacion,
   despacharNotificacionesPendientes,
   ejecutarTemporizadorAvisoDiaProgramado,
@@ -428,7 +430,7 @@ const server = http.createServer(async (req, res) => {
     // E08 — Motor de Notificaciones Push y Respaldo SMS
     // =========================================================================
 
-    // 12. Registrar dispositivo móvil (Expo Push Token)
+    // 12. Registrar dispositivo móvil (token de Firebase Cloud Messaging)
     if (pathname === '/api/dispositivos' && method === 'POST') {
       const body = await parseBody(req);
       const dispositivo = registrarDispositivo(body);
@@ -469,6 +471,13 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
       const reenviada = reenviarNotificacionManual(idNotif, body.idUsuario);
       return json(res, 200, { ok: true, mensaje: 'Notificación reenviada manualmente', notificacion: reenviada });
+    }
+
+    // 16b. Acuse de la app: la notificación push llegó al teléfono o el cliente la abrió
+    const matchAcuse = pathname.match(/^\/api\/notificaciones\/(\d+)\/acuse$/);
+    if (matchAcuse && method === 'POST') {
+      const notificacion = registrarAcuseNotificacion(parseInt(matchAcuse[1], 10));
+      return json(res, 200, { ok: true, notificacion });
     }
 
     // =========================================================================
@@ -878,6 +887,11 @@ export function startServer(port = PORT) {
         f.simulada
           ? `📅 Fecha de referencia FIJA (FECHA_HOY): ${f.hoy} — la real es ${f.fechaReal}`
           : `📅 Fecha de referencia: ${f.hoy} (${f.zonaHoraria})`
+      );
+      console.log(
+        fcmHabilitado()
+          ? `🔔 Notificaciones push REALES con Firebase (proyecto ${proyectoFirebase()})`
+          : '🔔 Notificaciones push SIMULADAS (define FIREBASE_SERVICE_ACCOUNT para usar Firebase)'
       );
       programarCierreDeCitasPasadas();
       resolve(server);

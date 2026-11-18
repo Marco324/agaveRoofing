@@ -1,9 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- E08: Android 13+ pide permiso para mostrar notificaciones push -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="agave_app_cliente"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- E08: canal por defecto para push de FCM (se crea en MainActivity) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="agave_citas" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
