@@ -76,6 +76,21 @@ export function confirmarInspeccion(idInspeccion: number, dto: ConfirmarInspecci
       ? 'Confirmación registrada por llamada telefónica desde el panel administrativo'
       : 'Cliente confirmó asistencia ("Sí estaré")');
 
+  // La app muestra la cita al cliente desde que se programa. Si confirma antes
+  // de que salga el aviso del día, se registra primero que ya la vio
+  // (PROGRAMADA → NOTIFICADA) para respetar la máquina de estados (RN-01).
+  if (cita.estado === EstadoInspeccion.PROGRAMADA) {
+    transicionar(
+      idInspeccion,
+      EstadoInspeccion.NOTIFICADA,
+      dto.idUsuario,
+      origen,
+      dto.confirmadaPorLlamada
+        ? 'La oficina avisó al cliente por teléfono antes del aviso del día'
+        : 'El cliente vio la cita en la aplicación antes del aviso del día'
+    );
+  }
+
   transicionar(
     idInspeccion,
     EstadoInspeccion.CONFIRMADA,

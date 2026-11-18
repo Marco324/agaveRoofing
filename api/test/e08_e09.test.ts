@@ -25,6 +25,7 @@ import {
   ErrorLimiteReprogramacionesRN06
 } from '../src/services/confirmacionReprogramacionService.ts';
 import { transicionar } from '../src/services/maquinaEstadosService.ts';
+import { crearInspeccion } from '../src/services/agendaService.ts';
 import { EstadoInspeccion, TipoNotificacion } from '../../shared/src/types/estados.ts';
 
 console.log('🧪 Iniciando pruebas automáticas de E08 (Notificaciones Push/SMS) y E09 (Confirmación y Reprogramación)...\n');
@@ -147,6 +148,26 @@ const citaConfirmada = confirmarInspeccion(8, {
 assert.strictEqual(citaConfirmada.estado, EstadoInspeccion.CONFIRMADA);
 assert.ok(citaConfirmada.confirmado_en, 'Debe registrar el timestamp confirmado_en');
 console.log(`  ✔ Cita ${citaConfirmada.folio} confirmada en ${citaConfirmada.confirmado_en}.`);
+
+// Una cita recién programada (aún sin aviso del día) también se puede confirmar
+// desde la app: pasa por NOTIFICADA para respetar RN-01.
+const recienProgramada = crearInspeccion({
+  idCliente: 1,
+  idDomicilio: 1,
+  idInspector: 1,
+  fechaProgramada: '2026-10-20',
+  ventanaInicio: '14:30',
+  ventanaFin: '16:30',
+  motivoVisita: 'Cita nueva sin aviso del día'
+} as any) as any;
+assert.strictEqual(recienProgramada.estado, EstadoInspeccion.PROGRAMADA);
+const confirmadaSinAviso = confirmarInspeccion(recienProgramada.id_inspeccion, { origen: 'APP_CLI' });
+assert.strictEqual(confirmadaSinAviso.estado, EstadoInspeccion.CONFIRMADA);
+const pasos = (db
+  .prepare('SELECT estado_anterior, estado_nuevo FROM inspeccion_historial WHERE id_inspeccion = ? ORDER BY id_historial')
+  .all(recienProgramada.id_inspeccion) as any[]).map((h) => `${h.estado_anterior ?? '∅'}→${h.estado_nuevo}`);
+assert.ok(pasos.includes('PROGRAMADA→NOTIFICADA') && pasos.includes('NOTIFICADA→CONFIRMADA'), pasos.join(', '));
+console.log(`  ✔ Cita ${confirmadaSinAviso.folio} recién programada confirmada desde la app (PROGRAMADA → NOTIFICADA → CONFIRMADA).`);
 
 console.log('\n▶ [Prueba E09-2] Consulta de horarios disponibles reales en la zona del domicilio');
 const horariosDisponibles = obtenerHorariosDisponibles(6, 3, '2026-10-28');
