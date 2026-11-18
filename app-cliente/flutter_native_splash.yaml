@@ -1,0 +1,20 @@
+# Splash screen nativa con el logo de Agave Roofing.
+# Regenerar con: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/branding/splash_logo.png
+  color_dark: "#0F172A"
+  image_dark: assets/branding/agave_logo_blanco.png
+
+  android_12:
+    color: "#FFFFFF"
+    image: assets/branding/splash_android12.png
+    icon_background_color: "#FFFFFF"
+    color_dark: "#0F172A"
+    icon_background_color_dark: "#0F172A"
+    image_dark: assets/branding/splash_android12_blanco.png
+
+  android: true
+  ios: true
+  web: false
+  fullscreen: false

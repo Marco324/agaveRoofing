@@ -855,6 +855,14 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset(
+            'assets/branding/agave_logo_blanco.png',
+            semanticLabel: 'Agave Roofing',
+          ),
+        ),
+        titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
