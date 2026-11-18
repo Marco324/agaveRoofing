@@ -7,18 +7,21 @@ import '../../models/seguimiento_vivo_model.dart';
 import '../../presenters/contracts/mis_citas_contract.dart';
 import '../../presenters/mis_citas_presenter.dart';
 import '../../services/push_service.dart';
+import '../../services/sesion_service.dart';
 import '../../utils/formato_fecha.dart';
 import '../widgets/proxima_cita_widget.dart';
 import '../widgets/reprogramar_dialog.dart';
+import 'login_screen.dart';
 
 class MisCitasScreen extends StatefulWidget {
   final int idCliente;
   final String nombreCliente;
 
+  /// El cliente de la sesión iniciada (RF-03): la app muestra solo sus citas.
   const MisCitasScreen({
     super.key,
-    this.idCliente = 1,
-    this.nombreCliente = 'Robert B. Martinez',
+    required this.idCliente,
+    required this.nombreCliente,
   });
 
   @override
@@ -30,16 +33,9 @@ class _MisCitasScreenState extends State<MisCitasScreen>
     implements MisCitasViewContract {
   late final MisCitasPresenter _presenter;
   bool _isLoading = false;
-  int _idClienteActual = 1;
-  late String _nombreCliente;
+  late final int _idClienteActual;
+  late final String _nombreCliente;
   StreamSubscription<AvisoPush>? _subAvisosPush;
-
-  /// Clientes de la base demo, para el selector del encabezado.
-  static const Map<int, String> _clientesDemo = {
-    4: 'Elena Rodriguez',
-    1: 'Robert B. Martinez',
-    2: 'Sarah Jenkins',
-  };
   CitaCliente? _proximaCita;
   List<CitaCliente> _historial = [];
   SeguimientoVivo? _seguimiento;
@@ -275,9 +271,14 @@ class _MisCitasScreenState extends State<MisCitasScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Cliente #$_idClienteActual • Sesión activa',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  _nombreCliente,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
+                if (SesionService.instancia.actual?.telefono != null)
+                  Text(
+                    'Teléfono: ${SesionService.instancia.actual!.telefono}',
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: canalPreferido,
@@ -315,6 +316,15 @@ class _MisCitasScreenState extends State<MisCitasScreen>
             ),
           ),
           actions: [
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _confirmarCerrarSesion();
+              },
+              icon: const Icon(Icons.logout),
+              label: const Text('Cerrar sesión'),
+            ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('Cerrar'),
@@ -330,6 +340,37 @@ class _MisCitasScreenState extends State<MisCitasScreen>
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _confirmarCerrarSesion() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Cerrar sesión?'),
+        content: const Text(
+          'Para volver a entrar necesitarás tu teléfono y tu contraseña.',
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) _presenter.cerrarSesion();
+  }
+
+  @override
+  void irAInicioDeSesion() {
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
     );
   }
 
@@ -366,23 +407,6 @@ class _MisCitasScreenState extends State<MisCitasScreen>
             icon: const Icon(Icons.verified_user_outlined),
             tooltip: 'Mi perfil y opinión',
             onPressed: _mostrarPerfilYEncuestaDialog,
-          ),
-          PopupMenuButton<int>(
-            icon: const Icon(Icons.switch_account),
-            tooltip: 'Cambiar cliente (demo)',
-            onSelected: (idCli) {
-              setState(() {
-                _idClienteActual = idCli;
-                _nombreCliente = _clientesDemo[idCli] ?? _nombreCliente;
-              });
-              _presenter.cargarMisCitas(idCli);
-              PushService.instancia.registrarCliente(idCli);
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 4, child: Text('Elena Rodriguez (inspector en camino)')),
-              PopupMenuItem(value: 1, child: Text('Robert Martinez (con reporte)')),
-              PopupMenuItem(value: 2, child: Text('Sarah Jenkins (inspector en sitio)')),
-            ],
           ),
           IconButton(
             icon: const Icon(Icons.refresh),

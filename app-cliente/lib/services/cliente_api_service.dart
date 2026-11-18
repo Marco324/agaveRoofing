@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/cita_cliente_model.dart';
 import '../models/horario_disponible_model.dart';
 import '../models/seguimiento_vivo_model.dart';
+import 'api_http.dart';
 
 class ClienteApiService {
   final String baseUrl;
@@ -12,7 +12,7 @@ class ClienteApiService {
 
   Future<Map<String, dynamic>> getMisCitas(int idCliente) async {
     final uri = Uri.parse('$baseUrl/inspecciones/mias?idCliente=$idCliente');
-    final response = await http.get(uri);
+    final response = await ApiHttp.instancia.get(uri);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -30,7 +30,7 @@ class ClienteApiService {
 
   Future<bool> confirmarAsistencia(int idInspeccion) async {
     final uri = Uri.parse('$baseUrl/inspecciones/$idInspeccion/confirmar');
-    final response = await http.post(
+    final response = await ApiHttp.instancia.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'origen': 'APP_CLI'}),
@@ -46,7 +46,7 @@ class ClienteApiService {
 
   Future<List<HorarioDisponible>> getHorariosDisponibles(int idInspeccion) async {
     final uri = Uri.parse('$baseUrl/inspecciones/$idInspeccion/horarios-disponibles');
-    final response = await http.get(uri);
+    final response = await ApiHttp.instancia.get(uri);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -68,7 +68,7 @@ class ClienteApiService {
     final fin = partes.length > 1 ? partes[1].trim() : '11:00';
 
     final uri = Uri.parse('$baseUrl/inspecciones/$idInspeccion/reprogramacion');
-    final response = await http.post(
+    final response = await ApiHttp.instancia.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
@@ -90,7 +90,7 @@ class ClienteApiService {
 
   Future<bool> confirmarEstoyEnCasa(int idInspeccion) async {
     final uri = Uri.parse('$baseUrl/inspecciones/$idInspeccion/presencia');
-    final response = await http.post(
+    final response = await ApiHttp.instancia.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: json.encode({}),
@@ -101,7 +101,7 @@ class ClienteApiService {
   /// Seguimiento en vivo del inspector (mapa del cliente).
   Future<SeguimientoVivo> getSeguimiento(int idInspeccion) async {
     final uri = Uri.parse('$baseUrl/inspecciones/$idInspeccion/seguimiento');
-    final response = await http.get(uri);
+    final response = await ApiHttp.instancia.get(uri);
 
     if (response.statusCode == 200) {
       return SeguimientoVivo.fromJson(json.decode(response.body) as Map<String, dynamic>);

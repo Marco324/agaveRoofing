@@ -1,4 +1,5 @@
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { URL } from 'node:url';
 import { fcmHabilitado, proyectoFirebase } from './services/fcmService.ts';
 import { db, initDatabase } from './db.ts';
@@ -72,6 +73,22 @@ import {
 import { EstadoInspeccion, OrigenTransicion } from '../../shared/src/types/estados.ts';
 import { hoy, infoFecha } from './fechaReferencia.ts';
 import { cerrarCitasPasadas, programarCierreDeCitasPasadas } from './services/citasPasadasService.ts';
+import {
+  autorizar,
+  cerrarSesion,
+  completarContrasenasFaltantes,
+  esRutaPublica,
+  hashContrasena,
+  iniciarSesion,
+  normalizarTelefono,
+  obtenerSesion,
+  sesionPublica,
+  tokenDePeticion,
+  ErrorCredenciales,
+  ErrorRolNoPermitido,
+  type Rol,
+  type SesionActiva
+} from './services/authService.ts';
 
 initDatabase();
 
@@ -148,6 +165,24 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    // RF-07 — Toda ruta, salvo las públicas, exige una sesión válida y el rol adecuado.
+    let sesion: SesionActiva | null = null;
+    if (!esRutaPublica(method || 'GET', pathname)) {
+      sesion = obtenerSesion(tokenDePeticion(req.headers, reqUrl));
+      if (!sesion) {
+        return json(res, 401, {
+          ok: false,
+          codigo: 'SESION_REQUERIDA',
+          error: 'Tu sesión terminó o no es válida. Vuelve a iniciar sesión.'
+        });
+      }
+      const permiso = autorizar(sesion, method || 'GET', pathname);
+      if (!permiso.ok) {
+        return json(res, permiso.status, { ok: false, codigo: permiso.codigo, error: permiso.error });
+      }
+    }
+    const esAdmin = sesion?.rol === 'ADMINISTRADOR';
+
     // 1. Salud
     if (pathname === '/api/salud' && method === 'GET') {
       return json(res, 200, {
@@ -171,66 +206,27 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, ...cerrarCitasPasadas() });
     }
 
-    // 1b. Autenticación por Rol y OTP (E05) + Bitácora
+    // 1b. Inicio de sesión (RF-01): correo + contraseña (admin, inspector) o teléfono + contraseña (cliente)
     if (pathname === '/api/auth/login' && method === 'POST') {
       const body = await parseBody(req);
-      const rolSolicitado = body.rol || 'ADMINISTRADOR';
-      let usuarioRow: any = null;
-
-      if (body.correo) {
-        usuarioRow = db.prepare(`
-          SELECT u.*, r.nombre AS rol_nombre
-          FROM usuario u
-          JOIN rol r ON u.id_rol = r.id_rol
-          WHERE u.correo = ? AND u.activo = 1
-        `).get(body.correo);
-      } else if (body.telefono) {
-        usuarioRow = db.prepare(`
-          SELECT u.*, r.nombre AS rol_nombre
-          FROM usuario u
-          JOIN rol r ON u.id_rol = r.id_rol
-          WHERE u.telefono = ? AND u.activo = 1
-        `).get(body.telefono);
-      }
-
-      if (!usuarioRow) {
-        // Fallback por rol para demostración ágil
-        usuarioRow = db.prepare(`
-          SELECT u.*, r.nombre AS rol_nombre
-          FROM usuario u
-          JOIN rol r ON u.id_rol = r.id_rol
-          WHERE r.nombre = ? AND u.activo = 1
-          LIMIT 1
-        `).get(rolSolicitado);
-      }
-
-      if (body.exigirRol && usuarioRow && usuarioRow.rol_nombre !== body.exigirRol) {
-        return json(res, 403, {
-          ok: false,
-          codigo: 'ACCESO_DENEGADO_ROL_E05',
-          error: `Acceso denegado: esta aplicación requiere rol ${body.exigirRol} (tu rol actual es ${usuarioRow.rol_nombre}).`
-        });
-      }
-
-      db.prepare(`
-        INSERT INTO bitacora (id_usuario, rol, accion, entidad, id_registro, detalle)
-        VALUES (?, ?, 'LOGIN_EXITOSO', 'usuario', ?, ?)
-      `).run(
-        usuarioRow?.id_usuario || 'u-admin-001',
-        usuarioRow?.rol_nombre || rolSolicitado,
-        usuarioRow?.id_usuario || 'u-admin-001',
-        `Inicio de sesión verificado (${body.metodo || 'JWT / OTP'})`
-      );
-
-      return json(res, 200, {
-        ok: true,
-        token: `jwt-agave-${usuarioRow?.id_usuario || 'u-admin-001'}-${Date.now()}`,
-        usuario: usuarioRow || {
-          id_usuario: 'u-admin-001',
-          nombre_completo: 'Marco Méndez (Admin)',
-          rol_nombre: rolSolicitado
-        }
+      const rolRequerido = (body.exigirRol || body.rol) as Rol | undefined;
+      const nueva = iniciarSesion({
+        correo: body.correo,
+        telefono: body.telefono,
+        contrasena: body.contrasena,
+        rolRequerido,
+        app: body.app
       });
+      return json(res, 200, { ok: true, token: nueva.token, usuario: sesionPublica(nueva) });
+    }
+
+    // 1b'. Sesión actual (las apps la revisan al abrir) y cierre de sesión (RF-05)
+    if (pathname === '/api/auth/sesion' && method === 'GET') {
+      return json(res, 200, { ok: true, usuario: sesionPublica(sesion!) });
+    }
+    if (pathname === '/api/auth/logout' && method === 'POST') {
+      cerrarSesion(sesion!.token);
+      return json(res, 200, { ok: true });
     }
 
     // 1c. Bitácora de auditoría y monitoreo (E05 / E12)
@@ -266,12 +262,42 @@ const server = http.createServer(async (req, res) => {
     // 2b. Alta y baja lógica de Clientes (E06 · RN-15)
     if (pathname === '/api/clientes' && method === 'POST') {
       const b = await parseBody(req);
-      const info = db.prepare(`
-        INSERT INTO cliente (nombre, telefono, correo, canal_preferido, notas, activo)
-        VALUES (?, ?, ?, ?, ?, 1)
-      `).run(b.nombre, b.telefono, b.correo || null, b.canalPreferido || 'PUSH', b.notas || null);
-      const nuevo = db.prepare('SELECT * FROM cliente WHERE id_cliente = ?').get(info.lastInsertRowid);
-      return json(res, 201, { ok: true, cliente: nuevo });
+      const nombre = String(b.nombre || '').trim();
+      const telefono = String(b.telefono || '').trim();
+      const contrasena = String(b.contrasena || '');
+      if (!nombre || normalizarTelefono(telefono).length < 10) {
+        return json(res, 400, { ok: false, codigo: 'VALIDACION_CLIENTE', error: 'Nombre y teléfono de 10 dígitos son obligatorios.' });
+      }
+      if (contrasena && contrasena.length < 6) {
+        return json(res, 400, { ok: false, codigo: 'VALIDACION_CLIENTE', error: 'La contraseña debe tener al menos 6 caracteres.' });
+      }
+      const usados = db.prepare('SELECT telefono FROM usuario WHERE telefono IS NOT NULL').all() as any[];
+      if (contrasena && usados.some((u) => normalizarTelefono(u.telefono) === normalizarTelefono(telefono))) {
+        return json(res, 409, { ok: false, codigo: 'TELEFONO_DUPLICADO', error: 'Ya existe una cuenta con ese teléfono.' });
+      }
+
+      // Con contraseña, el cliente recibe su cuenta para entrar a la app (RF-03).
+      let idUsuario: string | null = null;
+      db.exec('BEGIN');
+      try {
+        if (contrasena) {
+          idUsuario = `u-cli-${crypto.randomUUID().slice(0, 8)}`;
+          db.prepare(`
+            INSERT INTO usuario (id_usuario, auth_uid, id_rol, nombre_completo, correo, telefono, activo, contrasena_hash)
+            VALUES (?, ?, (SELECT id_rol FROM rol WHERE nombre = 'CLIENTE'), ?, ?, ?, 1, ?)
+          `).run(idUsuario, `auth-${idUsuario}`, nombre, b.correo || null, telefono, hashContrasena(contrasena));
+        }
+        const info = db.prepare(`
+          INSERT INTO cliente (id_usuario, nombre, telefono, correo, canal_preferido, notas, activo)
+          VALUES (?, ?, ?, ?, ?, ?, 1)
+        `).run(idUsuario, nombre, telefono, b.correo || null, b.canalPreferido || 'PUSH', b.notas || null);
+        db.exec('COMMIT');
+        const nuevo = db.prepare('SELECT * FROM cliente WHERE id_cliente = ?').get(info.lastInsertRowid);
+        return json(res, 201, { ok: true, cliente: nuevo, conCuenta: Boolean(idUsuario) });
+      } catch (e) {
+        db.exec('ROLLBACK');
+        throw e;
+      }
     }
 
     const matchClienteBaja = pathname.match(/^\/api\/clientes\/(\d+)\/baja$/);
@@ -329,7 +355,7 @@ const server = http.createServer(async (req, res) => {
         INSERT INTO encuesta_piloto (id_cliente, id_inspeccion, entendio_notificacion, facil_confirmar, util_mapa_vivo, comentario)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(
-        b.idCliente || 1,
+        esAdmin ? (b.idCliente || 1) : sesion!.idCliente,
         b.idInspeccion || null,
         b.entendioNotificacion !== false ? 1 : 0,
         b.facilConfirmar !== false ? 1 : 0,
@@ -342,7 +368,10 @@ const server = http.createServer(async (req, res) => {
 
     // 3. Ruta del día del inspector (E07 Anuar IN)
     if (pathname === '/api/inspecciones/mi-ruta' && method === 'GET') {
-      const idInspector = parseInt(reqUrl.searchParams.get('idInspector') || '1', 10);
+      // El inspector solo ve su propia ruta, diga lo que diga la URL (RF-07).
+      const idInspector = esAdmin
+        ? parseInt(reqUrl.searchParams.get('idInspector') || '1', 10)
+        : sesion!.idInspector!;
       const fecha = reqUrl.searchParams.get('fecha') || hoy();
       const ruta = obtenerRutaDelDia(idInspector, fecha);
       return json(res, 200, { idInspector, fecha, totalParadas: ruta.length, paradas: ruta });
@@ -350,7 +379,9 @@ const server = http.createServer(async (req, res) => {
 
     // 4. Mis citas del cliente (E07 Jesús CL)
     if (pathname === '/api/inspecciones/mias' && method === 'GET') {
-      const idCliente = parseInt(reqUrl.searchParams.get('idCliente') || '1', 10);
+      const idCliente = esAdmin
+        ? parseInt(reqUrl.searchParams.get('idCliente') || '1', 10)
+        : sesion!.idCliente!;
       const misCitas = obtenerMisCitas(idCliente);
       return json(res, 200, misCitas);
     }
@@ -360,7 +391,9 @@ const server = http.createServer(async (req, res) => {
       const fecha = reqUrl.searchParams.get('fecha') || undefined;
       const fechaInicio = reqUrl.searchParams.get('fechaInicio') || undefined;
       const fechaFin = reqUrl.searchParams.get('fechaFin') || undefined;
-      const idInspector = reqUrl.searchParams.get('idInspector') ? parseInt(reqUrl.searchParams.get('idInspector')!, 10) : undefined;
+      const idInspector = !esAdmin
+        ? sesion!.idInspector!
+        : reqUrl.searchParams.get('idInspector') ? parseInt(reqUrl.searchParams.get('idInspector')!, 10) : undefined;
       const idZona = reqUrl.searchParams.get('idZona') ? parseInt(reqUrl.searchParams.get('idZona')!, 10) : undefined;
       const estado = reqUrl.searchParams.get('estado') as EstadoInspeccion | undefined;
 
@@ -433,6 +466,11 @@ const server = http.createServer(async (req, res) => {
     // 12. Registrar dispositivo móvil (token de Firebase Cloud Messaging)
     if (pathname === '/api/dispositivos' && method === 'POST') {
       const body = await parseBody(req);
+      if (!esAdmin) {
+        // El teléfono queda ligado a quien inició sesión, no al id que mande la app.
+        body.idUsuario = sesion!.idUsuario;
+        delete body.idCliente;
+      }
       const dispositivo = registrarDispositivo(body);
       return json(res, 201, { ok: true, dispositivo });
     }
@@ -691,6 +729,15 @@ const server = http.createServer(async (req, res) => {
     // 35. Sincronización en lote del modo sin señal con idempotencia por id_local (RN-12)
     if (pathname === '/api/sincronizar' && method === 'POST') {
       const body = await parseBody(req);
+      if (!esAdmin && Array.isArray(body.operaciones)) {
+        const ajena = body.operaciones.find((op: any) => {
+          const fila = db.prepare('SELECT id_inspector FROM inspeccion WHERE id_inspeccion = ?').get(op?.idInspeccion) as any;
+          return !fila || fila.id_inspector !== sesion!.idInspector;
+        });
+        if (ajena) {
+          return json(res, 404, { ok: false, codigo: 'NO_ENCONTRADA', error: `La cita #${ajena.idInspeccion} no está en tu ruta.` });
+        }
+      }
       const resultado = sincronizarLoteOffline(body);
       return json(res, 200, resultado);
     }
@@ -768,6 +815,14 @@ const server = http.createServer(async (req, res) => {
         codigo: 'CUERPO_DEMASIADO_GRANDE',
         error: err.message
       });
+    }
+
+    if (err instanceof ErrorCredenciales) {
+      return json(res, 401, { ok: false, codigo: 'CREDENCIALES_INVALIDAS', error: err.message });
+    }
+
+    if (err instanceof ErrorRolNoPermitido) {
+      return json(res, 403, { ok: false, codigo: 'ROL_NO_PERMITIDO', error: err.message });
     }
 
     if (err instanceof ErrorTraslapeInspector) {
@@ -893,6 +948,10 @@ export function startServer(port = PORT) {
           ? `🔔 Notificaciones push REALES con Firebase (proyecto ${proyectoFirebase()})`
           : '🔔 Notificaciones push SIMULADAS (define FIREBASE_SERVICE_ACCOUNT para usar Firebase)'
       );
+      const completadas = completarContrasenasFaltantes();
+      if (completadas > 0) {
+        console.log(`🔑 ${completadas} cuenta(s) sin contraseña recibieron la inicial (AGAVE_CONTRASENA_INICIAL).`);
+      }
       programarCierreDeCitasPasadas();
       resolve(server);
     });

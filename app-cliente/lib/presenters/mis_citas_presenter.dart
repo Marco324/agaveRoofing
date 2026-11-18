@@ -3,6 +3,8 @@ import 'dart:async';
 import 'contracts/mis_citas_contract.dart';
 import '../models/cita_cliente_model.dart';
 import '../services/cliente_api_service.dart';
+import '../services/push_service.dart';
+import '../services/sesion_service.dart';
 
 class MisCitasPresenter {
   /// Cada cuánto se consulta la ubicación del inspector mientras va en camino.
@@ -19,6 +21,14 @@ class MisCitasPresenter {
 
   MisCitasPresenter(this.view, {ClienteApiService? service})
       : apiService = service ?? ClienteApiService();
+
+  /// RF-05 — Cierra la sesión en la API y en el teléfono.
+  Future<void> cerrarSesion() async {
+    detenerSeguimiento();
+    PushService.instancia.olvidarCliente();
+    await SesionService.instancia.cerrar();
+    view.irAInicioDeSesion();
+  }
 
   Future<void> cargarMisCitas(int idCliente) async {
     view.showLoading();

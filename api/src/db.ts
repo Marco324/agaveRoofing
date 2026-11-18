@@ -388,6 +388,23 @@ export function initDatabase() {
   if (!colNames.includes('motivo_rechazo')) {
     db.exec(`ALTER TABLE reprogramacion ADD COLUMN motivo_rechazo TEXT;`);
   }
+
+  // RF-01 / RF-05 — Contraseña (solo su hash) y sesiones abiertas por dispositivo
+  const colsUsuario = (db.prepare(`PRAGMA table_info(usuario)`).all() as { name: string }[]).map((c) => c.name);
+  if (!colsUsuario.includes('contrasena_hash')) {
+    db.exec(`ALTER TABLE usuario ADD COLUMN contrasena_hash TEXT;`);
+  }
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sesion (
+      token TEXT PRIMARY KEY,
+      id_usuario TEXT NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+      app TEXT,
+      creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+      expira_en TEXT NOT NULL,
+      cerrada_en TEXT
+    );
+    CREATE INDEX IF NOT EXISTS ix_sesion_usuario ON sesion (id_usuario);
+  `);
 }
 
 initDatabase();

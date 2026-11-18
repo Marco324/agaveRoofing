@@ -1,10 +1,20 @@
 import { db, initDatabase } from './db.ts';
+import { asignarContrasena, CONTRASENA_INICIAL } from './services/authService.ts';
 
-export function runSeed() {
+export { CONTRASENA_INICIAL };
+
+/**
+ * - `runSeed()` (por defecto, la usan las pruebas): cuentas + 12 citas de demostración.
+ * - `runSeed({ conCitas: false })`: solo cuentas, zonas, domicilios, plantillas y
+ *   configuración; las citas se programan a mano desde el panel.
+ */
+export function runSeed({ conCitas = true }: { conCitas?: boolean } = {}) {
   initDatabase();
 
   // Limpiar datos existentes de forma ordenada
   db.exec(`
+    DELETE FROM bitacora;
+    DELETE FROM encuesta_piloto;
     DELETE FROM operacion_sincronizada;
     DELETE FROM mensaje;
     DELETE FROM evidencia;
@@ -22,6 +32,7 @@ export function runSeed() {
     DELETE FROM domicilio;
     DELETE FROM cliente;
     DELETE FROM inspector;
+    DELETE FROM sesion;
     DELETE FROM usuario;
     DELETE FROM rol;
     DELETE FROM zona;
@@ -54,6 +65,16 @@ export function runSeed() {
   insertUsuario.run(uCli1,  'auth-cli-001',  3, 'Robert B. Martinez', 'robert.martinez@gmail.com', '+1-210-555-0201');
   insertUsuario.run(uCli2,  'auth-cli-002',  3, 'Sarah Jenkins', 'sarah.jenkins@outlook.com', '+1-210-555-0233');
   insertUsuario.run(uCli4,  'auth-cli-004',  3, 'Elena Rodriguez', 'elena.rodriguez@gmail.com', '+1-210-555-0455');
+  // En la demo, Michael Flores no tiene app (prueba el respaldo por SMS); en la semilla de cuentas sí.
+  const uCli3 = conCitas ? null : 'u-cli-003';
+  if (uCli3) {
+    insertUsuario.run(uCli3, 'auth-cli-003', 3, 'Michael A. Flores', 'mflores.satx@yahoo.com', '+1-210-555-0310');
+  }
+
+  // RF-01 — Todas las cuentas de prueba arrancan con la misma contraseña (solo se guarda su hash).
+  for (const idUsuario of [uAdmin, uInsp1, uInsp2, uCli1, uCli2, uCli4, uCli3]) {
+    if (idUsuario) asignarContrasena(idUsuario, CONTRASENA_INICIAL);
+  }
 
   // 3. Zonas de cobertura en San Antonio, TX
   const insertZona = db.prepare('INSERT INTO zona (id_zona, nombre, descripcion) VALUES (?, ?, ?)');
@@ -84,7 +105,7 @@ export function runSeed() {
   `);
   insertCliente.run(1, uCli1, 'Robert B. Martinez', '+1-210-555-0201', 'robert.martinez@gmail.com', 'PUSH', 'Techo residencial con teja asfáltica. Filtración tras tormenta.');
   insertCliente.run(2, uCli2, 'Sarah Jenkins', '+1-210-555-0233', 'sarah.jenkins@outlook.com', 'PUSH', 'Propiedad de dos pisos en Alamo Heights. Sospecha de granizo.');
-  insertCliente.run(3, null,  'Michael A. Flores', '+1-210-555-0310', 'mflores.satx@yahoo.com', 'SMS', 'Local comercial en Southtown. Requiere inspección anual preventiva.');
+  insertCliente.run(3, uCli3, 'Michael A. Flores', '+1-210-555-0310', 'mflores.satx@yahoo.com', 'SMS', 'Local comercial en Southtown. Requiere inspección anual preventiva.');
   insertCliente.run(4, uCli4, 'Elena Rodriguez', '+1-210-555-0455', 'elena.rodriguez@gmail.com', 'PUSH', 'Casa de madera con teja metálica cerca de Medical Center.');
 
   // 6. Domicilios en San Antonio, Texas
@@ -124,116 +145,6 @@ export function runSeed() {
     'Casa esquina con roble grande al frente.',
     29.508210, -98.579120
   );
-
-  // 7. Inspecciones de ejemplo (incluyendo citas para el jueves 15 de octubre de 2026 - Entrega E07)
-  const insertInspeccion = db.prepare(`
-    INSERT INTO inspeccion (
-      id_inspeccion, folio, id_cliente, id_domicilio, id_inspector,
-      fecha_programada, ventana_inicio, ventana_fin, estado,
-      motivo_visita, notas, veces_reprogramada, creado_en
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-  `);
-
-  const insertHistorial = db.prepare(`
-    INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
-    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-  `);
-
-  // Inspección 1: Jueves 15 de octubre de 2026, 09:00 - 11:00 (Inspector 1)
-  insertInspeccion.run(
-    1, 'INS-2026-000001', 1, 1, 1,
-    '2026-10-15', '09:00', '11:00', 'CONFIRMADA',
-    'Revisión de tejas levantadas tras tormenta de viento',
-    'El cliente confirmó que estará presente en el domicilio.', 0
-  );
-  db.prepare(`UPDATE inspeccion SET confirmado_en = '2026-10-14T10:00:00Z' WHERE id_inspeccion = 1`).run();
-  insertHistorial.run(1, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
-  insertHistorial.run(1, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Notificación push enviada al cliente');
-  insertHistorial.run(1, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó disponibilidad en la app');
-
-  // Inspección 2: Jueves 15 de octubre de 2026, 11:30 - 13:30 (Inspector 1)
-  insertInspeccion.run(
-    2, 'INS-2026-000002', 2, 2, 1,
-    '2026-10-15', '11:30', '13:30', 'NOTIFICADA',
-    'Evaluación por posible impacto de granizo en cumbrera',
-    'Pendiente de confirmación del cliente.', 0
-  );
-  insertHistorial.run(2, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
-  insertHistorial.run(2, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado');
-
-  // Inspección 3: Jueves 15 de octubre de 2026, 14:30 - 16:30 (Inspector 2)
-  insertInspeccion.run(
-    3, 'INS-2026-000003', 3, 3, 2,
-    '2026-10-15', '14:30', '16:30', 'CONFIRMADA',
-    'Inspección comercial anual preventiva en cubierta plana',
-    'Coordinar con vigilante de acceso en caseta.', 0
-  );
-  db.prepare(`UPDATE inspeccion SET confirmado_en = '2026-10-14T16:30:00Z' WHERE id_inspeccion = 3`).run();
-  insertHistorial.run(3, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Programación inicial');
-
-  // Inspección 4: Viernes 16 de octubre de 2026, 10:00 - 12:00 (Inspector 2)
-  insertInspeccion.run(
-    4, 'INS-2026-000004', 4, 4, 2,
-    '2026-10-16', '10:00', '12:00', 'PROGRAMADA',
-    'Revisión de sellado de tragaluces y chimenea',
-    'Revisar si hay filtraciones cerca del tragaluz principal.', 0
-  );
-  insertHistorial.run(4, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Programación inicial');
-
-  // Inspección 5: Jueves 29 de octubre de 2026 (E09), 09:00 - 11:00 (Inspector 1 - Robert Martinez - CONFIRMADA)
-  insertInspeccion.run(
-    5, 'INS-2026-000005', 1, 1, 1,
-    '2026-10-29', '09:00', '11:00', 'CONFIRMADA',
-    'Seguimiento de reparación de teja asfáltica en Stone Oak',
-    'Cliente confirmó desde el botón rápido de la notificación push.', 0
-  );
-  db.prepare(`UPDATE inspeccion SET confirmado_en = '2026-10-28T10:15:00Z' WHERE id_inspeccion = 5`).run();
-  insertHistorial.run(5, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada para cierre de Sprint 4');
-  insertHistorial.run(5, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado (24h antes) enviado por PUSH');
-  insertHistorial.run(5, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó asistencia desde botón "Sí estaré" en notificación');
-
-  // Inspección 6: Jueves 29 de octubre de 2026 (E09), 11:30 - 13:30 (Inspector 1 - Sarah Jenkins - REPROG_SOLICITADA)
-  insertInspeccion.run(
-    6, 'INS-2026-000006', 2, 2, 1,
-    '2026-10-29', '11:30', '13:30', 'REPROG_SOLICITADA',
-    'Inspección de cumbrera y canaletas en Alamo Heights',
-    'Cliente solicitó mover la cita al viernes 30 de octubre.', 1
-  );
-  insertHistorial.run(6, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
-  insertHistorial.run(6, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado por PUSH');
-  insertHistorial.run(6, 'NOTIFICADA', 'REPROG_SOLICITADA', uCli2, 'APP_CLI', 'Cliente solicitó reprogramación para 2026-10-30 (09:00 - 11:00)');
-
-  // Solicitud de reprogramación en bandeja (SOLICITADA) para Inspección 6
-  db.prepare(`
-    INSERT INTO reprogramacion (
-      id_reprogramacion, id_inspeccion, fecha_anterior, ventana_inicio_anterior, ventana_fin_anterior,
-      fecha_solicitada, ventana_inicio_solicitada, ventana_fin_solicitada, motivo,
-      solicitada_por, estado, creado_en
-    ) VALUES (1, 6, '2026-10-29', '11:30', '13:30', '2026-10-30', '09:00', '11:00',
-      'Tengo cita médica en el centro de San Antonio a mediodía, ¿podrían venir el viernes por la mañana?',
-      'CLIENTE', 'SOLICITADA', '2026-10-28T14:20:00Z')
-  `).run();
-
-  // Inspección 7: Jueves 29 de octubre de 2026 (E09), 14:30 - 16:30 (Inspector 2 - Michael Flores - SIN_CONFIRMAR)
-  insertInspeccion.run(
-    7, 'INS-2026-000007', 3, 3, 2,
-    '2026-10-29', '14:30', '16:30', 'SIN_CONFIRMAR',
-    'Inspección preventiva de cubierta comercial en Southtown',
-    'Venció el plazo de 12 horas sin confirmación. Llamar por teléfono.', 0
-  );
-  insertHistorial.run(7, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita comercial programada');
-  insertHistorial.run(7, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso enviado por respaldo SMS (Twilio)');
-  insertHistorial.run(7, 'NOTIFICADA', 'SIN_CONFIRMAR', null, 'SISTEMA', 'Plazo de confirmación (12 h) vencido sin respuesta del cliente (RN-07)');
-
-  // Inspección 8: Viernes 30 de octubre de 2026, 10:00 - 12:00 (Inspector 2 - Elena Rodriguez - NOTIFICADA)
-  insertInspeccion.run(
-    8, 'INS-2026-000008', 4, 4, 2,
-    '2026-10-30', '10:00', '12:00', 'NOTIFICADA',
-    'Revisión de sellado de tragaluces en Medical Center',
-    'Lista para que el cliente confirme o reprograme desde la app.', 0
-  );
-  insertHistorial.run(8, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Programación inicial');
-  insertHistorial.run(8, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado por PUSH');
 
   // 8. Configuración del sistema (Tabla 4.19 de 03_Diseno_Base_de_Datos.md)
   const insertConfig = db.prepare(`
@@ -284,243 +195,359 @@ export function runSeed() {
   insertPlantilla.run(12, 'EN_CAMINO', 'SMS', null,
     'Agave Roofing: {{inspector}} va en camino a su domicilio, llega en ~{{eta}} min. Sigalo en vivo: {{enlace}}', 1);
 
-  // 10. Dispositivos móviles registrados (E08 Expo Push Tokens)
-  const insertDispositivo = db.prepare(`
-    INSERT INTO dispositivo (id_dispositivo, id_usuario, token_push, plataforma, version_app, activo, ultimo_uso)
-    VALUES (?, ?, ?, ?, ?, 1, datetime('now'))
-  `);
-  insertDispositivo.run(1, uInsp1, 'ExponentPushToken[insp-carlos-garza-satx01]', 'ANDROID', '1.4.0');
-  insertDispositivo.run(2, uInsp2, 'ExponentPushToken[insp-david-vance-satx02]', 'IOS', '1.4.0');
-  insertDispositivo.run(3, uCli1,  'ExponentPushToken[cli-robert-martinez-ios17]', 'IOS', '1.4.0');
-  insertDispositivo.run(4, uCli2,  'ExponentPushToken[cli-sarah-jenkins-and14]', 'ANDROID', '1.4.0');
-  insertDispositivo.run(5, uCli4,  'ExponentPushToken[cli-elena-rodriguez-ios18]', 'IOS', '1.4.0');
+  if (conCitas) {
+    // Citas, trayectos y notificaciones de ejemplo (solo en la semilla de demostración)
+    // 7. Inspecciones de ejemplo (incluyendo citas para el jueves 15 de octubre de 2026 - Entrega E07)
+    const insertInspeccion = db.prepare(`
+      INSERT INTO inspeccion (
+        id_inspeccion, folio, id_cliente, id_domicilio, id_inspector,
+        fecha_programada, ventana_inicio, ventana_fin, estado,
+        motivo_visita, notas, veces_reprogramada, creado_en
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `);
 
-  // 11. Notificaciones iniciales de ejemplo para vista del panel y bitácora R4 (E08)
-  const insertNotif = db.prepare(`
-    INSERT INTO notificacion (
-      id_inspeccion, id_plantilla, id_dispositivo, tipo, canal, destinatario,
-      titulo_renderizado, cuerpo_renderizado, estado, intentos, reenvio_manual,
-      programada_para, enviada_en, entregada_en, error
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+    const insertHistorial = db.prepare(`
+      INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+    `);
 
-  insertNotif.run(
-    1, 1, 3, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
-    'Inspección de techo programada',
-    'Hola Robert B. Martinez: su inspección de Agave Roofing es el 2026-10-15 entre 09:00 - 11:00 con Carlos Garza.',
-    'ENTREGADA', 1, 0, '2026-10-14T09:00:00Z', '2026-10-14T09:00:02Z', '2026-10-14T09:00:03Z', null
-  );
-  insertNotif.run(
-    2, 1, 4, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-sarah-jenkins-and14]',
-    'Inspección de techo programada',
-    'Hola Sarah Jenkins: su inspección de Agave Roofing es el 2026-10-15 entre 11:30 - 13:30 con Carlos Garza.',
-    'ENTREGADA', 1, 0, '2026-10-14T11:30:00Z', '2026-10-14T11:30:01Z', '2026-10-14T11:30:02Z', null
-  );
-  insertNotif.run(
-    5, 1, 3, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
-    'Inspección de techo programada',
-    'Hola Robert B. Martinez: su inspección de Agave Roofing es el 2026-10-29 entre 09:00 - 11:00 con Carlos Garza. Toque "Sí estaré" para confirmar o "Mover cita" si necesita otro horario.',
-    'ENTREGADA', 1, 0, '2026-10-28T09:00:00Z', '2026-10-28T09:00:01Z', '2026-10-28T09:00:02Z', null
-  );
-  insertNotif.run(
-    5, 2, 3, 'RECORDATORIO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
-    'Recordatorio: su inspección es hoy',
-    'Hola Robert B. Martinez: hoy entre 09:00 - 11:00 lo visitará Carlos Garza de Agave Roofing para revisar su techo.',
-    'ENTREGADA', 1, 0, '2026-10-29T06:00:00Z', '2026-10-29T07:00:01Z', '2026-10-29T07:00:02Z', null
-  );
-  insertNotif.run(
-    6, 1, 4, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-sarah-jenkins-and14]',
-    'Inspección de techo programada',
-    'Hola Sarah Jenkins: su inspección de Agave Roofing es el 2026-10-29 entre 11:30 - 13:30 con Carlos Garza. Toque "Sí estaré" para confirmar o "Mover cita" si necesita otro horario.',
-    'ENTREGADA', 1, 0, '2026-10-28T11:30:00Z', '2026-10-28T11:30:01Z', '2026-10-28T11:30:02Z', null
-  );
-  insertNotif.run(
-    7, 9, null, 'DIA_PROGRAMADO', 'SMS', '+1-210-555-0310',
-    null,
-    'Agave Roofing (San Antonio): Hola Michael A. Flores, su inspeccion de techo es el 2026-10-29 (14:30 - 16:30) con David Vance. Confirme sin costo en: https://agave.tx/c/7',
-    'FALLIDA', 3, 0, '2026-10-28T14:30:00Z', '2026-10-28T14:30:05Z', null,
-    'Twilio Error 30005: Unknown destination handset / Buzón lleno tras 3 intentos'
-  );
-  insertNotif.run(
-    8, 1, 5, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-elena-rodriguez-ios18]',
-    'Inspección de techo programada',
-    'Hola Elena Rodriguez: su inspección de Agave Roofing es el 2026-10-30 entre 10:00 - 12:00 con David Vance. Toque "Sí estaré" para confirmar o "Mover cita" si necesita otro horario.',
-    'ENTREGADA', 1, 0, '2026-10-28T15:00:00Z', '2026-10-28T15:00:01Z', '2026-10-28T15:00:02Z', null
-  );
+    // Inspección 1: Jueves 15 de octubre de 2026, 09:00 - 11:00 (Inspector 1)
+    insertInspeccion.run(
+      1, 'INS-2026-000001', 1, 1, 1,
+      '2026-10-15', '09:00', '11:00', 'CONFIRMADA',
+      'Revisión de tejas levantadas tras tormenta de viento',
+      'El cliente confirmó que estará presente en el domicilio.', 0
+    );
+    db.prepare(`UPDATE inspeccion SET confirmado_en = '2026-10-14T10:00:00Z' WHERE id_inspeccion = 1`).run();
+    insertHistorial.run(1, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
+    insertHistorial.run(1, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Notificación push enviada al cliente');
+    insertHistorial.run(1, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó disponibilidad en la app');
 
-  // =========================================================================
-  // 12. Datos de Sprint 5 (E10: 05 de nov y E11: 12 de nov de 2026)
-  // =========================================================================
+    // Inspección 2: Jueves 15 de octubre de 2026, 11:30 - 13:30 (Inspector 1)
+    insertInspeccion.run(
+      2, 'INS-2026-000002', 2, 2, 1,
+      '2026-10-15', '11:30', '13:30', 'NOTIFICADA',
+      'Evaluación por posible impacto de granizo en cumbrera',
+      'Pendiente de confirmación del cliente.', 0
+    );
+    insertHistorial.run(2, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
+    insertHistorial.run(2, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado');
 
-  // Inspección 9: Jueves 05 de noviembre de 2026 (E10), 09:00 - 11:00 (Inspector 1 - Robert Martinez - COMPLETADA con Reporte PDF y Fotos)
-  insertInspeccion.run(
-    9, 'INS-2026-000009', 1, 1, 1,
-    '2026-11-05', '09:00', '11:00', 'COMPLETADA',
-    'Inspección integral post-granizada en techo de teja asfáltica (Stone Oak)',
-    'Inspección completada en tiempo y forma con reporte fotográfico.', 0
-  );
-  db.prepare(`
-    UPDATE inspeccion
-    SET confirmado_en = '2026-11-04T11:20:00Z',
-        presencia_confirmada_en = '2026-11-05T08:52:00Z'
-    WHERE id_inspeccion = 9
-  `).run();
-  insertHistorial.run(9, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita programada para Sprint 5');
-  insertHistorial.run(9, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado');
-  insertHistorial.run(9, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó asistencia desde la app');
-  insertHistorial.run(9, 'CONFIRMADA', 'EN_CAMINO', uInsp1, 'APP_INSP', 'Inspector inició trayecto con GPS activo');
-  db.prepare(`
-    INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
-    VALUES (9, 'EN_CAMINO', 'EN_SITIO', ?, 'APP_INSP', 'Llegada puntual dentro de ventana comprometida', '2026-11-05T09:18:00Z')
-  `).run(uInsp1);
-  db.prepare(`
-    INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
-    VALUES (9, 'EN_SITIO', 'COMPLETADA', ?, 'APP_INSP', 'Resultado capturado con 2 fotografías y reporte PDF generado', '2026-11-05T10:05:00Z')
-  `).run(uInsp1);
+    // Inspección 3: Jueves 15 de octubre de 2026, 14:30 - 16:30 (Inspector 2)
+    insertInspeccion.run(
+      3, 'INS-2026-000003', 3, 3, 2,
+      '2026-10-15', '14:30', '16:30', 'CONFIRMADA',
+      'Inspección comercial anual preventiva en cubierta plana',
+      'Coordinar con vigilante de acceso en caseta.', 0
+    );
+    db.prepare(`UPDATE inspeccion SET confirmado_en = '2026-10-14T16:30:00Z' WHERE id_inspeccion = 3`).run();
+    insertHistorial.run(3, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Programación inicial');
 
-  // Trayecto finalizado de la Inspección 9
-  db.prepare(`
-    INSERT INTO trayecto (
-      id_trayecto, id_inspeccion, id_inspector, estado,
-      iniciado_en, finalizado_en, eta_inicial_s, eta_actual_s,
-      eta_actualizado_en, eta_aproximado, distancia_m, duracion_s
-    ) VALUES (
-      1, 9, 1, 'FINALIZADO',
-      '2026-11-05T08:55:00Z', '2026-11-05T09:18:00Z', 1380, 0,
-      '2026-11-05T09:18:00Z', 0, 11450, 1380
-    )
-  `).run();
+    // Inspección 4: Viernes 16 de octubre de 2026, 10:00 - 12:00 (Inspector 2)
+    insertInspeccion.run(
+      4, 'INS-2026-000004', 4, 4, 2,
+      '2026-10-16', '10:00', '12:00', 'PROGRAMADA',
+      'Revisión de sellado de tragaluces y chimenea',
+      'Revisar si hay filtraciones cerca del tragaluz principal.', 0
+    );
+    insertHistorial.run(4, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Programación inicial');
 
-  // Resultado y evidencias fotográficas de la Inspección 9 (E11)
-  db.prepare(`
-    INSERT INTO resultado_inspeccion (
-      id_resultado, id_inspeccion, estado_techo, hallazgos,
-      requiere_reparacion, urgencia, recomendaciones, url_reporte_pdf,
-      id_local, registrado_sin_senal, registrado_en, sincronizado_en
-    ) VALUES (
-      1, 9, 'REGULAR',
-      'Se detectaron 6 tejas asfálticas fracturadas en el faldón norte por impacto de granizo y desgaste en el sellador de elastómero alrededor de la chimenea.',
-      1, 'MEDIA',
-      'Reemplazar el paquete de tejas dañadas en el sector norte y re-sellar el tapajuntas metálico antes de la temporada invernal en San Antonio.',
-      '/api/inspecciones/9/reporte-html',
-      '11111111-2222-4333-8444-555555555009', 0, '2026-11-05T10:05:00Z', '2026-11-05T10:05:02Z'
-    )
-  `).run();
+    // Inspección 5: Jueves 29 de octubre de 2026 (E09), 09:00 - 11:00 (Inspector 1 - Robert Martinez - CONFIRMADA)
+    insertInspeccion.run(
+      5, 'INS-2026-000005', 1, 1, 1,
+      '2026-10-29', '09:00', '11:00', 'CONFIRMADA',
+      'Seguimiento de reparación de teja asfáltica en Stone Oak',
+      'Cliente confirmó desde el botón rápido de la notificación push.', 0
+    );
+    db.prepare(`UPDATE inspeccion SET confirmado_en = '2026-10-28T10:15:00Z' WHERE id_inspeccion = 5`).run();
+    insertHistorial.run(5, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada para cierre de Sprint 4');
+    insertHistorial.run(5, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado (24h antes) enviado por PUSH');
+    insertHistorial.run(5, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó asistencia desde botón "Sí estaré" en notificación');
 
-  db.prepare(`
-    INSERT INTO evidencia (
-      id_evidencia, id_inspeccion, tipo, ruta_archivo, descripcion,
-      id_local, registrado_sin_senal, capturada_en, subida_en
-    ) VALUES
-      (1, 9, 'FOTO_TECHO', 'https://images.unsplash.com/photo-1632759145351-1d592919f522?auto=format&fit=crop&w=800&q=80',
-       'Faldón norte: tejas asfálticas con fisura por impacto de granizo en Stone Oak.',
-       '11111111-2222-4333-8444-555555555091', 0, '2026-11-05T09:42:00Z', '2026-11-05T10:05:01Z'),
-      (2, 9, 'FOTO_FACHADA', 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80',
-       'Fachada frontal del inmueble en 19202 Stone Oak Pkwy verificada al concluir.',
-       '11111111-2222-4333-8444-555555555092', 0, '2026-11-05T09:58:00Z', '2026-11-05T10:05:02Z')
-  `).run();
+    // Inspección 6: Jueves 29 de octubre de 2026 (E09), 11:30 - 13:30 (Inspector 1 - Sarah Jenkins - REPROG_SOLICITADA)
+    insertInspeccion.run(
+      6, 'INS-2026-000006', 2, 2, 1,
+      '2026-10-29', '11:30', '13:30', 'REPROG_SOLICITADA',
+      'Inspección de cumbrera y canaletas en Alamo Heights',
+      'Cliente solicitó mover la cita al viernes 30 de octubre.', 1
+    );
+    insertHistorial.run(6, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
+    insertHistorial.run(6, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado por PUSH');
+    insertHistorial.run(6, 'NOTIFICADA', 'REPROG_SOLICITADA', uCli2, 'APP_CLI', 'Cliente solicitó reprogramación para 2026-10-30 (09:00 - 11:00)');
 
-  // Inspección 10: Jueves 12 de noviembre de 2026 (E11), 09:00 - 11:00 (Inspector 1 - Robert Martinez - CONFIRMADA lista para iniciar trayecto)
-  insertInspeccion.run(
-    10, 'INS-2026-000010', 1, 1, 1,
-    '2026-11-12', '09:00', '11:00', 'CONFIRMADA',
-    'Verificación final de sellado e impermeabilización en Stone Oak',
-    'Cliente confirmado. Lista para pulsar "Voy en camino" (E10) y probar modo sin señal (E11).', 0
-  );
-  db.prepare(`
-    UPDATE inspeccion
-    SET confirmado_en = '2026-11-11T10:00:00Z',
-        presencia_confirmada_en = '2026-11-12T08:40:00Z'
-    WHERE id_inspeccion = 10
-  `).run();
-  insertHistorial.run(10, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada para cierre de Sprint 5 (E11)');
-  insertHistorial.run(10, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado por PUSH');
-  insertHistorial.run(10, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó asistencia y marcó "Ya estoy en mi casa"');
+    // Solicitud de reprogramación en bandeja (SOLICITADA) para Inspección 6
+    db.prepare(`
+      INSERT INTO reprogramacion (
+        id_reprogramacion, id_inspeccion, fecha_anterior, ventana_inicio_anterior, ventana_fin_anterior,
+        fecha_solicitada, ventana_inicio_solicitada, ventana_fin_solicitada, motivo,
+        solicitada_por, estado, creado_en
+      ) VALUES (1, 6, '2026-10-29', '11:30', '13:30', '2026-10-30', '09:00', '11:00',
+        'Tengo cita médica en el centro de San Antonio a mediodía, ¿podrían venir el viernes por la mañana?',
+        'CLIENTE', 'SOLICITADA', '2026-10-28T14:20:00Z')
+    `).run();
 
-  // Mensajes iniciales de ejemplo en la Inspección 10 (E11)
-  db.prepare(`
-    INSERT INTO mensaje (id_inspeccion, de_usuario, para_usuario, remitente_rol, texto, enviado_en)
-    VALUES
-      (10, ?, ?, 'INSPECTOR', 'Buenos días Sr. Martinez, estoy revisando el equipo de escalera y salgo hacia Stone Oak en unos minutos.', '2026-11-12T08:35:00Z'),
-      (10, ?, ?, 'CLIENTE', '¡Gracias Carlos! Ya estoy aquí en casa, el portón principal está abierto.', '2026-11-12T08:40:00Z')
-  `).run(uInsp1, uCli1, uCli1, uInsp1);
+    // Inspección 7: Jueves 29 de octubre de 2026 (E09), 14:30 - 16:30 (Inspector 2 - Michael Flores - SIN_CONFIRMAR)
+    insertInspeccion.run(
+      7, 'INS-2026-000007', 3, 3, 2,
+      '2026-10-29', '14:30', '16:30', 'SIN_CONFIRMAR',
+      'Inspección preventiva de cubierta comercial en Southtown',
+      'Venció el plazo de 12 horas sin confirmación. Llamar por teléfono.', 0
+    );
+    insertHistorial.run(7, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita comercial programada');
+    insertHistorial.run(7, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso enviado por respaldo SMS (Twilio)');
+    insertHistorial.run(7, 'NOTIFICADA', 'SIN_CONFIRMAR', null, 'SISTEMA', 'Plazo de confirmación (12 h) vencido sin respuesta del cliente (RN-07)');
 
-  // Inspección 11: Jueves 12 de noviembre de 2026 (E11), 11:30 - 13:30 (Inspector 1 - Sarah Jenkins - EN_SITIO lista para capturar resultado)
-  insertInspeccion.run(
-    11, 'INS-2026-000011', 2, 2, 1,
-    '2026-11-12', '11:30', '13:30', 'EN_SITIO',
-    'Diagnóstico de cumbrera y ventilación de ático en Alamo Heights',
-    'Inspector en sitio tomando fotografías del techo.', 0
-  );
-  db.prepare(`
-    UPDATE inspeccion
-    SET confirmado_en = '2026-11-11T12:10:00Z',
-        presencia_confirmada_en = '2026-11-12T11:15:00Z'
-    WHERE id_inspeccion = 11
-  `).run();
-  insertHistorial.run(11, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
-  insertHistorial.run(11, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso enviado por PUSH');
-  insertHistorial.run(11, 'NOTIFICADA', 'CONFIRMADA', uCli2, 'APP_CLI', 'Confirmada por Sarah Jenkins');
-  insertHistorial.run(11, 'CONFIRMADA', 'EN_CAMINO', uInsp1, 'APP_INSP', 'Inicio de trayecto hacia Alamo Heights');
-  db.prepare(`
-    INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
-    VALUES (11, 'EN_CAMINO', 'EN_SITIO', ?, 'APP_INSP', 'Llegada registrada en Alamo Heights', '2026-11-12T11:28:00Z')
-  `).run(uInsp1);
+    // Inspección 8: Viernes 30 de octubre de 2026, 10:00 - 12:00 (Inspector 2 - Elena Rodriguez - NOTIFICADA)
+    insertInspeccion.run(
+      8, 'INS-2026-000008', 4, 4, 2,
+      '2026-10-30', '10:00', '12:00', 'NOTIFICADA',
+      'Revisión de sellado de tragaluces en Medical Center',
+      'Lista para que el cliente confirme o reprograme desde la app.', 0
+    );
+    insertHistorial.run(8, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Programación inicial');
+    insertHistorial.run(8, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado por PUSH');
 
-  // Inspección 12: Jueves 12 de noviembre de 2026 (E10 / E11), 14:30 - 16:30 (Inspector 2 David Vance - Elena Rodriguez - EN_CAMINO con trayecto ACTIVO)
-  insertInspeccion.run(
-    12, 'INS-2026-000012', 4, 4, 2,
-    '2026-11-12', '14:30', '16:30', 'EN_CAMINO',
-    'Revisión de tapajuntas y tragaluces en Medical Center',
-    'Inspector David Vance en trayecto activo transmitiendo GPS cada 15 s.', 0
-  );
-  db.prepare(`
-    UPDATE inspeccion
-    SET confirmado_en = '2026-11-11T15:00:00Z'
-    WHERE id_inspeccion = 12
-  `).run();
-  insertHistorial.run(12, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada para Sprint 5');
-  insertHistorial.run(12, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso enviado por PUSH');
-  insertHistorial.run(12, 'NOTIFICADA', 'CONFIRMADA', uCli4, 'APP_CLI', 'Confirmada por Elena Rodriguez');
-  insertHistorial.run(12, 'CONFIRMADA', 'EN_CAMINO', uInsp2, 'APP_INSP', 'Inspector David Vance pulsó "Voy en camino"');
+    // 10. Dispositivos móviles registrados (E08 Expo Push Tokens)
+    const insertDispositivo = db.prepare(`
+      INSERT INTO dispositivo (id_dispositivo, id_usuario, token_push, plataforma, version_app, activo, ultimo_uso)
+      VALUES (?, ?, ?, ?, ?, 1, datetime('now'))
+    `);
+    insertDispositivo.run(1, uInsp1, 'ExponentPushToken[insp-carlos-garza-satx01]', 'ANDROID', '1.4.0');
+    insertDispositivo.run(2, uInsp2, 'ExponentPushToken[insp-david-vance-satx02]', 'IOS', '1.4.0');
+    insertDispositivo.run(3, uCli1,  'ExponentPushToken[cli-robert-martinez-ios17]', 'IOS', '1.4.0');
+    insertDispositivo.run(4, uCli2,  'ExponentPushToken[cli-sarah-jenkins-and14]', 'ANDROID', '1.4.0');
+    insertDispositivo.run(5, uCli4,  'ExponentPushToken[cli-elena-rodriguez-ios18]', 'IOS', '1.4.0');
 
-  // Trayecto ACTIVO para Inspección 12 (Inspector 2 David Vance rumbo a Medical Center)
-  const ahoraISO = new Date().toISOString();
-  db.prepare(`
-    INSERT INTO trayecto (
-      id_trayecto, id_inspeccion, id_inspector, estado,
-      iniciado_en, eta_inicial_s, eta_actual_s, eta_actualizado_en, eta_aproximado
-    ) VALUES (
-      2, 12, 2, 'ACTIVO',
-      ?, 960, 540, ?, 0
-    )
-  `).run(ahoraISO, ahoraISO);
+    // 11. Notificaciones iniciales de ejemplo para vista del panel y bitácora R4 (E08)
+    const insertNotif = db.prepare(`
+      INSERT INTO notificacion (
+        id_inspeccion, id_plantilla, id_dispositivo, tipo, canal, destinatario,
+        titulo_renderizado, cuerpo_renderizado, estado, intentos, reenvio_manual,
+        programada_para, enviada_en, entregada_en, error
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
 
-  db.prepare(`
-    INSERT INTO punto_ubicacion (id_trayecto, latitud, longitud, precision_m, velocidad_ms, capturado_en)
-    VALUES
-      (2, 29.485100, -98.535200, 7, 14.2, ?),
-      (2, 29.496400, -98.556800, 6, 13.8, ?),
-      (2, 29.502900, -98.568900, 5, 12.5, ?)
-  `).run(ahoraISO, ahoraISO, ahoraISO);
+    insertNotif.run(
+      1, 1, 3, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
+      'Inspección de techo programada',
+      'Hola Robert B. Martinez: su inspección de Agave Roofing es el 2026-10-15 entre 09:00 - 11:00 con Carlos Garza.',
+      'ENTREGADA', 1, 0, '2026-10-14T09:00:00Z', '2026-10-14T09:00:02Z', '2026-10-14T09:00:03Z', null
+    );
+    insertNotif.run(
+      2, 1, 4, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-sarah-jenkins-and14]',
+      'Inspección de techo programada',
+      'Hola Sarah Jenkins: su inspección de Agave Roofing es el 2026-10-15 entre 11:30 - 13:30 con Carlos Garza.',
+      'ENTREGADA', 1, 0, '2026-10-14T11:30:00Z', '2026-10-14T11:30:01Z', '2026-10-14T11:30:02Z', null
+    );
+    insertNotif.run(
+      5, 1, 3, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
+      'Inspección de techo programada',
+      'Hola Robert B. Martinez: su inspección de Agave Roofing es el 2026-10-29 entre 09:00 - 11:00 con Carlos Garza. Toque "Sí estaré" para confirmar o "Mover cita" si necesita otro horario.',
+      'ENTREGADA', 1, 0, '2026-10-28T09:00:00Z', '2026-10-28T09:00:01Z', '2026-10-28T09:00:02Z', null
+    );
+    insertNotif.run(
+      5, 2, 3, 'RECORDATORIO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
+      'Recordatorio: su inspección es hoy',
+      'Hola Robert B. Martinez: hoy entre 09:00 - 11:00 lo visitará Carlos Garza de Agave Roofing para revisar su techo.',
+      'ENTREGADA', 1, 0, '2026-10-29T06:00:00Z', '2026-10-29T07:00:01Z', '2026-10-29T07:00:02Z', null
+    );
+    insertNotif.run(
+      6, 1, 4, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-sarah-jenkins-and14]',
+      'Inspección de techo programada',
+      'Hola Sarah Jenkins: su inspección de Agave Roofing es el 2026-10-29 entre 11:30 - 13:30 con Carlos Garza. Toque "Sí estaré" para confirmar o "Mover cita" si necesita otro horario.',
+      'ENTREGADA', 1, 0, '2026-10-28T11:30:00Z', '2026-10-28T11:30:01Z', '2026-10-28T11:30:02Z', null
+    );
+    insertNotif.run(
+      7, 9, null, 'DIA_PROGRAMADO', 'SMS', '+1-210-555-0310',
+      null,
+      'Agave Roofing (San Antonio): Hola Michael A. Flores, su inspeccion de techo es el 2026-10-29 (14:30 - 16:30) con David Vance. Confirme sin costo en: https://agave.tx/c/7',
+      'FALLIDA', 3, 0, '2026-10-28T14:30:00Z', '2026-10-28T14:30:05Z', null,
+      'Twilio Error 30005: Unknown destination handset / Buzón lleno tras 3 intentos'
+    );
+    insertNotif.run(
+      8, 1, 5, 'DIA_PROGRAMADO', 'PUSH', 'ExponentPushToken[cli-elena-rodriguez-ios18]',
+      'Inspección de techo programada',
+      'Hola Elena Rodriguez: su inspección de Agave Roofing es el 2026-10-30 entre 10:00 - 12:00 con David Vance. Toque "Sí estaré" para confirmar o "Mover cita" si necesita otro horario.',
+      'ENTREGADA', 1, 0, '2026-10-28T15:00:00Z', '2026-10-28T15:00:01Z', '2026-10-28T15:00:02Z', null
+    );
 
-  insertNotif.run(
-    9, 6, 3, 'RESULTADO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
-    'Reporte de inspección disponible',
-    'Hola Robert B. Martinez: ya puede consultar el reporte y fotografías de la inspección de su techo.',
-    'ENTREGADA', 1, 0, '2026-11-05T10:05:00Z', '2026-11-05T10:05:01Z', '2026-11-05T10:05:02Z', null
-  );
-  insertNotif.run(
-    12, 3, 5, 'EN_CAMINO', 'PUSH', 'ExponentPushToken[cli-elena-rodriguez-ios18]',
-    'Su inspector va en camino',
-    'David Vance salió hacia su domicilio. Tiempo estimado de llegada: 9 minutos.',
-    'ENTREGADA', 1, 0, ahoraISO, ahoraISO, ahoraISO, null
-  );
+    // =========================================================================
+    // 12. Datos de Sprint 5 (E10: 05 de nov y E11: 12 de nov de 2026)
+    // =========================================================================
 
-  console.log('✅ Semilla completada exitosamente: 4 zonas de San Antonio, 2 inspectores, 4 clientes, 5 dispositivos push, 12 plantillas y 12 inspecciones (E07 a E11).');
+    // Inspección 9: Jueves 05 de noviembre de 2026 (E10), 09:00 - 11:00 (Inspector 1 - Robert Martinez - COMPLETADA con Reporte PDF y Fotos)
+    insertInspeccion.run(
+      9, 'INS-2026-000009', 1, 1, 1,
+      '2026-11-05', '09:00', '11:00', 'COMPLETADA',
+      'Inspección integral post-granizada en techo de teja asfáltica (Stone Oak)',
+      'Inspección completada en tiempo y forma con reporte fotográfico.', 0
+    );
+    db.prepare(`
+      UPDATE inspeccion
+      SET confirmado_en = '2026-11-04T11:20:00Z',
+          presencia_confirmada_en = '2026-11-05T08:52:00Z'
+      WHERE id_inspeccion = 9
+    `).run();
+    insertHistorial.run(9, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita programada para Sprint 5');
+    insertHistorial.run(9, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado');
+    insertHistorial.run(9, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó asistencia desde la app');
+    insertHistorial.run(9, 'CONFIRMADA', 'EN_CAMINO', uInsp1, 'APP_INSP', 'Inspector inició trayecto con GPS activo');
+    db.prepare(`
+      INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
+      VALUES (9, 'EN_CAMINO', 'EN_SITIO', ?, 'APP_INSP', 'Llegada puntual dentro de ventana comprometida', '2026-11-05T09:18:00Z')
+    `).run(uInsp1);
+    db.prepare(`
+      INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
+      VALUES (9, 'EN_SITIO', 'COMPLETADA', ?, 'APP_INSP', 'Resultado capturado con 2 fotografías y reporte PDF generado', '2026-11-05T10:05:00Z')
+    `).run(uInsp1);
+
+    // Trayecto finalizado de la Inspección 9
+    db.prepare(`
+      INSERT INTO trayecto (
+        id_trayecto, id_inspeccion, id_inspector, estado,
+        iniciado_en, finalizado_en, eta_inicial_s, eta_actual_s,
+        eta_actualizado_en, eta_aproximado, distancia_m, duracion_s
+      ) VALUES (
+        1, 9, 1, 'FINALIZADO',
+        '2026-11-05T08:55:00Z', '2026-11-05T09:18:00Z', 1380, 0,
+        '2026-11-05T09:18:00Z', 0, 11450, 1380
+      )
+    `).run();
+
+    // Resultado y evidencias fotográficas de la Inspección 9 (E11)
+    db.prepare(`
+      INSERT INTO resultado_inspeccion (
+        id_resultado, id_inspeccion, estado_techo, hallazgos,
+        requiere_reparacion, urgencia, recomendaciones, url_reporte_pdf,
+        id_local, registrado_sin_senal, registrado_en, sincronizado_en
+      ) VALUES (
+        1, 9, 'REGULAR',
+        'Se detectaron 6 tejas asfálticas fracturadas en el faldón norte por impacto de granizo y desgaste en el sellador de elastómero alrededor de la chimenea.',
+        1, 'MEDIA',
+        'Reemplazar el paquete de tejas dañadas en el sector norte y re-sellar el tapajuntas metálico antes de la temporada invernal en San Antonio.',
+        '/api/inspecciones/9/reporte-html',
+        '11111111-2222-4333-8444-555555555009', 0, '2026-11-05T10:05:00Z', '2026-11-05T10:05:02Z'
+      )
+    `).run();
+
+    db.prepare(`
+      INSERT INTO evidencia (
+        id_evidencia, id_inspeccion, tipo, ruta_archivo, descripcion,
+        id_local, registrado_sin_senal, capturada_en, subida_en
+      ) VALUES
+        (1, 9, 'FOTO_TECHO', 'https://images.unsplash.com/photo-1632759145351-1d592919f522?auto=format&fit=crop&w=800&q=80',
+         'Faldón norte: tejas asfálticas con fisura por impacto de granizo en Stone Oak.',
+         '11111111-2222-4333-8444-555555555091', 0, '2026-11-05T09:42:00Z', '2026-11-05T10:05:01Z'),
+        (2, 9, 'FOTO_FACHADA', 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80',
+         'Fachada frontal del inmueble en 19202 Stone Oak Pkwy verificada al concluir.',
+         '11111111-2222-4333-8444-555555555092', 0, '2026-11-05T09:58:00Z', '2026-11-05T10:05:02Z')
+    `).run();
+
+    // Inspección 10: Jueves 12 de noviembre de 2026 (E11), 09:00 - 11:00 (Inspector 1 - Robert Martinez - CONFIRMADA lista para iniciar trayecto)
+    insertInspeccion.run(
+      10, 'INS-2026-000010', 1, 1, 1,
+      '2026-11-12', '09:00', '11:00', 'CONFIRMADA',
+      'Verificación final de sellado e impermeabilización en Stone Oak',
+      'Cliente confirmado. Lista para pulsar "Voy en camino" (E10) y probar modo sin señal (E11).', 0
+    );
+    db.prepare(`
+      UPDATE inspeccion
+      SET confirmado_en = '2026-11-11T10:00:00Z',
+          presencia_confirmada_en = '2026-11-12T08:40:00Z'
+      WHERE id_inspeccion = 10
+    `).run();
+    insertHistorial.run(10, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada para cierre de Sprint 5 (E11)');
+    insertHistorial.run(10, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso del día programado enviado por PUSH');
+    insertHistorial.run(10, 'NOTIFICADA', 'CONFIRMADA', uCli1, 'APP_CLI', 'Cliente confirmó asistencia y marcó "Ya estoy en mi casa"');
+
+    // Mensajes iniciales de ejemplo en la Inspección 10 (E11)
+    db.prepare(`
+      INSERT INTO mensaje (id_inspeccion, de_usuario, para_usuario, remitente_rol, texto, enviado_en)
+      VALUES
+        (10, ?, ?, 'INSPECTOR', 'Buenos días Sr. Martinez, estoy revisando el equipo de escalera y salgo hacia Stone Oak en unos minutos.', '2026-11-12T08:35:00Z'),
+        (10, ?, ?, 'CLIENTE', '¡Gracias Carlos! Ya estoy aquí en casa, el portón principal está abierto.', '2026-11-12T08:40:00Z')
+    `).run(uInsp1, uCli1, uCli1, uInsp1);
+
+    // Inspección 11: Jueves 12 de noviembre de 2026 (E11), 11:30 - 13:30 (Inspector 1 - Sarah Jenkins - EN_SITIO lista para capturar resultado)
+    insertInspeccion.run(
+      11, 'INS-2026-000011', 2, 2, 1,
+      '2026-11-12', '11:30', '13:30', 'EN_SITIO',
+      'Diagnóstico de cumbrera y ventilación de ático en Alamo Heights',
+      'Inspector en sitio tomando fotografías del techo.', 0
+    );
+    db.prepare(`
+      UPDATE inspeccion
+      SET confirmado_en = '2026-11-11T12:10:00Z',
+          presencia_confirmada_en = '2026-11-12T11:15:00Z'
+      WHERE id_inspeccion = 11
+    `).run();
+    insertHistorial.run(11, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada por administración');
+    insertHistorial.run(11, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso enviado por PUSH');
+    insertHistorial.run(11, 'NOTIFICADA', 'CONFIRMADA', uCli2, 'APP_CLI', 'Confirmada por Sarah Jenkins');
+    insertHistorial.run(11, 'CONFIRMADA', 'EN_CAMINO', uInsp1, 'APP_INSP', 'Inicio de trayecto hacia Alamo Heights');
+    db.prepare(`
+      INSERT INTO inspeccion_historial (id_inspeccion, estado_anterior, estado_nuevo, id_usuario, origen, nota, ocurrido_en)
+      VALUES (11, 'EN_CAMINO', 'EN_SITIO', ?, 'APP_INSP', 'Llegada registrada en Alamo Heights', '2026-11-12T11:28:00Z')
+    `).run(uInsp1);
+
+    // Inspección 12: Jueves 12 de noviembre de 2026 (E10 / E11), 14:30 - 16:30 (Inspector 2 David Vance - Elena Rodriguez - EN_CAMINO con trayecto ACTIVO)
+    insertInspeccion.run(
+      12, 'INS-2026-000012', 4, 4, 2,
+      '2026-11-12', '14:30', '16:30', 'EN_CAMINO',
+      'Revisión de tapajuntas y tragaluces en Medical Center',
+      'Inspector David Vance en trayecto activo transmitiendo GPS cada 15 s.', 0
+    );
+    db.prepare(`
+      UPDATE inspeccion
+      SET confirmado_en = '2026-11-11T15:00:00Z'
+      WHERE id_inspeccion = 12
+    `).run();
+    insertHistorial.run(12, null, 'PROGRAMADA', uAdmin, 'PANEL', 'Cita agendada para Sprint 5');
+    insertHistorial.run(12, 'PROGRAMADA', 'NOTIFICADA', null, 'SISTEMA', 'Aviso enviado por PUSH');
+    insertHistorial.run(12, 'NOTIFICADA', 'CONFIRMADA', uCli4, 'APP_CLI', 'Confirmada por Elena Rodriguez');
+    insertHistorial.run(12, 'CONFIRMADA', 'EN_CAMINO', uInsp2, 'APP_INSP', 'Inspector David Vance pulsó "Voy en camino"');
+
+    // Trayecto ACTIVO para Inspección 12 (Inspector 2 David Vance rumbo a Medical Center)
+    const ahoraISO = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO trayecto (
+        id_trayecto, id_inspeccion, id_inspector, estado,
+        iniciado_en, eta_inicial_s, eta_actual_s, eta_actualizado_en, eta_aproximado
+      ) VALUES (
+        2, 12, 2, 'ACTIVO',
+        ?, 960, 540, ?, 0
+      )
+    `).run(ahoraISO, ahoraISO);
+
+    db.prepare(`
+      INSERT INTO punto_ubicacion (id_trayecto, latitud, longitud, precision_m, velocidad_ms, capturado_en)
+      VALUES
+        (2, 29.485100, -98.535200, 7, 14.2, ?),
+        (2, 29.496400, -98.556800, 6, 13.8, ?),
+        (2, 29.502900, -98.568900, 5, 12.5, ?)
+    `).run(ahoraISO, ahoraISO, ahoraISO);
+
+    insertNotif.run(
+      9, 6, 3, 'RESULTADO', 'PUSH', 'ExponentPushToken[cli-robert-martinez-ios17]',
+      'Reporte de inspección disponible',
+      'Hola Robert B. Martinez: ya puede consultar el reporte y fotografías de la inspección de su techo.',
+      'ENTREGADA', 1, 0, '2026-11-05T10:05:00Z', '2026-11-05T10:05:01Z', '2026-11-05T10:05:02Z', null
+    );
+    insertNotif.run(
+      12, 3, 5, 'EN_CAMINO', 'PUSH', 'ExponentPushToken[cli-elena-rodriguez-ios18]',
+      'Su inspector va en camino',
+      'David Vance salió hacia su domicilio. Tiempo estimado de llegada: 9 minutos.',
+      'ENTREGADA', 1, 0, ahoraISO, ahoraISO, ahoraISO, null
+    );
+
+  }
+  console.log(conCitas
+    ? '✅ Semilla completada exitosamente: 4 zonas de San Antonio, 2 inspectores, 4 clientes, 5 dispositivos push, 12 plantillas y 12 inspecciones (E07 a E11).'
+    : '✅ Cuentas listas: 1 administrador, 2 inspectores y 4 clientes con domicilio, sin citas. Programa la primera desde el panel.');
 }
 
 // Ejecutar si se llama directamente
 if (process.argv[1]?.endsWith('seed.ts')) {
-  runSeed();
+  // `npm run seed` → solo cuentas; `npm run seed:demo` → cuentas + citas de demostración.
+  runSeed({ conCitas: process.argv.includes('--demo') });
 }

@@ -4,6 +4,7 @@ import 'contracts/ruta_inspector_contract.dart';
 import '../models/ruta_parada_model.dart';
 import '../services/id_local.dart';
 import '../services/inspector_api_service.dart';
+import '../services/sesion_service.dart';
 import '../services/ubicacion_service.dart';
 
 class RutaInspectorPresenter {
@@ -229,6 +230,13 @@ class RutaInspectorPresenter {
     } finally {
       _enviandoPunto = false;
     }
+  }
+
+  /// RF-05 — Deja de compartir la ubicación y cierra la sesión.
+  Future<void> cerrarSesion() async {
+    detenerGps();
+    await SesionService.instancia.cerrar();
+    view.irAInicioDeSesion();
   }
 
   void detenerGps() {

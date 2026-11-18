@@ -15,4 +15,7 @@ abstract class MisCitasViewContract {
 
   /// Último estado del seguimiento en vivo; `null` apaga el mapa.
   void showSeguimiento(SeguimientoVivo? seguimiento);
+
+  /// La sesión se cerró: volver a la pantalla de inicio de sesión.
+  void irAInicioDeSesion();
 }

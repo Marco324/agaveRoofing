@@ -54,12 +54,15 @@
               </a>
             </div>
             <div class="text-right hidden sm:block">
-              <div class="text-xs font-semibold text-slate-200 leading-tight">Marco Méndez (LP)</div>
-              <div class="text-[10px] text-slate-400">Product Owner / Admin</div>
+              <div id="nombreUsuarioPanel" class="text-xs font-semibold text-slate-200 leading-tight">—</div>
+              <div class="text-[10px] text-slate-400">Administrador</div>
             </div>
-            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-700 flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-emerald-500 shrink-0">
-              MM
+            <div id="inicialesUsuarioPanel" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-700 flex items-center justify-center text-xs sm:text-sm font-bold border-2 border-emerald-500 shrink-0">
+              —
             </div>
+            <button type="button" onclick="cerrarSesionPanel()" class="text-[11px] bg-slate-800 hover:bg-rose-700 text-slate-200 border border-slate-700 px-2.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap" title="Cerrar sesión">
+              <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Salir</span>
+            </button>
             <button id="btnMobileMenu" onclick="toggleMobileNav()" class="md:hidden p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" aria-label="Abrir menú rápido">
               <i id="iconMobileMenu" class="fa-solid fa-bars text-sm"></i>
             </button>
@@ -739,9 +742,10 @@
                 <span id="badgeCountClientesCat" class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">—</span>
               </div>
               <div class="p-3.5 sm:p-4 border-b border-slate-100 bg-slate-50/50">
-                <form id="formNuevoClienteCat" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                <form id="formNuevoClienteCat" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 text-xs">
                   <input type="text" id="catCliNombre" placeholder="Nombre completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
-                  <input type="text" id="catCliTel" placeholder="+1-210-555-0999" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
+                  <input type="tel" id="catCliTel" placeholder="+1-210-555-0999" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
+                  <input type="password" id="catCliContrasena" placeholder="Contraseña para la app (mín. 6)" minlength="6" autocomplete="new-password" title="Opcional: con contraseña, el cliente puede entrar a la app con su teléfono" class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
                   <select id="catCliCanal" class="bg-white border border-slate-300 rounded-lg px-2.5 py-2 sm:py-1.5">
                     <option value="PUSH">Canal: PUSH</option>
                     <option value="SMS">Canal: SMS</option>
@@ -951,6 +955,7 @@
 
   </div>
 
+  <script src="assets/sesion.js"></script>
   <script>
     // Conexión con la API local
     // Se puede cambiar sin editar el código:
@@ -977,7 +982,32 @@
     let notificacionesData = [];
     let reprogramacionesData = [];
     let catalogos = { zonas: [], inspectores: [], clientes: [], domicilios: [] };
-    const ID_USUARIO_PANEL = 'u-admin-001';
+    // RF-01 — El panel exige sesión de administrador; el id sale de la sesión.
+    const sesionPanel = SesionAgave.crear({
+      apiUrl: API_URL,
+      rol: 'ADMINISTRADOR',
+      app: 'PANEL',
+      campo: 'correo',
+      titulo: 'Panel de operaciones',
+      logo: 'assets/agave_logo_blanco.png'
+    });
+    let ID_USUARIO_PANEL = null;
+
+    function pintarUsuarioPanel(usuario) {
+      const nombre = (usuario && usuario.nombre) || '—';
+      document.getElementById('nombreUsuarioPanel').textContent = nombre;
+      const iniciales = nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+      document.getElementById('inicialesUsuarioPanel').textContent = iniciales || '—';
+    }
+
+    async function cerrarSesionPanel() {
+      const ok = await confirmar({
+        titulo: '¿Cerrar sesión?',
+        mensaje: 'Tendrás que escribir tu correo y contraseña para volver a entrar.',
+        textoBoton: 'Cerrar sesión'
+      });
+      if (ok) sesionPanel.cerrar();
+    }
     const ESTADOS_NO_MODIFICABLES = ['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA', 'PENDIENTE_CIERRE'];
     // "Hoy" lo decide la API (puede estar fijado con FECHA_HOY para la demo).
     let fechaReferencia = { hoy: null, simulada: false };
@@ -2501,10 +2531,24 @@
       });
     }
 
-    function descargarCsvIndicadores() {
+    async function descargarCsvIndicadores() {
       const inicio = document.getElementById('inputKpiInicio').value;
       const fin = document.getElementById('inputKpiFin').value;
-      window.open(`${API_URL}/indicadores/csv?fechaInicio=${inicio}&fechaFin=${fin}`, '_blank');
+      // Con fetch para que la descarga lleve la sesión (un enlace directo no manda el token).
+      try {
+        const res = await fetch(`${API_URL}/indicadores/csv?fechaInicio=${encodeURIComponent(inicio)}&fechaFin=${encodeURIComponent(fin)}`);
+        if (!res.ok) throw new Error(`No se pudo descargar el CSV (${res.status}).`);
+        const url = URL.createObjectURL(await res.blob());
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `indicadores_agave_roofing_${inicio}_${fin}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (err) {
+        toast(err instanceof TypeError ? 'No hay conexión con la API.' : err.message, 'error');
+      }
     }
 
     async function purgarPuntosPanel() {
@@ -2635,18 +2679,25 @@
       const nombre = document.getElementById('catCliNombre').value.trim();
       const telefono = document.getElementById('catCliTel').value.trim();
       const canalPreferido = document.getElementById('catCliCanal').value;
+      const contrasena = document.getElementById('catCliContrasena').value;
       try {
-        await api('/clientes', { method: 'POST', body: { nombre, telefono, canalPreferido } });
+        const r = await api('/clientes', { method: 'POST', body: { nombre, telefono, canalPreferido, contrasena: contrasena || undefined } });
         document.getElementById('catCliNombre').value = '';
         document.getElementById('catCliTel').value = '';
+        document.getElementById('catCliContrasena').value = '';
         await Promise.all([cargarCatalogosYSeguridad(), cargarCatalogosBase()]);
-        toast(`Cliente "${nombre}" registrado.`);
+        toast(r.conCuenta
+          ? `Cliente "${nombre}" registrado. Ya puede entrar a la app con su teléfono y la contraseña.`
+          : `Cliente "${nombre}" registrado (sin acceso a la app).`);
       } catch (err) {
         toast(err.message, 'error');
       }
     };
 
     async function inicializarPanel() {
+      const usuario = await sesionPanel.asegurar();
+      ID_USUARIO_PANEL = usuario.idUsuario;
+      pintarUsuarioPanel(usuario);
       await cargarFechaReferencia();
       fechaFiltro = hoyISO();
       document.getElementById('inputKpiInicio').value = sumarDias(hoyISO(), -60);

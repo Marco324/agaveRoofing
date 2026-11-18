@@ -36,10 +36,29 @@ Requisito: **Node.js 22 o superior** (usa `--experimental-strip-types` y `--expe
 
 ### 1. Sembrar la base de datos y levantar la API (`puerto 4000`)
 ```bash
-npm run seed   # regenera data/agavealerta.db con los datos de prueba
+npm run seed   # cuentas, zonas y domicilios, SIN citas (el proceso se hace a mano desde el panel)
 npm run api    # API en http://localhost:4000
 ```
-Con la API corriendo, abre estos archivos directamente en el navegador (la API no sirve archivos estáticos):
+`npm run seed:demo` siembra además las 12 citas de demostración (octubre y noviembre de 2026, ver *Fecha de referencia*). Las dos opciones **borran** la base `data/agavealerta.db`.
+
+**Cuentas de prueba (inicio de sesión obligatorio, RF-01).** Todas usan la contraseña `Agave2026` (se puede cambiar antes de sembrar con `AGAVE_CONTRASENA_INICIAL=...`). La API guarda solo el hash.
+
+| Dónde entra | Usuario | Cuenta |
+|---|---|---|
+| Panel (ejecutivo) | `marco.admin@agaveroofing.com` | Marco Méndez Sánchez — Administrador |
+| App del inspector | `carlos.garza@agaveroofing.com` | Carlos Garza — zonas Norte y Este |
+| App del inspector | `david.vance@agaveroofing.com` | David Vance — zonas Centro/Sur y Noroeste |
+| App del cliente | teléfono `210 555 0201` | Robert B. Martinez — Stone Oak |
+| App del cliente | teléfono `210 555 0233` | Sarah Jenkins — Alamo Heights |
+| App del cliente | teléfono `210 555 0310` | Michael A. Flores — Southtown (solo con `npm run seed`) |
+| App del cliente | teléfono `210 555 0455` | Elena Rodriguez — Medical Center |
+
+El teléfono se acepta con o sin `+1`, guiones o espacios. Cada app solo admite su rol: una cuenta de inspector no entra a la app del cliente y viceversa. Cada usuario ve **solo sus citas** (RF-07): la API ignora el `idCliente` o `idInspector` que mande la app y usa el de la sesión. Un cliente nuevo dado de alta en el panel (*Catálogos → Alta cliente*) con contraseña puede entrar a la app con su teléfono.
+
+**Flujo de la prueba completa:** el ejecutivo entra al panel y programa la cita (cliente, domicilio, inspector, fecha y ventana) → el cliente entra a su app y confirma → el inspector entra a la suya, pulsa *Voy en camino* (GPS real), el cliente lo sigue en el mapa y avisa *Ya estoy en casa* → el inspector registra la llegada y captura el resultado con fotos → el panel muestra el monitor, el reporte y los indicadores.
+
+La sesión dura 30 días y sigue activa al cerrar la app o recargar el panel; *Cerrar sesión* está en el perfil de cada app y en el botón *Salir* del panel. Si la base existía antes de esta versión, la API asigna la contraseña inicial a las cuentas que no tenían.
+Con la API corriendo, abre estos archivos directamente en el navegador (la API no sirve archivos estáticos). Los tres piden iniciar sesión; los simuladores aceptan otra API con `?api=http://…/api`:
 - **Panel de administración:** `panel/index.html`
 - **Simulador web app del inspector:** `app-inspector/simulador_web/index.html`
 - **Simulador web app del cliente:** `app-cliente/simulador_web/index.html`
@@ -62,7 +81,7 @@ FECHA_HOY=2026-11-20 npm run api      # cualquier otra fecha
 - `REPROG_SOLICITADA` no vence sola: espera la respuesta de la oficina.
 - Si llega tarde evidencia del modo sin señal (llegada, resultado o ausencia) de una cita `NO_REALIZADA`, se reabre como `PENDIENTE_CIERRE` y se cierra con lo que llegó.
 
-> ⚠️ El cierre es permanente en la base. Si levantas la API con la fecha real (`npm run api`), las citas de la demo del 12 de noviembre quedarán cerradas; vuelve a sembrar con `npm run seed` y usa `npm run api:demo`.
+> ⚠️ El cierre es permanente en la base. Si levantas la API con la fecha real (`npm run api`), las citas de la demo del 12 de noviembre quedarán cerradas; vuelve a sembrar con `npm run seed:demo` y usa `npm run api:demo`.
 
 `npm test` usa su propia base (`data/prueba.db`, vía `AGAVE_DB_PATH`) y no toca la de la demo.
 
@@ -93,7 +112,7 @@ Notas de desarrollo:
 - La app del inspector envía su ubicación cada 15 s **solo con la app en primer plano**; el envío en segundo plano queda como trabajo futuro.
 - El botón de avance simulado del GPS está oculto por defecto; se activa en el perfil del inspector (icono de credencial → "Modo demo").
 
-### 3. Ejecutar las Suites de Pruebas Automatizadas (`E07`, `E08/E09`, `E10/E11` — 28 escenarios)
+### 3. Ejecutar las Suites de Pruebas Automatizadas (`E07`, `E08/E09`, `E10/E11`, citas pasadas, FCM, fecha y sesiones)
 ```bash
 npm test
 ```

@@ -4,20 +4,23 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/ruta_parada_model.dart';
 import '../../presenters/contracts/ruta_inspector_contract.dart';
 import '../../presenters/ruta_inspector_presenter.dart';
+import '../../services/sesion_service.dart';
 import '../../utils/formato_fecha.dart';
 import '../widgets/parada_card_widget.dart';
 import '../widgets/selector_dias_widget.dart';
 import 'capturar_resultado_screen.dart';
 import 'cliente_ausente_screen.dart';
+import 'login_screen.dart';
 
 class RutaDelDiaScreen extends StatefulWidget {
   final int idInspector;
   final String nombreInspector;
 
+  /// El inspector de la sesión iniciada (RF-03): la app muestra solo su ruta.
   const RutaDelDiaScreen({
     super.key,
-    this.idInspector = 1,
-    this.nombreInspector = 'Carlos Garza',
+    required this.idInspector,
+    required this.nombreInspector,
   });
 
   @override
@@ -29,8 +32,8 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     implements RutaInspectorViewContract {
   late final RutaInspectorPresenter _presenter;
   bool _isLoading = false;
-  late int _idInspectorActual;
-  late String _nombreInspectorActual;
+  late final int _idInspectorActual;
+  late final String _nombreInspectorActual;
 
   /// "Hoy" según la API; mientras responde, la fecha del teléfono.
   String _hoy = fechaIso(DateTime.now());
@@ -423,6 +426,40 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     }
   }
 
+  Future<void> _confirmarCerrarSesion() async {
+    final compartiendo = _idInspeccionCompartiendo != null;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Cerrar sesión?'),
+        content: Text(
+          compartiendo
+              ? 'Vas en camino a un domicilio: al salir se deja de compartir tu ubicación con el cliente.'
+              : 'Para volver a entrar necesitarás tu correo y tu contraseña.',
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) _presenter.cerrarSesion();
+  }
+
+  @override
+  void irAInicioDeSesion() {
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
+
   void _mostrarPerfilYSesionDialog() {
     showDialog(
       context: context,
@@ -435,12 +472,17 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Inspector: $_nombreInspectorActual (#$_idInspectorActual)',
+                  _nombreInspectorActual,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
+                if (SesionService.instancia.actual?.correo != null)
+                  Text(
+                    SesionService.instancia.actual!.correo!,
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
                 const SizedBox(height: 12),
                 const Text(
                   'Ubicación: se comparte con el cliente solo mientras vas en camino a su domicilio, '
@@ -468,6 +510,15 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
             ),
           ),
           actions: [
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _confirmarCerrarSesion();
+              },
+              icon: const Icon(Icons.logout),
+              label: const Text('Cerrar sesión'),
+            ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('Cerrar'),
@@ -882,31 +933,6 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         actions: [
-          PopupMenuButton<int>(
-            icon: const Icon(Icons.engineering),
-            tooltip: 'Cambiar Inspector',
-            onSelected: (idInsp) {
-              if (idInsp != _idInspectorActual) _presenter.detenerGps();
-              setState(() {
-                _idInspectorActual = idInsp;
-                _nombreInspectorActual = idInsp == 1
-                    ? 'Carlos Garza'
-                    : 'David Vance';
-              });
-              _reiniciarConteos();
-              _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada);
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 1,
-                child: Text('Carlos Garza (Stone Oak / Alamo Heights)'),
-              ),
-              PopupMenuItem(
-                value: 2,
-                child: Text('David Vance (Southtown / Medical Center)'),
-              ),
-            ],
-          ),
           IconButton(
             icon: const Icon(Icons.badge_outlined),
             tooltip: 'Perfil y modo demo',

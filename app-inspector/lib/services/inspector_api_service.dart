@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/foto_evidencia_model.dart';
 import '../models/ruta_parada_model.dart';
+import 'api_http.dart';
 import 'ubicacion_service.dart';
 
 /// Error de la API con su código (por ejemplo `TRAYECTO_NO_ACTIVO_RN08`).
@@ -52,7 +53,7 @@ class InspectorApiService {
     Map<String, dynamic> cuerpo,
     String errorPorDefecto,
   ) async {
-    final response = await http
+    final response = await ApiHttp.instancia
         .post(
           Uri.parse('$baseUrl$ruta'),
           headers: _jsonHeaders,
@@ -72,7 +73,7 @@ class InspectorApiService {
     final uri = Uri.parse(
       '$baseUrl/inspecciones/mi-ruta?idInspector=$idInspector&fecha=$fecha',
     );
-    final response = await http.get(uri).timeout(_tiempoMaximo);
+    final response = await ApiHttp.instancia.get(uri).timeout(_tiempoMaximo);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -110,7 +111,7 @@ class InspectorApiService {
       '$baseUrl/inspecciones?idInspector=$idInspector'
       '&fechaInicio=$fechaInicio&fechaFin=$fechaFin',
     );
-    final response = await http.get(uri).timeout(_tiempoMaximo);
+    final response = await ApiHttp.instancia.get(uri).timeout(_tiempoMaximo);
     if (response.statusCode != 200) {
       throw _error(response, 'No se pudo obtener el calendario');
     }

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import 'api_http.dart';
 
 /// Aviso push recibido mientras la app está abierta (o al tocar la notificación).
 class AvisoPush {
@@ -85,6 +86,12 @@ class PushService {
         '(falta google-services.json / GoogleService-Info.plist). $e',
       );
     }
+  }
+
+  /// Al cerrar sesión: el siguiente cliente que entre vuelve a registrar el teléfono.
+  void olvidarCliente() {
+    _idClienteActual = null;
+    _idClienteRegistrado = null;
   }
 
   /// Pide permiso, obtiene el token y lo registra en la API para [idCliente].
@@ -171,7 +178,8 @@ class PushService {
   Future<void> _registrarToken(int idCliente, String token) async {
     final plataforma = defaultTargetPlatform == TargetPlatform.iOS ? 'IOS' : 'ANDROID';
     try {
-      final resp = await http
+      // Con el token de la sesión: la API liga el teléfono a quien inició sesión.
+      final resp = await ApiHttp.instancia
           .post(
             Uri.parse('${ApiConfig.baseUrl}/dispositivos'),
             headers: {'Content-Type': 'application/json'},

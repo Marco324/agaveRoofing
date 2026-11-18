@@ -2,7 +2,7 @@
 ## Sistema de Alerta y Seguimiento de Inspecciones de Techo — Agave Roofing (AgaveAlerta)
 
 **Basado en la estructura del estándar IEEE 830.**
-**Versión 1.3 — 17 de noviembre de 2026** (ver §5, Control de cambios)
+**Versión 1.4 — 17 de noviembre de 2026** (ver §5, Control de cambios)
 **Universidad Autónoma de Nuevo León — FIME**
 **Proyecto Integrador I — Equipo 01 — Agosto–Diciembre 2026**
 
@@ -452,6 +452,7 @@ Ver detalle y diagramas en `04_Diagramas_UML.md`.
 | 1.1 | 13/nov/2026 | Marco (LP) | Se agrega esta sección para documentar las diferencias entre lo especificado y lo construido en la versión de demostración. **No se elimina ningún requerimiento**: los no implementados pasan al Product Backlog como trabajo futuro, según la condición 2 del acta de congelación. |
 | 1.2 | 15/nov/2026 | Marco (LP) | Mapa real, GPS y cámara en las apps Flutter y mapa real en el monitor del panel (rama `feat/mapa-gps-camara`). Se actualizan RF-08, RF-45, RF-46, RF-47, RF-48 y RF-54 en §5.3. |
 | 1.3 | 17/nov/2026 | Marco (LP) | Manejo de citas pasadas: estados `NO_REALIZADA` y `PENDIENTE_CIERRE` (RN-01 actualizada, **RN-18** nueva) y fecha de negocio en la zona horaria de San Antonio (**RN-19** nueva). Se agregan los términos *visita perdida* y *visita sin cerrar* (§1.3), una fila en §5.2 y notas en los módulos 3 (Agenda), 5 (Confirmación), 7 (Ejecución) y 9 (Tablero) de §5.3. No se elimina ningún requerimiento. |
+| 1.4 | 17/nov/2026 | Marco (LP) | Inicio de sesión obligatorio en el panel, las dos apps y los simuladores web (rama `feat/inicio-sesion`): contraseña con hash, sesión persistente, cierre de sesión y permisos por rol y por dueño de la cita en cada petición. `npm run seed` deja solo cuentas y domicilios (sin citas). Se actualizan RF-01, RF-02, RF-03, RF-05 y RF-07 en §5.3 y se agrega una fila en §5.2. |
 
 ### 5.2 Cambios de arquitectura y restricciones
 
@@ -459,6 +460,7 @@ La sección 2.1 describe la **arquitectura objetivo**. La versión entregada (Re
 
 | Referencia | Especificado | Construido en Release 1.0 |
 |------------|--------------|---------------------------|
+| RF-01, RF-07 *(v1.4)* | Supabase Auth con JWT; OTP por SMS para el cliente | Autenticación propia en la API: hash scrypt (`node:crypto`), token aleatorio opaco en la tabla `sesion` (30 días) y validación de rol y dueño en cada petición. El cliente usa teléfono y contraseña; el OTP queda pendiente hasta tener proveedor de SMS |
 | RES-03, RNF-26, RNF-27 | Node.js + Express, Prisma con migraciones, PostgreSQL 15 en Supabase | Node.js 22 con el módulo `http` nativo (sin Express); SQLite en modo WAL vía `node:sqlite`. `schema.prisma` y `setup_rls.sql` quedan como diseño para la migración |
 | RES-04, RF-01, RNF-19 | Supabase Auth (correo / OTP) y JWT validado en cada petición | Inicio de sesión de demostración sin contraseña ni OTP; el token no se valida en las rutas |
 | RES-05, IU-05 | FCM / APNs para push; Twilio y Resend de respaldo | Envíos simulados: se registran estados, reintentos y respaldo, sin entrega real al teléfono |
@@ -477,8 +479,10 @@ Leyenda: **Completo** = implementado en la API y en el cliente correspondiente �
 
 | Módulo | Requerimientos | Estado | Notas |
 |--------|----------------|--------|-------|
-| 1. Seguridad | RF-01, RF-02, RF-03 | Parcial | Inicio de sesión y verificación de rol de demostración; no hay contraseña, OTP ni sesión persistente en las apps |
-| 1. Seguridad | RF-07 | Pendiente | Las rutas aceptan `idCliente` / `idInspector` por parámetro sin validar token |
+| 1. Seguridad | RF-01 | Parcial | *(v1.4)* Administrador e Inspector entran con **correo y contraseña**; el Cliente con **teléfono y contraseña** en lugar de código OTP (no hay proveedor de SMS). La contraseña se guarda con hash scrypt y sal propia; los intentos fallidos quedan en bitácora. No se usa Supabase Auth (ver §5.2) |
+| 1. Seguridad | RF-02, RF-03 | Completo | *(v1.4)* Cada app solo admite su rol (el panel, administradores; la app del inspector, inspectores; la del cliente, clientes). Cada usuario de rol Cliente o Inspector queda ligado a su cliente o inspector y la app ya no permite cambiar de cuenta |
+| 1. Seguridad | RF-05 | Completo | *(v1.4)* La sesión dura 30 días y sigue activa al cerrar la app o recargar el panel; *Cerrar sesión* en el perfil de cada app y *Salir* en el panel invalidan el token en la API |
+| 1. Seguridad | RF-07 | Completo | *(v1.4)* Toda ruta, salvo salud, fecha del sistema, inicio de sesión y acuse de notificación, exige `Authorization: Bearer <token>` y valida el rol. Las rutas de una cita revisan que sea del cliente o del inspector de la sesión (si no, 404); la ruta del inspector y las citas del cliente usan el id de la sesión, no el que mande la app. El token es opaco (no JWT) y se guarda en la tabla `sesion` |
 | 1. Seguridad | RF-08 | Parcial | La app del inspector explica para qué usa la ubicación y luego pide el permiso; si se niega o el GPS está apagado, lo dice con claridad y no deja iniciar el trayecto. Permiso solo "mientras se usa la app" (no en segundo plano). Ninguna app pide aún el permiso de notificaciones. La cámara y la galería piden su permiso al usarse |
 | 2. Catálogos | RF-09, RF-10, RF-12 | Parcial | Alta y baja lógica de clientes en el panel; domicilios e inspectores por API |
 | 2. Catálogos | RF-11 (prioridad M) | Simulado | Las coordenadas se asignan aleatoriamente cerca del centro de San Antonio; no hay geocodificación ni ajuste del pin |

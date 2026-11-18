@@ -31,4 +31,7 @@ abstract class RutaInspectorViewContract {
     DateTime? ultimoEnvio,
     bool ultimoEnvioFallo = false,
   });
+
+  /// La sesión se cerró: volver a la pantalla de inicio de sesión.
+  void irAInicioDeSesion();
 }
