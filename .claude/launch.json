@@ -4,20 +4,46 @@
     {
       "name": "panel",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "5500", "--directory", "panel"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5500",
+        "--directory",
+        "panel"
+      ],
       "port": 5500
     },
     {
       "name": "api",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "api"],
+      "runtimeArgs": [
+        "run",
+        "api"
+      ],
       "port": 4000
     },
     {
       "name": "api-fcm",
       "runtimeExecutable": "env",
-      "runtimeArgs": ["PORT=4100", "FIREBASE_SERVICE_ACCOUNT=/Users/marcomendezsanchez/agave-secretos/firebase-service-account.json", "npm", "run", "api"],
+      "runtimeArgs": [
+        "PORT=4100",
+        "FIREBASE_SERVICE_ACCOUNT=/Users/marcomendezsanchez/agave-secretos/firebase-service-account.json",
+        "npm",
+        "run",
+        "api"
+      ],
       "port": 4100,
+      "autoPort": false
+    },
+    {
+      "name": "panel-sesion",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5510"
+      ],
+      "port": 5510,
       "autoPort": false
     }
   ]

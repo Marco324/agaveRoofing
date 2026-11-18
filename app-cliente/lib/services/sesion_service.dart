@@ -52,7 +52,7 @@ class SesionService {
     } catch (_) {
       guardada = null;
     }
-    if (guardada == null || guardada.rol != rol) {
+    if (guardada == null || guardada.rol != rol || guardada.idCliente == null) {
       await prefs.remove(_clave);
       return null;
     }
@@ -66,7 +66,12 @@ class SesionService {
           .timeout(_tiempoMaximo);
       if (resp.statusCode == 200) {
         final data = json.decode(resp.body) as Map<String, dynamic>;
-        _actual = SesionUsuario.desdeApi(guardada.token, data['usuario'] as Map<String, dynamic>);
+        final vigente = SesionUsuario.desdeApi(guardada.token, data['usuario'] as Map<String, dynamic>);
+        if (vigente.rol != rol || vigente.idCliente == null) {
+          await prefs.remove(_clave);
+          return null;
+        }
+        _actual = vigente;
         await prefs.setString(_clave, json.encode(_actual!.toJson()));
         return _actual;
       }
@@ -112,7 +117,17 @@ class SesionService {
       );
     }
 
-    _actual = SesionUsuario.desdeApi(data['token'] as String, data['usuario'] as Map<String, dynamic>);
+    final usuario = data['usuario'];
+    final nueva = usuario is Map<String, dynamic>
+        ? SesionUsuario.desdeApi(data['token'] as String, usuario)
+        : null;
+    // Una API anterior a RF-01 responde sin rol ni idCliente: no se puede abrir la app.
+    if (nueva == null || nueva.rol != rol || nueva.idCliente == null) {
+      throw SesionException(
+        'El servidor no devolvió tu perfil de cliente. Reinicia la API (npm run api) con la versión actual e intenta de nuevo.',
+      );
+    }
+    _actual = nueva;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_clave, json.encode(_actual!.toJson()));
     return _actual!;
