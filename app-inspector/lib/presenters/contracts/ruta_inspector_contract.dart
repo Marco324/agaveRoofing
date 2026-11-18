@@ -8,8 +8,9 @@ abstract class RutaInspectorViewContract {
   /// "Hoy" del sistema; [simulada] indica una fecha fija de demo.
   void showFechaReferencia(String hoy, {required bool simulada});
 
-  /// Paradas por día (`2026-11-12` → 2) para marcar el calendario.
-  void showParadasPorDia(Map<String, int> conteo);
+  /// Paradas por día (`2026-11-12` → 2) y las que quedaron sin cerrar, para
+  /// marcar el calendario.
+  void showParadasPorDia(Map<String, int> conteo, Map<String, int> sinCerrar);
   void showError(String message);
   void showSuccessMessage(String message);
 

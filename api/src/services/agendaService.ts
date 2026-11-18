@@ -8,6 +8,7 @@ import type {
   FiltroAgendaDTO
 } from '../../../shared/src/types/dtos.ts';
 import { generarFolio } from './folioService.ts';
+import { hoy } from '../fechaReferencia.ts';
 import { transicionar } from './maquinaEstadosService.ts';
 import { encolarNotificacion, despacharNotificacionesPendientes } from './notificacionService.ts';
 import { TipoNotificacion } from '../../../shared/src/types/estados.ts';
@@ -212,6 +213,11 @@ export function moverInspeccion(idInspeccion: number, dto: MoverInspeccionDTO) {
   if (['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA'].includes(cita.estado)) {
     throw new ErrorValidacionAgenda(`No se puede mover una inspección en estado ${cita.estado} (Violación RN-05).`);
   }
+  if (cita.estado === EstadoInspeccion.PENDIENTE_CIERRE) {
+    throw new ErrorValidacionAgenda(
+      'Esta visita quedó sin cerrar: primero ciérrala (resultado, ausencia o "no se realizó") antes de darle otra fecha.'
+    );
+  }
 
   // RN-06: Máximo 3 reprogramaciones
   if (cita.veces_reprogramada >= 3) {
@@ -220,6 +226,10 @@ export function moverInspeccion(idInspeccion: number, dto: MoverInspeccionDTO) {
 
   if (!dto.nuevaFecha || !/^\d{4}-\d{2}-\d{2}$/.test(dto.nuevaFecha)) {
     throw new ErrorValidacionAgenda('Indica la nueva fecha de la inspección (AAAA-MM-DD).');
+  }
+
+  if (dto.nuevaFecha < hoy()) {
+    throw new ErrorValidacionAgenda(`La nueva fecha (${dto.nuevaFecha}) ya pasó; elige una a partir de ${hoy()}.`);
   }
 
   validarVentanaOperacion(dto.nuevaVentanaInicio, dto.nuevaVentanaFin);
@@ -273,6 +283,17 @@ export function moverInspeccion(idInspeccion: number, dto: MoverInspeccionDTO) {
     dto.idUsuario || null,
     `Cita reprogramada a ${dto.nuevaFecha} (${dto.nuevaVentanaInicio} - ${dto.nuevaVentanaFin}). Motivo: ${dto.motivo || 'Ajuste de agenda'}`
   );
+
+  // Una cita vencida que recibe nueva fecha vuelve al flujo normal.
+  if (cita.estado === EstadoInspeccion.NO_REALIZADA) {
+    transicionar(
+      idInspeccion,
+      EstadoInspeccion.REPROGRAMADA,
+      dto.idUsuario,
+      OrigenTransicion.PANEL,
+      `Nueva fecha para la visita no realizada del ${cita.fecha_programada}`
+    );
+  }
 
   // E09: Notificar al cliente cuando la oficina reprograma la cita
   try {

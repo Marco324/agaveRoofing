@@ -99,8 +99,9 @@ class InspectorApiService {
   }
 
   /// Cuántas paradas tiene el inspector en cada día del rango
-  /// (`2026-11-12` → 2). Las canceladas no cuentan.
-  Future<Map<String, int>> getParadasPorDia({
+  /// (`2026-11-12` → 2) y cuántas quedaron sin cerrar. Las canceladas no cuentan.
+  Future<({Map<String, int> total, Map<String, int> sinCerrar})>
+  getParadasPorDia({
     required int idInspector,
     required String fechaInicio,
     required String fechaFin,
@@ -115,14 +116,18 @@ class InspectorApiService {
     }
     final data = json.decode(response.body) as Map<String, dynamic>;
     final conteo = <String, int>{};
+    final sinCerrar = <String, int>{};
     for (final i in data['inspecciones'] as List<dynamic>? ?? const []) {
       final fila = i as Map<String, dynamic>;
       if (fila['estado'] == 'CANCELADA') continue;
       final fecha = fila['fecha_programada'] as String?;
       if (fecha == null) continue;
       conteo[fecha] = (conteo[fecha] ?? 0) + 1;
+      if (fila['estado'] == 'PENDIENTE_CIERRE') {
+        sinCerrar[fecha] = (sinCerrar[fecha] ?? 0) + 1;
+      }
     }
-    return conteo;
+    return (total: conteo, sinCerrar: sinCerrar);
   }
 
   /// "Voy en camino" con la posición real. Devuelve el `id_trayecto` abierto.

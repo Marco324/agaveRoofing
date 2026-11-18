@@ -4,6 +4,26 @@ import '../../utils/formato_fecha.dart';
 
 const Color _agaveEmerald = Color(0xFF059669);
 const Color _slate = Color(0xFF0F172A);
+const Color _rojoSinCerrar = Color(0xFFDC2626);
+
+/// Paradas por día (`2026-11-12` → 2) y, de ellas, cuántas quedaron sin cerrar.
+class ConteoDias {
+  final Map<String, int> total;
+  final Map<String, int> sinCerrar;
+
+  const ConteoDias({this.total = const {}, this.sinCerrar = const {}});
+
+  /// Agrega los conteos de [otro]. Los días que trae [otro] reemplazan a los
+  /// anteriores (un día que ya se cerró deja de marcarse como pendiente).
+  ConteoDias unir(ConteoDias otro) {
+    final pendientes = {...sinCerrar}
+      ..removeWhere((dia, _) => otro.total.containsKey(dia));
+    return ConteoDias(
+      total: {...total, ...otro.total},
+      sinCerrar: {...pendientes, ...otro.sinCerrar},
+    );
+  }
+}
 
 /// Tira con los 7 días de la semana de [seleccionada]. Cada día muestra
 /// cuántas paradas tiene; las flechas cambian de semana.
@@ -12,7 +32,7 @@ class SelectorSemanaWidget extends StatelessWidget {
 
   /// "Hoy" según la API (puede ser una fecha de demo).
   final DateTime hoy;
-  final Map<String, int> paradasPorDia;
+  final ConteoDias paradasPorDia;
   final ValueChanged<DateTime> onSeleccionar;
   final VoidCallback onAbrirCalendario;
 
@@ -117,7 +137,8 @@ class SelectorSemanaWidget extends StatelessWidget {
                     dia: dia,
                     seleccionado: mismoDia(dia, seleccionada),
                     esHoy: mismoDia(dia, hoy),
-                    paradas: paradasPorDia[fechaIso(dia)] ?? 0,
+                    paradas: paradasPorDia.total[fechaIso(dia)] ?? 0,
+                    sinCerrar: paradasPorDia.sinCerrar[fechaIso(dia)] ?? 0,
                     oscuro: true,
                     onTap: () => onSeleccionar(dia),
                   ),
@@ -136,6 +157,7 @@ class _CeldaDia extends StatelessWidget {
   final bool seleccionado;
   final bool esHoy;
   final int paradas;
+  final int sinCerrar;
   final bool oscuro;
   final bool fueraDelMes;
   final VoidCallback onTap;
@@ -145,6 +167,7 @@ class _CeldaDia extends StatelessWidget {
     required this.seleccionado,
     required this.esHoy,
     required this.paradas,
+    this.sinCerrar = 0,
     required this.oscuro,
     required this.onTap,
     this.fueraDelMes = false,
@@ -167,7 +190,8 @@ class _CeldaDia extends StatelessWidget {
         button: true,
         selected: seleccionado,
         label:
-            '${fechaLarga(fechaIso(dia))}, ${paradas == 0 ? 'sin paradas' : plural(paradas, 'parada')}',
+            '${fechaLarga(fechaIso(dia))}, ${paradas == 0 ? 'sin paradas' : plural(paradas, 'parada')}'
+            '${sinCerrar > 0 ? ', ${sinCerrar == 1 ? '1 sin cerrar' : '$sinCerrar sin cerrar'}' : ''}',
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
@@ -203,6 +227,7 @@ class _CeldaDia extends StatelessWidget {
                 const SizedBox(height: 2),
                 _MarcaParadas(
                   paradas: paradas,
+                  sinCerrar: sinCerrar,
                   seleccionado: seleccionado,
                   oscuro: oscuro,
                 ),
@@ -215,9 +240,11 @@ class _CeldaDia extends StatelessWidget {
   }
 }
 
-/// Insignia con el número de paradas del día (vacía si no hay).
+/// Insignia con el número de paradas del día (vacía si no hay). En rojo si
+/// alguna quedó sin cerrar.
 class _MarcaParadas extends StatelessWidget {
   final int paradas;
+  final int sinCerrar;
   final bool seleccionado;
   final bool oscuro;
 
@@ -225,15 +252,21 @@ class _MarcaParadas extends StatelessWidget {
     required this.paradas,
     required this.seleccionado,
     required this.oscuro,
+    this.sinCerrar = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     if (paradas == 0) return const SizedBox(height: 16);
-    final fondo = seleccionado
+    final alerta = sinCerrar > 0;
+    final fondo = alerta
+        ? _rojoSinCerrar
+        : seleccionado
         ? Colors.white
         : (oscuro ? Colors.amber.shade400 : _agaveEmerald);
-    final texto = seleccionado
+    final texto = alerta
+        ? Colors.white
+        : seleccionado
         ? _agaveEmerald
         : (oscuro ? _slate : Colors.white);
     return Container(
@@ -246,7 +279,7 @@ class _MarcaParadas extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Text(
-        '$paradas',
+        alerta ? '!$paradas' : '$paradas',
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
@@ -268,7 +301,7 @@ Future<DateTime?> mostrarCalendarioMes(
   BuildContext context, {
   required DateTime seleccionada,
   required DateTime hoy,
-  required ValueNotifier<Map<String, int>> paradasPorDia,
+  required ValueNotifier<ConteoDias> paradasPorDia,
   required void Function(DateTime inicio, DateTime fin) cargarMes,
 }) {
   return showModalBottomSheet<DateTime>(
@@ -288,7 +321,7 @@ Future<DateTime?> mostrarCalendarioMes(
 class _CalendarioMes extends StatefulWidget {
   final DateTime seleccionada;
   final DateTime hoy;
-  final ValueNotifier<Map<String, int>> paradasPorDia;
+  final ValueNotifier<ConteoDias> paradasPorDia;
   final void Function(DateTime inicio, DateTime fin) cargarMes;
 
   const _CalendarioMes({
@@ -347,9 +380,10 @@ class _CalendarioMesState extends State<_CalendarioMes> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: ValueListenableBuilder<Map<String, int>>(
+        child: ValueListenableBuilder<ConteoDias>(
           valueListenable: widget.paradasPorDia,
-          builder: (context, conteo, _) {
+          builder: (context, conteoDias, _) {
+            final conteo = conteoDias.total;
             final paradasDelMes = conteo.entries
                 .where((e) {
                   final f = fechaDesdeIso(e.key);
@@ -430,6 +464,7 @@ class _CalendarioMesState extends State<_CalendarioMes> {
                             seleccionado: mismoDia(dia, widget.seleccionada),
                             esHoy: mismoDia(dia, hoy),
                             paradas: conteo[fechaIso(dia)] ?? 0,
+                            sinCerrar: conteoDias.sinCerrar[fechaIso(dia)] ?? 0,
                             oscuro: false,
                             fueraDelMes: dia.month != _mes.month,
                             onTap: () => Navigator.of(context).pop(dia),

@@ -84,7 +84,7 @@ class RutaInspectorPresenter {
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
       );
-      view.showParadasPorDia(conteo);
+      view.showParadasPorDia(conteo.total, conteo.sinCerrar);
     } catch (_) {
       // Opcional: sin conteos no se bloquea la ruta.
     }

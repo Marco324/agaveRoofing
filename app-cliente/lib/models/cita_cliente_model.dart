@@ -189,6 +189,8 @@ String etiquetaDeEstado(String estado) {
       return 'Confirmada';
     case 'REPROGRAMADA':
       return 'Cambio de horario';
+    case 'REPROG_SOLICITADA':
+      return 'Cambio solicitado';
     case 'EN_CAMINO':
       return 'En camino';
     case 'EN_SITIO':

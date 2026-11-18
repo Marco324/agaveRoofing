@@ -1,4 +1,5 @@
 import { db } from '../db.ts';
+import { hoy } from '../fechaReferencia.ts';
 import {
   EstadoInspeccion,
   OrigenTransicion,
@@ -134,7 +135,10 @@ export function obtenerHorariosDisponibles(
     { inicio: '14:30', fin: '16:30' }
   ];
 
-  const baseDate = fechaBaseStr ? new Date(`${fechaBaseStr}T12:00:00Z`) : new Date(`${cita.fecha_programada}T12:00:00Z`);
+  // Los horarios se buscan a partir de la fecha de la cita o de hoy, lo que sea
+  // más tarde (una cita vencida no debe ofrecer días que ya pasaron).
+  const fechaBase = fechaBaseStr || (cita.fecha_programada > hoy() ? cita.fecha_programada : hoy());
+  const baseDate = new Date(`${fechaBase}T12:00:00Z`);
   const disponibles: HorarioDisponibleDTO[] = [];
 
   for (let d = 1; d <= diasBusqueda; d++) {
@@ -150,7 +154,7 @@ export function obtenerHorariosDisponibles(
           WHERE id_inspector = ?
             AND fecha_programada = ?
             AND id_inspeccion != ?
-            AND estado NOT IN ('CANCELADA', 'COMPLETADA', 'CLIENTE_AUSENTE')
+            AND estado NOT IN ('CANCELADA', 'COMPLETADA', 'CLIENTE_AUSENTE', 'NO_REALIZADA')
             AND (ventana_inicio < ? AND ventana_fin > ?)
         `).get(insp.id_inspector, fechaISO, idInspeccion, ventana.fin, ventana.inicio);
 
@@ -187,7 +191,8 @@ export function solicitarReprogramacion(
   }
 
   // RN-05: No permitir reprogramar cuando la cita ya va en camino o terminó
-  if (['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA'].includes(cita.estado)) {
+  // (PENDIENTE_CIERRE: la visita ocurrió y falta su cierre).
+  if (['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA', 'PENDIENTE_CIERRE'].includes(cita.estado)) {
     throw new ErrorReprogramacionEnCaminoRN05(cita.estado);
   }
 
@@ -208,6 +213,10 @@ export function solicitarReprogramacion(
   }
 
   validarVentanaOperacion(dto.ventanaInicioSolicitada, ventanaFinSolicitada);
+
+  if (dto.fechaSolicitada < hoy()) {
+    throw new Error(`La fecha solicitada (${dto.fechaSolicitada}) ya pasó; elige una a partir de ${hoy()}.`);
+  }
 
   // Transicionar la cita a REPROG_SOLICITADA (RN-01)
   transicionar(

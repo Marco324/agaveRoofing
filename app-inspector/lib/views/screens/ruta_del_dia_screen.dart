@@ -69,7 +69,9 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
   // ---------------------------------------------------------------------------
 
   /// Paradas por día de los meses ya consultados.
-  final ValueNotifier<Map<String, int>> _paradasPorDia = ValueNotifier({});
+  final ValueNotifier<ConteoDias> _paradasPorDia = ValueNotifier(
+    const ConteoDias(),
+  );
 
   /// Meses ya consultados (`2026-11`), para no repetir la petición.
   final Set<String> _mesesConConteo = {};
@@ -86,9 +88,11 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
   }
 
   @override
-  void showParadasPorDia(Map<String, int> conteo) {
+  void showParadasPorDia(Map<String, int> conteo, Map<String, int> sinCerrar) {
     if (!mounted) return;
-    _paradasPorDia.value = {..._paradasPorDia.value, ...conteo};
+    _paradasPorDia.value = _paradasPorDia.value.unir(
+      ConteoDias(total: conteo, sinCerrar: sinCerrar),
+    );
     setState(() {});
   }
 
@@ -108,10 +112,17 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     }
   }
 
+  /// Vuelve a pedir los conteos del mes visible (p. ej. tras cerrar una visita).
+  void _refrescarConteosDelMes() {
+    final dia = fechaDesdeIso(_fechaSeleccionada)!;
+    _mesesConConteo.remove(_fechaSeleccionada.substring(0, 7));
+    _cargarConteosDeSemana(dia);
+  }
+
   /// Vuelve a pedir los conteos (al cambiar de inspector o recargar).
   void _reiniciarConteos() {
     _mesesConConteo.clear();
-    _paradasPorDia.value = {};
+    _paradasPorDia.value = const ConteoDias();
     _cargarConteosDeSemana(fechaDesdeIso(_fechaSeleccionada)!);
   }
 
@@ -305,9 +316,10 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     });
   }
 
-  int _paradasTerminadas() => _paradas
-      .where((p) => p.estaCompletada || p.estado == 'CLIENTE_AUSENTE')
-      .length;
+  int _paradasTerminadas() => _paradas.where((p) => p.estaCerrada).length;
+
+  int _paradasSinCerrar() =>
+      _paradas.where((p) => p.estaPendienteCierre).length;
 
   /// Abre el marcador o la app de mensajes con el teléfono del cliente.
   Future<void> _contactarCliente(RutaParada parada, String esquema) async {
@@ -388,6 +400,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
         _idInspectorActual,
         _fechaSeleccionada,
       );
+      _refrescarConteosDelMes();
     }
   }
 
@@ -406,6 +419,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
         _idInspectorActual,
         _fechaSeleccionada,
       );
+      _refrescarConteosDelMes();
     }
   }
 
@@ -950,10 +964,17 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
                                     ),
                                     if (_paradas.isNotEmpty)
                                       Text(
-                                        '${_paradasTerminadas()} de ${_paradas.length} terminadas',
+                                        _paradasSinCerrar() > 0
+                                            ? '${_paradasTerminadas()} de ${_paradas.length} cerradas · ${_paradasSinCerrar()} sin cerrar'
+                                            : '${_paradasTerminadas()} de ${_paradas.length} cerradas',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: Colors.grey.shade700,
+                                          fontWeight: _paradasSinCerrar() > 0
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                          color: _paradasSinCerrar() > 0
+                                              ? const Color(0xFFA21CAF)
+                                              : Colors.grey.shade700,
                                         ),
                                       ),
                                   ],
@@ -1042,6 +1063,8 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
                         onCapturarResultado: () =>
                             _abrirCapturaResultado(parada),
                         onMarcarAusente: () => _confirmarAusente(parada),
+                        esDeHoy: _fechaSeleccionada == _hoy,
+                        esPasada: _fechaSeleccionada.compareTo(_hoy) < 0,
                         onLlamarCliente: () => _contactarCliente(parada, 'tel'),
                         onMensajeCliente: () =>
                             _contactarCliente(parada, 'sms'),

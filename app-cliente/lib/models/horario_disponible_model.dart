@@ -1,3 +1,5 @@
+import '../utils/formato_fecha.dart';
+
 class HorarioDisponible {
   final String fecha;
   final String ventanaInicio;
@@ -9,7 +11,8 @@ class HorarioDisponible {
     required this.ventanaFin,
   });
 
-  String get etiqueta => '$fecha ($ventanaInicio - $ventanaFin)';
+  /// `Martes 24 de noviembre · 9:00 – 11:00 am`
+  String get etiqueta => '${fechaLarga(fecha)} · ${ventanaHoraria(ventanaInicio, ventanaFin)}';
 
   factory HorarioDisponible.fromJson(Map<String, dynamic> json) {
     return HorarioDisponible(

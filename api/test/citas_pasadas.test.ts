@@ -7,6 +7,9 @@ assert.ok(
   'Ejecuta con AGAVE_DB_PATH apuntando a una base de prueba (npm run test:pasadas)'
 );
 
+// "Hoy" fijo para que la prueba no dependa del reloj real.
+process.env.FECHA_HOY = '2026-11-13';
+
 const { runSeed } = await import('../src/seed.ts');
 const { db } = await import('../src/db.ts');
 const { cerrarCitasPasadas } = await import('../src/services/citasPasadasService.ts');
@@ -184,7 +187,6 @@ console.log(`  ✔ ${vencida.folio}: NO_REALIZADA → cliente pide fecha → ofi
 // ---------------------------------------------------------------------------
 // 6. El cliente nunca ve una cita pasada como "próxima"
 // ---------------------------------------------------------------------------
-process.env.FECHA_HOY = '2026-11-13';
 for (const idCliente of new Set(todas().map((f) => f.id_cliente))) {
   const { proximaCita } = obtenerMisCitas(idCliente) as any;
   if (proximaCita) {
@@ -192,7 +194,60 @@ for (const idCliente of new Set(todas().map((f) => f.id_cliente))) {
     assert.ok(!['NO_REALIZADA', 'PENDIENTE_CIERRE'].includes(proximaCita.estado));
   }
 }
-delete process.env.FECHA_HOY;
 console.log('  ✔ Ningún cliente tiene una "próxima inspección" con fecha pasada.');
+
+// ---------------------------------------------------------------------------
+// 7. Oficina y cliente: nuevas fechas para citas vencidas
+// ---------------------------------------------------------------------------
+const { moverInspeccion } = await import('../src/services/agendaService.ts');
+const { obtenerHorariosDisponibles } = await import('../src/services/confirmacionReprogramacionService.ts');
+const { obtenerTableroIndicadores } = await import('../src/services/indicadoresService.ts');
+
+cerrarCitasPasadas('2026-11-13');
+const vencidas = todas().filter((f) => f.estado === 'NO_REALIZADA');
+assert.ok(vencidas.length >= 2, 'Debe haber citas vencidas para probar');
+
+// Horarios: nunca en el pasado
+const horarios = obtenerHorariosDisponibles(vencidas[0].id_inspeccion);
+assert.ok(horarios.length > 0);
+assert.ok(horarios.every((h) => h.fecha > '2026-11-13'), 'No se ofrecen días pasados');
+console.log(`  ✔ Horarios para una cita vencida empiezan después de hoy (${horarios[0].fecha}).`);
+
+// Mover a una fecha pasada: rechazado
+assert.throws(
+  () => moverInspeccion(vencidas[0].id_inspeccion, { nuevaFecha: '2026-11-10', nuevaVentanaInicio: '09:00', nuevaVentanaFin: '11:00' } as any),
+  /ya pasó/
+);
+// Mover a fecha futura: vuelve al flujo normal
+const movida = moverInspeccion(vencidas[0].id_inspeccion, {
+  nuevaFecha: '2026-11-25',
+  nuevaVentanaInicio: '07:00',
+  nuevaVentanaFin: '07:45',
+  motivo: 'Visita perdida'
+} as any) as any;
+assert.strictEqual(movida.estado, EstadoInspeccion.REPROGRAMADA);
+assert.strictEqual(movida.fecha_programada, '2026-11-25');
+console.log('  ✔ Oficina mueve una NO_REALIZADA a fecha futura → REPROGRAMADA (fecha pasada rechazada).');
+
+// Una visita sin cerrar no se puede mover ni reprogramar por el cliente
+const idPend = enCursoDel12[1]?.id_inspeccion;
+if (idPend && estadoDe(idPend) === 'PENDIENTE_CIERRE') {
+  assert.throws(
+    () => moverInspeccion(idPend, { nuevaFecha: '2026-11-26', nuevaVentanaInicio: '09:00', nuevaVentanaFin: '11:00' } as any),
+    /sin cerrar/
+  );
+  assert.throws(() =>
+    solicitarReprogramacion(idPend, { fechaSolicitada: '2026-11-26', ventanaInicioSolicitada: '09:00' } as any)
+  );
+  console.log('  ✔ PENDIENTE_CIERRE no se puede mover ni reprogramar.');
+}
+
+// Indicadores
+const ind = obtenerTableroIndicadores('2026-10-01', '2026-11-30') as any;
+const noRealizadasBD = todas().filter((f) => f.estado === 'NO_REALIZADA').length;
+assert.strictEqual(ind.tarjetas.noRealizadas, noRealizadasBD);
+assert.ok(typeof ind.tarjetas.tasaNoRealizadasPct === 'number');
+assert.ok(typeof ind.tarjetas.pendientesCierre === 'number');
+console.log(`  ✔ Indicadores: ${ind.tarjetas.noRealizadas} no realizadas (${ind.tarjetas.tasaNoRealizadasPct}%), ${ind.tarjetas.pendientesCierre} sin cerrar.`);
 
 console.log('✅ citas_pasadas: todas las pruebas OK\n');

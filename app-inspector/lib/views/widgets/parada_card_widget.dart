@@ -16,6 +16,12 @@ class ParadaCardWidget extends StatelessWidget {
   final VoidCallback? onLlamarCliente;
   final VoidCallback? onMensajeCliente;
 
+  /// La parada es de hoy: solo hoy se puede salir hacia el domicilio.
+  final bool esDeHoy;
+
+  /// La parada es de un día que ya pasó.
+  final bool esPasada;
+
   /// Este teléfono está enviando la ubicación de esta cita al cliente.
   final bool compartiendoUbicacion;
 
@@ -35,6 +41,8 @@ class ParadaCardWidget extends StatelessWidget {
     required this.onMarcarAusente,
     this.onLlamarCliente,
     this.onMensajeCliente,
+    this.esDeHoy = true,
+    this.esPasada = false,
     this.compartiendoUbicacion = false,
   });
 
@@ -64,6 +72,10 @@ class ParadaCardWidget extends StatelessWidget {
         return Colors.teal;
       case 'CLIENTE_AUSENTE':
         return Colors.red.shade700;
+      case 'PENDIENTE_CIERRE':
+        return const Color(0xFFC026D3); // fuchsia
+      case 'NO_REALIZADA':
+        return Colors.grey.shade700;
       default:
         return Colors.blueGrey;
     }
@@ -341,7 +353,16 @@ class ParadaCardWidget extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            if (parada.puedeIniciarTrayecto) ...[
+            if (parada.puedeIniciarTrayecto && !esDeHoy) ...[
+              _AvisoParada(
+                icono: esPasada ? Icons.history : Icons.event,
+                color: Colors.blueGrey.shade700,
+                fondo: Colors.blueGrey.shade50,
+                texto: esPasada
+                    ? 'Esta visita es de un día anterior y no se inició.'
+                    : 'Podrás salir hacia este domicilio el día de la visita.',
+              ),
+            ] else if (parada.puedeIniciarTrayecto) ...[
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -669,6 +690,57 @@ class ParadaCardWidget extends StatelessWidget {
                   ),
                 ),
               ),
+            ] else if (parada.estaPendienteCierre) ...[
+              const _AvisoParada(
+                icono: Icons.pending_actions,
+                color: Color(0xFFA21CAF),
+                fondo: Color(0xFFFDF4FF),
+                texto:
+                    'Esta visita quedó sin cerrar. Captura el resultado o registra que el cliente no estaba.',
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple.shade700,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: onCapturarResultado,
+                  icon: const Icon(Icons.assignment_turned_in, size: 20),
+                  label: const Text(
+                    'Cerrar con resultado',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red.shade700,
+                    minimumSize: const Size(0, 44),
+                  ),
+                  onPressed: onMarcarAusente,
+                  icon: const Icon(Icons.person_off_outlined, size: 18),
+                  label: const Text(
+                    'El cliente no estaba (registrar ausencia)',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+            ] else if (parada.estaNoRealizada) ...[
+              _AvisoParada(
+                icono: Icons.event_busy,
+                color: Colors.grey.shade800,
+                fondo: Colors.grey.shade100,
+                texto:
+                    'No se realizó en su fecha. La oficina le asignará una nueva.',
+              ),
             ] else if (parada.estaCompletada) ...[
               Container(
                 width: double.infinity,
@@ -689,6 +761,49 @@ class ParadaCardWidget extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Aviso de una línea con ícono, para explicar por qué no hay acciones.
+class _AvisoParada extends StatelessWidget {
+  final IconData icono;
+  final Color color;
+  final Color fondo;
+  final String texto;
+
+  const _AvisoParada({
+    required this.icono,
+    required this.color,
+    required this.fondo,
+    required this.texto,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: fondo,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icono, size: 20, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              texto,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

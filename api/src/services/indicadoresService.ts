@@ -28,6 +28,8 @@ export function obtenerTableroIndicadores(fechaInicio?: string, fechaFin?: strin
         SUM(CASE WHEN confirmado_en IS NOT NULL OR veces_reprogramada > 0 OR estado IN ('CONFIRMADA','REPROG_SOLICITADA','REPROGRAMADA','EN_CAMINO','EN_SITIO','COMPLETADA') THEN 1 ELSE 0 END) AS confirmadas,
         SUM(CASE WHEN estado = 'CLIENTE_AUSENTE' THEN 1 ELSE 0 END) AS visitas_fallidas,
         SUM(CASE WHEN estado = 'COMPLETADA' THEN 1 ELSE 0 END) AS completadas,
+        SUM(CASE WHEN estado = 'NO_REALIZADA' THEN 1 ELSE 0 END) AS no_realizadas,
+        SUM(CASE WHEN estado = 'PENDIENTE_CIERRE' THEN 1 ELSE 0 END) AS pendientes_cierre,
         SUM(CASE WHEN veces_reprogramada > 0 THEN 1 ELSE 0 END) AS reprogramadas
       FROM inspeccion
       ${whereSQL}
@@ -40,6 +42,11 @@ export function obtenerTableroIndicadores(fechaInicio?: string, fechaFin?: strin
   const visitasFallidas = Number(resumenRow?.visitas_fallidas || 0);
   const completadas = Number(resumenRow?.completadas || 0);
   const reprogramadas = Number(resumenRow?.reprogramadas || 0);
+  // Visitas perdidas: la fecha pasó y nadie fue (distinto de cliente ausente).
+  const noRealizadas = Number(resumenRow?.no_realizadas || 0);
+  const pendientesCierre = Number(resumenRow?.pendientes_cierre || 0);
+  const tasaNoRealizadasPct =
+    totalCitas > 0 ? Number(((noRealizadas / totalCitas) * 100).toFixed(1)) : 0;
 
   const tasaConfirmacionPct =
     totalCitas > 0 ? Number(((confirmadas / totalCitas) * 100).toFixed(1)) : 0;
@@ -126,7 +133,10 @@ export function obtenerTableroIndicadores(fechaInicio?: string, fechaFin?: strin
       visitasFallidas,
       tasaVisitasFallidasPct,
       reprogramadas,
-      completadas
+      completadas,
+      noRealizadas,
+      tasaNoRealizadasPct,
+      pendientesCierre
     },
     citasPorEstado,
     evolucionSemanal,

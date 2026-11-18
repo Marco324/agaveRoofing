@@ -9,11 +9,11 @@
     "api:demo": "FECHA_HOY=2026-11-12 node --experimental-strip-types --experimental-sqlite api/src/server.ts",
     "start": "node --experimental-strip-types --experimental-sqlite api/src/server.ts",
     "seed": "node --experimental-strip-types --experimental-sqlite api/src/seed.ts",
-    "test": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/citas_pasadas.test.ts && node --experimental-strip-types api/test/fecha_referencia.test.ts",
+    "test": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts && FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts && FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/citas_pasadas.test.ts && node --experimental-strip-types api/test/fecha_referencia.test.ts",
     "test:fecha": "node --experimental-strip-types api/test/fecha_referencia.test.ts",
-    "test:e07": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts",
-    "test:e08-e09": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts",
-    "test:e10-e11": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts",
+    "test:e07": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts",
+    "test:e08-e09": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts",
+    "test:e10-e11": "FECHA_HOY=2026-10-15 AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts",
     "test:pasadas": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/citas_pasadas.test.ts"
   }
 }

@@ -127,6 +127,21 @@
         </div>
       </div>
 
+      <!-- Bandeja: visitas pasadas que requieren atención de la oficina -->
+      <div id="bannerRequierenAtencion" class="hidden mb-5 sm:mb-6 bg-fuchsia-50 border-2 border-fuchsia-300 rounded-xl p-3.5 sm:p-4 shadow-sm">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-fuchsia-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-clipboard-question"></i>
+          </div>
+          <div class="text-xs min-w-0 flex-1">
+            <div class="font-bold text-fuchsia-900 text-xs sm:text-sm">Visitas que requieren atención</div>
+            <p id="textoRequierenAtencion" class="text-fuchsia-800 mt-0.5 leading-relaxed"></p>
+          </div>
+        </div>
+        <div id="listaRequierenAtencion" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-2"></div>
+        <button id="btnVerTodasAtencion" class="hidden mt-2 text-xs font-semibold text-fuchsia-800 hover:underline"></button>
+      </div>
+
       <!-- ================================================================== -->
       <!-- SECCIÓN 1: VISTA DE AGENDA Y CALENDARIO (E07 / E09)                -->
       <!-- ================================================================== -->
@@ -574,7 +589,7 @@
         </div>
 
         <!-- 5 Tarjetas Principales del Tablero (Responsivas en Móvil, Tablet y Escritorio) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
           <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <span class="text-xs text-slate-500 font-semibold">Citas del Periodo</span>
@@ -599,6 +614,14 @@
             <div id="kpiTabFallidas" class="text-2xl sm:text-3xl font-extrabold text-rose-700 mt-2">—</div>
             <div class="text-[11px] text-rose-700 mt-1">Línea base por correo: 18 %</div>
           </div>
+          <div class="bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-200 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-fuchsia-800 font-bold">Visitas No Realizadas</span>
+              <span class="w-7 h-7 rounded-lg bg-fuchsia-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-calendar-xmark"></i></span>
+            </div>
+            <div id="kpiTabNoRealizadas" class="text-2xl sm:text-3xl font-extrabold text-fuchsia-700 mt-2">—</div>
+            <div id="kpiTabNoRealizadasMeta" class="text-[11px] text-fuchsia-700 mt-1">La fecha pasó sin visita</div>
+          </div>
           <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <span class="text-xs text-amber-800 font-bold">Reprogramadas a Tiempo</span>
@@ -607,7 +630,7 @@
             <div id="kpiTabReprog" class="text-2xl sm:text-3xl font-extrabold text-amber-700 mt-2">—</div>
             <div class="text-[11px] text-amber-700 mt-1">Visitas en vano evitadas</div>
           </div>
-          <div class="sm:col-span-2 lg:col-span-1 bg-slate-900 text-white p-4 rounded-xl shadow-sm flex flex-col justify-between">
+          <div class="bg-slate-900 text-white p-4 rounded-xl shadow-sm flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <span class="text-xs text-emerald-300 font-bold">Inspecciones Completadas</span>
               <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xs"><i class="fa-solid fa-file-pdf"></i></span>
@@ -1213,6 +1236,113 @@
         toast(err.message, 'error');
       }
       renderCalendar();
+      cargarRequierenAtencion();
+    }
+
+    // ---------------------------------------------------------------------
+    // Visitas que requieren atención (citas pasadas sin cerrar o no realizadas)
+    // ---------------------------------------------------------------------
+    let requierenAtencion = [];
+    let verTodasAtencion = false;
+    const MAX_ATENCION_VISIBLES = 4;
+
+    async function cargarRequierenAtencion() {
+      try {
+        const [pendientes, noRealizadas] = await Promise.all([
+          api('/inspecciones?estado=PENDIENTE_CIERRE'),
+          api('/inspecciones?estado=NO_REALIZADA')
+        ]);
+        const porFechaDesc = (a, b) => (b.fecha_programada + b.ventana_inicio).localeCompare(a.fecha_programada + a.ventana_inicio);
+        requierenAtencion = [
+          ...(pendientes.inspecciones || []).sort(porFechaDesc),
+          ...(noRealizadas.inspecciones || []).sort(porFechaDesc)
+        ];
+      } catch (_) {
+        requierenAtencion = [];
+      }
+      renderRequierenAtencion();
+    }
+
+    function renderRequierenAtencion() {
+      const banner = document.getElementById('bannerRequierenAtencion');
+      const lista = document.getElementById('listaRequierenAtencion');
+      const btnTodas = document.getElementById('btnVerTodasAtencion');
+      if (requierenAtencion.length === 0) {
+        banner.classList.add('hidden');
+        return;
+      }
+      const sinCerrar = requierenAtencion.filter(c => c.estado === 'PENDIENTE_CIERRE').length;
+      const noRealizadas = requierenAtencion.length - sinCerrar;
+      const partes = [];
+      if (sinCerrar) partes.push(`<strong>${sinCerrar}</strong> ${sinCerrar === 1 ? 'visita quedó' : 'visitas quedaron'} sin cerrar`);
+      if (noRealizadas) partes.push(`<strong>${noRealizadas}</strong> ${noRealizadas === 1 ? 'no se realizó' : 'no se realizaron'} en su fecha`);
+      document.getElementById('textoRequierenAtencion').innerHTML =
+        `${partes.join(' y ')}. Cierra las pendientes y dales nueva fecha (o cancela) a las no realizadas.`;
+
+      const visibles = verTodasAtencion ? requierenAtencion : requierenAtencion.slice(0, MAX_ATENCION_VISIBLES);
+      lista.innerHTML = '';
+      visibles.forEach(c => {
+        const pendiente = c.estado === 'PENDIENTE_CIERRE';
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-lg border border-fuchsia-200 p-3 text-xs flex flex-col gap-2';
+        div.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="font-mono font-bold text-slate-900">${esc(c.folio)}</div>
+              <div class="text-slate-700 truncate">${esc(c.cliente_nombre)} · ${esc(formatearFechaLarga(c.fecha_programada))}</div>
+              <div class="text-slate-500 truncate">${esc(c.inspector_nombre || 'Sin inspector')} · ${esc(c.ventana_inicio)} - ${esc(c.ventana_fin)}</div>
+            </div>
+            <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border ${getEstadoBadge(c.estado)}">${pendiente ? 'SIN CERRAR' : 'NO REALIZADA'}</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            ${pendiente
+              ? `<button data-accion="no-realizada" class="px-2.5 py-1.5 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold">Marcar como no realizada</button>`
+              : `<button data-accion="nueva-fecha" class="px-2.5 py-1.5 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold">Dar nueva fecha</button>`}
+            <button data-accion="detalle" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium">Ver detalle</button>
+          </div>`;
+        div.querySelector('[data-accion="detalle"]').onclick = () => abrirDetallePorId(c.id_inspeccion);
+        const principal = div.querySelector('[data-accion="no-realizada"], [data-accion="nueva-fecha"]');
+        principal.onclick = () => pendiente ? marcarNoRealizada(c, principal) : darNuevaFecha(c);
+        lista.appendChild(div);
+      });
+
+      if (requierenAtencion.length > MAX_ATENCION_VISIBLES) {
+        btnTodas.textContent = verTodasAtencion ? 'Ver menos' : `Ver las ${requierenAtencion.length}`;
+        btnTodas.classList.remove('hidden');
+        btnTodas.onclick = () => { verTodasAtencion = !verTodasAtencion; renderRequierenAtencion(); };
+      } else {
+        btnTodas.classList.add('hidden');
+      }
+      banner.classList.remove('hidden');
+    }
+
+    async function marcarNoRealizada(c, boton) {
+      const ok = confirm(`¿Confirmas que la visita ${c.folio} del ${formatearFechaLarga(c.fecha_programada)} no se realizó?\n\nDespués podrás darle una nueva fecha.`);
+      if (!ok) return;
+      boton.disabled = true;
+      boton.classList.add('opacity-60');
+      try {
+        await api(`/inspecciones/${c.id_inspeccion}/estado`, {
+          method: 'PATCH',
+          body: {
+            nuevoEstado: 'NO_REALIZADA',
+            idUsuario: ID_USUARIO_PANEL,
+            origen: 'PANEL',
+            nota: 'La oficina confirmó que la visita no se realizó (quedó sin cerrar)'
+          }
+        });
+        toast(`${c.folio} marcada como no realizada.`);
+        await Promise.all([cargarCitasDesdeApi(), cargarFechasConCitas()]);
+      } catch (e) {
+        toast(e.message, 'error');
+        boton.disabled = false;
+        boton.classList.remove('opacity-60');
+      }
+    }
+
+    async function darNuevaFecha(c) {
+      await abrirDetallePorId(c.id_inspeccion);
+      if (selectedCita && selectedCita.id_inspeccion === c.id_inspeccion) mostrarFormularioAccion('mover');
     }
 
     const COLORES_INSPECTOR = [
@@ -1428,7 +1558,7 @@
           <h5 class="text-xs font-bold text-slate-800">Mover fecha u horario</h5>
           <p class="text-[11px] text-slate-500">Reprogramaciones usadas: ${c.veces_reprogramada || 0} de 3. El cliente recibirá el aviso del nuevo horario.</p>
           <div class="grid grid-cols-3 gap-2">
-            <label class="block text-[11px] font-semibold text-slate-600">Fecha<input type="date" name="nuevaFecha" required value="${esc(c.fecha_programada)}" class="${claseCampo} mt-1"></label>
+            <label class="block text-[11px] font-semibold text-slate-600">Fecha<input type="date" name="nuevaFecha" required min="${hoyISO()}" value="${esc(c.fecha_programada < hoyISO() ? hoyISO() : c.fecha_programada)}" class="${claseCampo} mt-1"></label>
             <label class="block text-[11px] font-semibold text-slate-600">Inicio<input type="time" name="nuevaVentanaInicio" required value="${esc(c.ventana_inicio)}" class="${claseCampo} mt-1"></label>
             <label class="block text-[11px] font-semibold text-slate-600">Fin<input type="time" name="nuevaVentanaFin" required value="${esc(c.ventana_fin)}" class="${claseCampo} mt-1"></label>
           </div>
@@ -2275,6 +2405,10 @@
       document.getElementById('kpiTabTotal').textContent = data.tarjetas.totalCitas;
       document.getElementById('kpiTabConfirmacion').textContent = `${data.tarjetas.tasaConfirmacionPct}%`;
       document.getElementById('kpiTabFallidas').textContent = `${data.tarjetas.visitasFallidas} (${data.tarjetas.tasaVisitasFallidasPct}%)`;
+      document.getElementById('kpiTabNoRealizadas').textContent = `${data.tarjetas.noRealizadas ?? 0} (${data.tarjetas.tasaNoRealizadasPct ?? 0}%)`;
+      document.getElementById('kpiTabNoRealizadasMeta').textContent = data.tarjetas.pendientesCierre
+        ? `La fecha pasó sin visita · ${data.tarjetas.pendientesCierre} más sin cerrar`
+        : 'La fecha pasó sin visita';
       document.getElementById('kpiTabReprog').textContent = data.tarjetas.reprogramadas;
       document.getElementById('kpiTabCompletadas').textContent = data.tarjetas.completadas;
 

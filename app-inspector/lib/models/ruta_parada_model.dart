@@ -144,6 +144,19 @@ class RutaParada {
   bool get estaEnSitio => estado == 'EN_SITIO';
   bool get estaCompletada => estado == 'COMPLETADA';
 
+  /// La fecha pasó con la visita en curso: aún se puede capturar el cierre.
+  bool get estaPendienteCierre => estado == 'PENDIENTE_CIERRE';
+
+  /// La fecha pasó y nadie fue.
+  bool get estaNoRealizada => estado == 'NO_REALIZADA';
+
+  /// Ya no requiere nada del inspector.
+  bool get estaCerrada =>
+      estaCompletada ||
+      estado == 'CLIENTE_AUSENTE' ||
+      estaNoRealizada ||
+      estado == 'CANCELADA';
+
   /// Texto legible del estado; nunca se muestra el código interno.
   String get etiquetaEstado {
     switch (estado) {

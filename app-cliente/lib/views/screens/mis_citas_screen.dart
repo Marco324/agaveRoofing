@@ -145,6 +145,50 @@ class _MisCitasScreenState extends State<MisCitasScreen>
   String _textoOGuion(String? texto) =>
       texto == null || texto.trim().isEmpty ? '—' : texto.trim();
 
+  /// Texto del historial para una visita sin reporte, según lo que pasó.
+  String _detalleSinReporte(CitaCliente c) {
+    switch (c.estado) {
+      case 'NO_REALIZADA':
+        return 'No se realizó esta visita';
+      case 'PENDIENTE_CIERRE':
+        return 'En revisión · tu inspector está terminando el reporte';
+      case 'REPROG_SOLICITADA':
+        return 'Pediste otra fecha · esperando respuesta de la oficina';
+      case 'CLIENTE_AUSENTE':
+        return 'No te encontramos en casa';
+      default:
+        return '${c.etiquetaEstado} · Sin reporte';
+    }
+  }
+
+  /// Para una visita no realizada: pedir otra fecha, o llamar si ya se usaron
+  /// los 3 cambios permitidos (RN-06).
+  Widget _botonNuevaVisita(CitaCliente c) {
+    if (c.vecesReprogramada >= 3) {
+      return Text(
+        'Ya usaste los 3 cambios de fecha. Llama a Agave Roofing para agendar otra visita.',
+        style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
+      );
+    }
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(46),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        onPressed: () => _presenter.abrirModalReprogramacion(c.idInspeccion),
+        icon: const Icon(Icons.edit_calendar, size: 20),
+        label: const Text(
+          'Agendar nueva visita',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
   void _mostrarReporteDialog(CitaCliente cita) {
     final res = cita.resultado;
     showDialog(
@@ -388,14 +432,25 @@ class _MisCitasScreenState extends State<MisCitasScreen>
                             fechaLarga(c.fechaProgramada),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
-                          subtitle: Text(
-                            tieneReporte
-                                ? 'Techo: ${etiquetaEstadoTecho(c.resultado!.estadoTecho)} · Ver reporte'
-                                : '${c.etiquetaEstado} · Sin reporte',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: tieneReporte ? Colors.teal.shade800 : Colors.grey.shade700,
-                            ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tieneReporte
+                                    ? 'Techo: ${etiquetaEstadoTecho(c.resultado!.estadoTecho)} · Ver reporte'
+                                    : _detalleSinReporte(c),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: tieneReporte
+                                      ? Colors.teal.shade800
+                                      : (c.estado == 'NO_REALIZADA' ? Colors.red.shade800 : Colors.grey.shade700),
+                                ),
+                              ),
+                              if (c.estado == 'NO_REALIZADA') ...[
+                                const SizedBox(height: 8),
+                                _botonNuevaVisita(c),
+                              ],
+                            ],
                           ),
                           trailing: tieneReporte ? const Icon(Icons.chevron_right) : null,
                         ),
