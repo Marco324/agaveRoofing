@@ -83,6 +83,21 @@ class InspectorApiService {
     }
   }
 
+  /// "Hoy" según la API: `(hoy: '2026-11-12', simulada: true)`.
+  Future<({String hoy, bool simulada})> getFechaReferencia() async {
+    final response = await http
+        .get(Uri.parse('$baseUrl/sistema/fecha'))
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode != 200) {
+      throw _error(response, 'No se pudo obtener la fecha del sistema');
+    }
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    return (
+      hoy: data['hoy'] as String,
+      simulada: data['simulada'] as bool? ?? false,
+    );
+  }
+
   /// Cuántas paradas tiene el inspector en cada día del rango
   /// (`2026-11-12` → 2). Las canceladas no cuentan.
   Future<Map<String, int>> getParadasPorDia({

@@ -145,7 +145,9 @@ class CitaCliente {
       estado != 'EN_CAMINO' &&
       estado != 'EN_SITIO' &&
       estado != 'COMPLETADA' &&
-      estado != 'CLIENTE_AUSENTE';
+      estado != 'CLIENTE_AUSENTE' &&
+      estado != 'CANCELADA' &&
+      estado != 'PENDIENTE_CIERRE';
 
   factory CitaCliente.fromJson(Map<String, dynamic> json) {
     return CitaCliente(
@@ -194,9 +196,13 @@ String etiquetaDeEstado(String estado) {
     case 'COMPLETADA':
       return 'Completada';
     case 'CLIENTE_AUSENTE':
-      return 'Visita no realizada';
+      return 'No te encontramos';
     case 'CANCELADA':
       return 'Cancelada';
+    case 'NO_REALIZADA':
+      return 'No se realizó';
+    case 'PENDIENTE_CIERRE':
+      return 'En revisión';
     default:
       return '—';
   }

@@ -70,7 +70,7 @@ export function validarTraslapeInspector(
     FROM inspeccion
     WHERE id_inspector = ?
       AND fecha_programada = ?
-      AND estado NOT IN ('CANCELADA', 'COMPLETADA', 'CLIENTE_AUSENTE')
+      AND estado NOT IN ('CANCELADA', 'COMPLETADA', 'CLIENTE_AUSENTE', 'NO_REALIZADA')
       AND (ventana_inicio < ? AND ventana_fin > ?)
   `;
 

@@ -265,6 +265,14 @@
                 <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> CLIENTE_AUSENTE</span>
                 <span class="text-slate-400">Cobro fallido</span>
               </div>
+              <div class="flex items-center justify-between">
+                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-700"></span> NO_REALIZADA</span>
+                <span class="text-slate-400">Fecha pasada sin visita</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></span> PENDIENTE_CIERRE</span>
+                <span class="text-slate-400">Visita sin cerrar</span>
+              </div>
             </div>
           </div>
 
@@ -945,7 +953,10 @@
     let reprogramacionesData = [];
     let catalogos = { zonas: [], inspectores: [], clientes: [], domicilios: [] };
     const ID_USUARIO_PANEL = 'u-admin-001';
-    const ESTADOS_NO_MODIFICABLES = ['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA'];
+    const ESTADOS_NO_MODIFICABLES = ['EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'CLIENTE_AUSENTE', 'CANCELADA', 'PENDIENTE_CIERRE'];
+    // "Hoy" lo decide la API (puede estar fijado con FECHA_HOY para la demo).
+    let fechaReferencia = { hoy: null, simulada: false };
+
     let fechaFiltro = hoyISO();
     let selectedCita = null;
     let monitorTimer = null;
@@ -957,8 +968,17 @@
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    async function cargarFechaReferencia() {
+      try {
+        const r = await fetch(`${API_URL}/sistema/fecha`);
+        if (r.ok) fechaReferencia = await r.json();
+      } catch (_) {
+        // Sin API se usa la fecha del navegador.
+      }
+    }
+
     function hoyISO() {
-      return aISO(new Date());
+      return fechaReferencia.hoy || aISO(new Date());
     }
 
     function sumarDias(iso, dias) {
@@ -1279,7 +1299,9 @@
         EN_CAMINO: 'bg-cyan-100 text-cyan-800 border-cyan-200',
         EN_SITIO: 'bg-green-100 text-green-800 border-green-200',
         COMPLETADA: 'bg-slate-200 text-slate-800 border-slate-300',
-        CANCELADA: 'bg-slate-100 text-slate-600 border-slate-200'
+        CANCELADA: 'bg-slate-100 text-slate-600 border-slate-200',
+        NO_REALIZADA: 'bg-red-100 text-red-800 border-red-200',
+        PENDIENTE_CIERRE: 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200'
       };
       return badges[estado] || 'bg-slate-100 text-slate-700 border-slate-200';
     }
@@ -1576,9 +1598,10 @@
 
     function actualizarEtiquetaFecha() {
       document.getElementById('currentDateDisplay').textContent = formatearFechaLarga(fechaFiltro);
-      document.getElementById('currentSprintLabel').textContent = fechaFiltro === hoyISO()
+      document.getElementById('currentSprintLabel').textContent = (fechaFiltro === hoyISO()
         ? 'Hoy · Agenda de inspecciones — San Antonio, TX'
-        : 'Agenda de inspecciones — San Antonio, TX';
+        : 'Agenda de inspecciones — San Antonio, TX')
+        + (fechaReferencia.simulada ? ' · Fecha de demo' : '');
       document.getElementById('inputFechaAgenda').value = fechaFiltro;
       const lblMonitor = document.getElementById('labelFechaMonitor');
       if (lblMonitor) lblMonitor.textContent = formatearFechaLarga(fechaFiltro);
@@ -2486,6 +2509,8 @@
     };
 
     async function inicializarPanel() {
+      await cargarFechaReferencia();
+      fechaFiltro = hoyISO();
       document.getElementById('inputKpiInicio').value = sumarDias(hoyISO(), -60);
       document.getElementById('inputKpiFin').value = sumarDias(hoyISO(), 14);
       document.getElementById('inputNuevaFechaOficina').value = sumarDias(hoyISO(), 1);

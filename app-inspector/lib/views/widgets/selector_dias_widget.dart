@@ -9,6 +9,9 @@ const Color _slate = Color(0xFF0F172A);
 /// cuántas paradas tiene; las flechas cambian de semana.
 class SelectorSemanaWidget extends StatelessWidget {
   final DateTime seleccionada;
+
+  /// "Hoy" según la API (puede ser una fecha de demo).
+  final DateTime hoy;
   final Map<String, int> paradasPorDia;
   final ValueChanged<DateTime> onSeleccionar;
   final VoidCallback onAbrirCalendario;
@@ -16,6 +19,7 @@ class SelectorSemanaWidget extends StatelessWidget {
   const SelectorSemanaWidget({
     super.key,
     required this.seleccionada,
+    required this.hoy,
     required this.paradasPorDia,
     required this.onSeleccionar,
     required this.onAbrirCalendario,
@@ -26,7 +30,6 @@ class SelectorSemanaWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lunes = inicioDeSemana(seleccionada);
-    final hoy = DateTime.now();
     final dias = List.generate(
       7,
       (i) => DateTime(lunes.year, lunes.month, lunes.day + i),
@@ -264,6 +267,7 @@ String _capitalizar(String s) =>
 Future<DateTime?> mostrarCalendarioMes(
   BuildContext context, {
   required DateTime seleccionada,
+  required DateTime hoy,
   required ValueNotifier<Map<String, int>> paradasPorDia,
   required void Function(DateTime inicio, DateTime fin) cargarMes,
 }) {
@@ -274,6 +278,7 @@ Future<DateTime?> mostrarCalendarioMes(
     backgroundColor: Colors.white,
     builder: (_) => _CalendarioMes(
       seleccionada: seleccionada,
+      hoy: hoy,
       paradasPorDia: paradasPorDia,
       cargarMes: cargarMes,
     ),
@@ -282,11 +287,13 @@ Future<DateTime?> mostrarCalendarioMes(
 
 class _CalendarioMes extends StatefulWidget {
   final DateTime seleccionada;
+  final DateTime hoy;
   final ValueNotifier<Map<String, int>> paradasPorDia;
   final void Function(DateTime inicio, DateTime fin) cargarMes;
 
   const _CalendarioMes({
     required this.seleccionada,
+    required this.hoy,
     required this.paradasPorDia,
     required this.cargarMes,
   });
@@ -335,7 +342,7 @@ class _CalendarioMesState extends State<_CalendarioMes> {
       totalDias,
       (i) => DateTime(inicio.year, inicio.month, inicio.day + i),
     );
-    final hoy = DateTime.now();
+    final hoy = widget.hoy;
 
     return SafeArea(
       child: Padding(

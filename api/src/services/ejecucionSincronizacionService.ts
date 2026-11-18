@@ -16,6 +16,7 @@ import type {
   EnviarMensajeDTO
 } from '../../../shared/src/types/dtos.ts';
 import { transicionar } from './maquinaEstadosService.ts';
+import { reabrirParaCierreTardio } from './citasPasadasService.ts';
 import { cerrarTrayecto } from './trayectoService.ts';
 import {
   encolarNotificacion,
@@ -124,13 +125,26 @@ export function registrarLlegadaInspector(
 
   const ocurridoEn = dto.ocurridoEn || new Date().toISOString();
 
-  // Si la cita ya estaba EN_SITIO o COMPLETADA, devolver de forma idempotente
-  if (cita.estado !== EstadoInspeccion.EN_SITIO && cita.estado !== EstadoInspeccion.COMPLETADA) {
+  // Llegada que se sincroniza después de su fecha: si el cierre automático ya la
+  // marcó NO_REALIZADA, la llegada prueba que sí hubo visita.
+  const estadoLlegada = reabrirParaCierreTardio(
+    idInspeccion,
+    cita.estado,
+    `llegada del inspector sincronizada después de la fecha (${ocurridoEn})`
+  );
+
+  // Si la cita ya estaba EN_SITIO, COMPLETADA o pendiente de cierre (fecha
+  // pasada), solo se registra la llegada; el estado no cambia.
+  if (
+    estadoLlegada !== EstadoInspeccion.EN_SITIO &&
+    estadoLlegada !== EstadoInspeccion.COMPLETADA &&
+    estadoLlegada !== EstadoInspeccion.PENDIENTE_CIERRE
+  ) {
     // Si venía de CONFIRMADA/NOTIFICADA/SIN_CONFIRMAR porque operó sin señal todo el camino, pasar primero a EN_CAMINO
     if (
-      cita.estado === EstadoInspeccion.CONFIRMADA ||
-      cita.estado === EstadoInspeccion.NOTIFICADA ||
-      cita.estado === EstadoInspeccion.SIN_CONFIRMAR
+      estadoLlegada === EstadoInspeccion.CONFIRMADA ||
+      estadoLlegada === EstadoInspeccion.NOTIFICADA ||
+      estadoLlegada === EstadoInspeccion.SIN_CONFIRMAR
     ) {
       transicionar(
         idInspeccion,
@@ -163,24 +177,28 @@ export function registrarLlegadaInspector(
     trayectoCerrado = cerrarTrayecto(trayectoActivo.id_trayecto, 'LLEGADA', ocurridoEn);
   }
 
-  // Encolar y despachar notificación LLEGADA al cliente
-  try {
-    encolarNotificacion({
-      idInspeccion,
-      tipo: TipoNotificacion.LLEGADA,
-      programadaPara: ocurridoEn
-    });
-    despacharNotificacionesPendientes(ocurridoEn);
-  } catch (err) {
-    if (!(err instanceof ErrorNotificacionDuplicadaRN13)) {
-      throw err;
+  // Encolar y despachar notificación LLEGADA al cliente (no tiene sentido
+  // avisar "tu inspector llegó" días después de la fecha de la cita).
+  const llegadaTardia = estadoLlegada === EstadoInspeccion.PENDIENTE_CIERRE;
+  if (!llegadaTardia) {
+    try {
+      encolarNotificacion({
+        idInspeccion,
+        tipo: TipoNotificacion.LLEGADA,
+        programadaPara: ocurridoEn
+      });
+      despacharNotificacionesPendientes(ocurridoEn);
+    } catch (err) {
+      if (!(err instanceof ErrorNotificacionDuplicadaRN13)) {
+        throw err;
+      }
     }
   }
 
   const respuesta = {
     idInspeccion,
     folio: cita.folio,
-    estado: EstadoInspeccion.EN_SITIO,
+    estado: llegadaTardia ? EstadoInspeccion.PENDIENTE_CIERRE : EstadoInspeccion.EN_SITIO,
     ocurridoEn,
     registradoSinSenal: Boolean(dto.registradoSinSenal),
     idLocal: dto.idLocal || null,
@@ -413,9 +431,20 @@ export function registrarResultadoInspeccion(
     .prepare('SELECT estado FROM inspeccion WHERE id_inspeccion = ?')
     .get(idInspeccion) as { estado: string };
 
-  if (citaActual.estado !== EstadoInspeccion.COMPLETADA) {
-    if (citaActual.estado !== EstadoInspeccion.EN_SITIO) {
-      if (citaActual.estado !== EstadoInspeccion.EN_CAMINO) {
+  // Resultado que llega después de la fecha (cola sin señal o cierre tardío).
+  const estadoResultado = reabrirParaCierreTardio(
+    idInspeccion,
+    citaActual.estado,
+    `resultado de la inspección sincronizado después de la fecha (${registradoEn})`
+  );
+
+  if (estadoResultado !== EstadoInspeccion.COMPLETADA) {
+    // Pendiente de cierre: pasa directo a COMPLETADA (la visita ya ocurrió).
+    if (
+      estadoResultado !== EstadoInspeccion.EN_SITIO &&
+      estadoResultado !== EstadoInspeccion.PENDIENTE_CIERRE
+    ) {
+      if (estadoResultado !== EstadoInspeccion.EN_CAMINO) {
         transicionar(
           idInspeccion,
           EstadoInspeccion.EN_CAMINO,
@@ -542,11 +571,17 @@ export function registrarClienteAusente(
     cerrarTrayecto(trayectoActivo.id_trayecto, 'CLIENTE_AUSENTE', ocurridoEn);
   }
 
-  // 3. Transicionar a CLIENTE_AUSENTE
-  if (cita.estado !== EstadoInspeccion.CLIENTE_AUSENTE) {
+  // 3. Transicionar a CLIENTE_AUSENTE (también si llega después de la fecha)
+  const estadoAusencia = reabrirParaCierreTardio(
+    idInspeccion,
+    cita.estado,
+    `ausencia del cliente sincronizada después de la fecha (${ocurridoEn})`
+  );
+  if (estadoAusencia !== EstadoInspeccion.CLIENTE_AUSENTE) {
     if (
-      cita.estado !== EstadoInspeccion.EN_CAMINO &&
-      cita.estado !== EstadoInspeccion.EN_SITIO
+      estadoAusencia !== EstadoInspeccion.EN_CAMINO &&
+      estadoAusencia !== EstadoInspeccion.EN_SITIO &&
+      estadoAusencia !== EstadoInspeccion.PENDIENTE_CIERRE
     ) {
       transicionar(
         idInspeccion,

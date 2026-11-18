@@ -31,7 +31,11 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
   bool _isLoading = false;
   late int _idInspectorActual;
   late String _nombreInspectorActual;
-  String _fechaSeleccionada = '2026-11-12';
+
+  /// "Hoy" según la API; mientras responde, la fecha del teléfono.
+  String _hoy = fechaIso(DateTime.now());
+  bool _fechaSimulada = false;
+  late String _fechaSeleccionada = _hoy;
   List<RutaParada> _paradas = [];
 
   // Envío de ubicación al cliente
@@ -49,8 +53,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     _nombreInspectorActual = widget.nombreInspector;
     WidgetsBinding.instance.addObserver(this);
     _presenter = RutaInspectorPresenter(this);
-    _presenter.cargarRuta(_idInspectorActual, _fechaSeleccionada);
-    _cargarConteosDeSemana(fechaDesdeIso(_fechaSeleccionada)!);
+    _presenter.iniciar(_idInspectorActual, fechaPorDefecto: _hoy);
   }
 
   @override
@@ -70,6 +73,17 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
 
   /// Meses ya consultados (`2026-11`), para no repetir la petición.
   final Set<String> _mesesConConteo = {};
+
+  @override
+  void showFechaReferencia(String hoy, {required bool simulada}) {
+    if (!mounted) return;
+    setState(() {
+      _hoy = hoy;
+      _fechaSimulada = simulada;
+      _fechaSeleccionada = hoy;
+    });
+    _cargarConteosDeSemana(fechaDesdeIso(hoy)!);
+  }
 
   @override
   void showParadasPorDia(Map<String, int> conteo) {
@@ -117,6 +131,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
     final elegido = await mostrarCalendarioMes(
       context,
       seleccionada: fechaDesdeIso(_fechaSeleccionada)!,
+      hoy: fechaDesdeIso(_hoy)!,
       paradasPorDia: _paradasPorDia,
       cargarMes: (inicio, fin) {
         final clave = fechaIso(
@@ -834,7 +849,9 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
             ),
             Text(
-              _nombreInspectorActual,
+              _fechaSimulada
+                  ? '$_nombreInspectorActual · fecha de demo'
+                  : _nombreInspectorActual,
               style: const TextStyle(fontSize: 12),
               overflow: TextOverflow.ellipsis,
             ),
@@ -883,6 +900,7 @@ class _RutaDelDiaScreenState extends State<RutaDelDiaScreen>
           preferredSize: const Size.fromHeight(SelectorSemanaWidget.alto),
           child: SelectorSemanaWidget(
             seleccionada: fechaDesdeIso(_fechaSeleccionada)!,
+            hoy: fechaDesdeIso(_hoy)!,
             paradasPorDia: _paradasPorDia.value,
             onSeleccionar: _seleccionarDia,
             onAbrirCalendario: _abrirCalendario,

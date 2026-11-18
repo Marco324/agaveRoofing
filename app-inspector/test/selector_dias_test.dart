@@ -24,11 +24,13 @@ void main() {
                   ),
                   child: SelectorSemanaWidget(
                     seleccionada: DateTime(2026, 11, 12),
+                    hoy: DateTime(2026, 11, 12),
                     paradasPorDia: conteo.value,
                     onSeleccionar: (_) {},
                     onAbrirCalendario: () => mostrarCalendarioMes(
                       context,
                       seleccionada: DateTime(2026, 11, 12),
+                      hoy: DateTime(2026, 11, 12),
                       paradasPorDia: conteo,
                       cargarMes: (_, _) {},
                     ),

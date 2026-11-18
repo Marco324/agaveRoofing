@@ -47,6 +47,23 @@ Con la API corriendo, abre estos archivos directamente en el navegador (la API n
 
 Para usar otro puerto: `PORT=5000 npm run api` (y actualizar `API_URL` en el panel y los simuladores).
 
+**Fecha de referencia ("hoy").** La API decide qué es "hoy" (próxima cita del cliente, ruta por defecto del inspector, botón *Hoy* del panel y de las apps) con la fecha de San Antonio (`America/Chicago`). Los datos de prueba están alrededor del **12 de noviembre de 2026**; para presentar la demo con esa fecha:
+```bash
+npm run api:demo                      # equivale a FECHA_HOY=2026-11-12 npm run api
+FECHA_HOY=2026-11-20 npm run api      # cualquier otra fecha
+```
+`GET /api/sistema/fecha` devuelve `{ hoy, simulada, fechaReal, zonaHoraria }`. Las marcas de tiempo (GPS, bitácora, sincronización) siempre usan el reloj real.
+
+**Citas pasadas.** Al arrancar y cada 10 minutos, la API cierra las citas con fecha anterior a "hoy" (también a mano: `POST /api/sistema/cerrar-citas-pasadas`):
+- Nadie fue (`PROGRAMADA`, `NOTIFICADA`, `CONFIRMADA`, `SIN_CONFIRMAR`, `REPROGRAMADA`) → **`NO_REALIZADA`**. Se puede reprogramar conservando el folio.
+- El inspector salió o llegó sin cerrar (`EN_CAMINO`, `EN_SITIO`) → **`PENDIENTE_CIERRE`**; su GPS se apaga y todavía acepta el resultado o la ausencia.
+- `REPROG_SOLICITADA` no vence sola: espera la respuesta de la oficina.
+- Si llega tarde evidencia del modo sin señal (llegada, resultado o ausencia) de una cita `NO_REALIZADA`, se reabre como `PENDIENTE_CIERRE` y se cierra con lo que llegó.
+
+> ⚠️ El cierre es permanente en la base. Si levantas la API con la fecha real (`npm run api`), las citas de la demo del 12 de noviembre quedarán cerradas; vuelve a sembrar con `npm run seed` y usa `npm run api:demo`.
+
+`npm test` usa su propia base (`data/prueba.db`, vía `AGAVE_DB_PATH`) y no toca la de la demo.
+
 ### 2. Ejecutar las Aplicaciones Móviles en Flutter
 La URL de la API se lee de `--dart-define=API_URL` (`lib/config/api_config.dart`). Si no se indica:
 - **Emulador de Android:** `http://10.0.2.2:4000/api` (así ve el emulador a tu computadora).

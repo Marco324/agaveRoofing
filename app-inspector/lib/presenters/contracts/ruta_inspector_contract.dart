@@ -5,6 +5,9 @@ abstract class RutaInspectorViewContract {
   void hideLoading();
   void showRuta(List<RutaParada> paradas, String fecha);
 
+  /// "Hoy" del sistema; [simulada] indica una fecha fija de demo.
+  void showFechaReferencia(String hoy, {required bool simulada});
+
   /// Paradas por día (`2026-11-12` → 2) para marcar el calendario.
   void showParadasPorDia(Map<String, int> conteo);
   void showError(String message);

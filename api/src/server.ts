@@ -68,6 +68,8 @@ import {
   exportarIndicadoresCSV
 } from './services/indicadoresService.ts';
 import { EstadoInspeccion, OrigenTransicion } from '../../shared/src/types/estados.ts';
+import { hoy, infoFecha } from './fechaReferencia.ts';
+import { cerrarCitasPasadas, programarCierreDeCitasPasadas } from './services/citasPasadasService.ts';
 
 initDatabase();
 
@@ -152,8 +154,19 @@ const server = http.createServer(async (req, res) => {
         empresa: 'Agave Roofing (San Antonio, TX)',
         version: '1.2.0-E12',
         sprint: 'Sprint 6 (E01 a E12 Completos)',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        fecha: infoFecha()
       });
+    }
+
+    // 1a. Fecha de negocio ("hoy"), real o fijada con FECHA_HOY
+    if (pathname === '/api/sistema/fecha' && method === 'GET') {
+      return json(res, 200, infoFecha());
+    }
+
+    // 1a'. Cierre de citas pasadas (también corre solo al arrancar y cada 10 min)
+    if (pathname === '/api/sistema/cerrar-citas-pasadas' && method === 'POST') {
+      return json(res, 200, { ok: true, ...cerrarCitasPasadas() });
     }
 
     // 1b. Autenticación por Rol y OTP (E05) + Bitácora
@@ -328,7 +341,7 @@ const server = http.createServer(async (req, res) => {
     // 3. Ruta del día del inspector (E07 Anuar IN)
     if (pathname === '/api/inspecciones/mi-ruta' && method === 'GET') {
       const idInspector = parseInt(reqUrl.searchParams.get('idInspector') || '1', 10);
-      const fecha = reqUrl.searchParams.get('fecha') || new Date().toISOString().split('T')[0];
+      const fecha = reqUrl.searchParams.get('fecha') || hoy();
       const ruta = obtenerRutaDelDia(idInspector, fecha);
       return json(res, 200, { idInspector, fecha, totalParadas: ruta.length, paradas: ruta });
     }
@@ -860,6 +873,13 @@ export function startServer(port = PORT) {
   return new Promise((resolve) => {
     server.listen(port, () => {
       console.log(`🚀 AgaveAlerta API escuchando en http://localhost:${port}`);
+      const f = infoFecha();
+      console.log(
+        f.simulada
+          ? `📅 Fecha de referencia FIJA (FECHA_HOY): ${f.hoy} — la real es ${f.fechaReal}`
+          : `📅 Fecha de referencia: ${f.hoy} (${f.zonaHoraria})`
+      );
+      programarCierreDeCitasPasadas();
       resolve(server);
     });
   });

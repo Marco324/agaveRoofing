@@ -288,8 +288,12 @@ export function resolverReprogramacion(
       );
     }
 
-    // 1. Transición por máquina de estados: REPROG_SOLICITADA -> REPROGRAMADA -> NOTIFICADA (conservando el mismo folio RN-06)
-    if (cita.estado === EstadoInspeccion.REPROG_SOLICITADA) {
+    // 1. Transición por máquina de estados: REPROG_SOLICITADA -> REPROGRAMADA -> NOTIFICADA (conservando el mismo folio RN-06).
+    //    También desde NO_REALIZADA: la cita vencida recibe su nueva fecha.
+    if (
+      cita.estado === EstadoInspeccion.REPROG_SOLICITADA ||
+      cita.estado === EstadoInspeccion.NO_REALIZADA
+    ) {
       transicionar(
         cita.id_inspeccion,
         EstadoInspeccion.REPROGRAMADA,

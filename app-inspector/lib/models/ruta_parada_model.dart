@@ -169,6 +169,10 @@ class RutaParada {
         return 'Cliente ausente';
       case 'CANCELADA':
         return 'Cancelada';
+      case 'NO_REALIZADA':
+        return 'No realizada';
+      case 'PENDIENTE_CIERRE':
+        return 'Sin cerrar';
       default:
         return '—';
     }

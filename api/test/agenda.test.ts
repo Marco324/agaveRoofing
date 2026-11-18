@@ -149,8 +149,15 @@ rutaInspector.forEach((p, idx) => {
 // Prueba 7: Endpoint de Mis Citas del cliente (E07 Jesús)
 // -------------------------------------------------------------
 console.log('\n▶ [Prueba 7] Mis Citas del cliente (próxima cita y línea de tiempo)');
+// La próxima cita depende de "hoy": se fija en la fecha de estos datos de
+// prueba (una cita pasada nunca se muestra como próxima).
+const fechaHoyOriginal = process.env.FECHA_HOY;
+process.env.FECHA_HOY = '2026-10-15';
 const misCitas = obtenerMisCitas(1);
+if (fechaHoyOriginal === undefined) delete process.env.FECHA_HOY;
+else process.env.FECHA_HOY = fechaHoyOriginal;
 assert.ok(misCitas.proximaCita !== null, 'El cliente 1 debe tener su próxima cita');
+assert.ok(misCitas.proximaCita!.fechaProgramada >= '2026-10-15', 'La próxima cita no puede ser pasada');
 assert.ok(misCitas.proximaCita!.lineaDeTiempo.length >= 2, 'Debe incluir la línea de tiempo');
 console.log(`  ✔ Próxima cita de ${misCitas.proximaCita!.folio}: ${misCitas.proximaCita!.fechaProgramada} (${misCitas.proximaCita!.ventanaInicio})`);
 console.log(`  ✔ Eventos en línea de tiempo: ${misCitas.proximaCita!.lineaDeTiempo.length}`);

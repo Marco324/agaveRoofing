@@ -13,8 +13,42 @@ export const EstadoInspeccion = {
   EN_SITIO: 'EN_SITIO',
   COMPLETADA: 'COMPLETADA',
   CLIENTE_AUSENTE: 'CLIENTE_AUSENTE',
-  CANCELADA: 'CANCELADA'
+  CANCELADA: 'CANCELADA',
+  /** La fecha pasó y nadie fue: cierre automático (se puede reprogramar). */
+  NO_REALIZADA: 'NO_REALIZADA',
+  /** La fecha pasó con el inspector en camino o en sitio sin cerrar la visita. */
+  PENDIENTE_CIERRE: 'PENDIENTE_CIERRE'
 } as const;
+
+/** Estados en los que todavía nadie ha ido al domicilio. */
+export const ESTADOS_ANTES_DE_LA_VISITA: readonly EstadoInspeccion[] = [
+  'PROGRAMADA',
+  'NOTIFICADA',
+  'CONFIRMADA',
+  'SIN_CONFIRMAR',
+  'REPROG_SOLICITADA',
+  'REPROGRAMADA'
+];
+
+/**
+ * Estados que el cierre automático pasa a NO_REALIZADA cuando su fecha queda
+ * atrás. REPROG_SOLICITADA no: espera la respuesta de la oficina.
+ */
+export const ESTADOS_QUE_VENCEN_SIN_VISITA: readonly EstadoInspeccion[] = ESTADOS_ANTES_DE_LA_VISITA.filter(
+  (e) => e !== 'REPROG_SOLICITADA'
+);
+
+/** Estados con la visita en curso (el inspector salió o llegó). */
+export const ESTADOS_VISITA_EN_CURSO: readonly EstadoInspeccion[] = ['EN_CAMINO', 'EN_SITIO'];
+
+/** Estados en los que la cita ya no va a ocurrir en su fecha (no es "próxima"). */
+export const ESTADOS_FINALIZADOS_O_VENCIDOS: readonly EstadoInspeccion[] = [
+  'COMPLETADA',
+  'CLIENTE_AUSENTE',
+  'CANCELADA',
+  'NO_REALIZADA',
+  'PENDIENTE_CIERRE'
+];
 
 export type EstadoInspeccion = (typeof EstadoInspeccion)[keyof typeof EstadoInspeccion];
 
@@ -106,44 +140,65 @@ export type TipoEvidencia = (typeof TipoEvidencia)[keyof typeof TipoEvidencia];
 export const TRANSICIONES_PERMITIDAS: Record<EstadoInspeccion, readonly EstadoInspeccion[]> = {
   [EstadoInspeccion.PROGRAMADA]: [
     EstadoInspeccion.NOTIFICADA,
-    EstadoInspeccion.CANCELADA
+    EstadoInspeccion.CANCELADA,
+    EstadoInspeccion.NO_REALIZADA // La fecha pasó sin visita
   ],
   [EstadoInspeccion.NOTIFICADA]: [
     EstadoInspeccion.CONFIRMADA,
     EstadoInspeccion.REPROG_SOLICITADA,
     EstadoInspeccion.SIN_CONFIRMAR,
     EstadoInspeccion.EN_CAMINO,
-    EstadoInspeccion.CANCELADA
+    EstadoInspeccion.CANCELADA,
+    EstadoInspeccion.NO_REALIZADA // La fecha pasó sin visita
   ],
   [EstadoInspeccion.CONFIRMADA]: [
     EstadoInspeccion.EN_CAMINO,
     EstadoInspeccion.REPROG_SOLICITADA,
-    EstadoInspeccion.CANCELADA
+    EstadoInspeccion.CANCELADA,
+    EstadoInspeccion.NO_REALIZADA // La fecha pasó sin visita
   ],
   [EstadoInspeccion.SIN_CONFIRMAR]: [
     EstadoInspeccion.CONFIRMADA,
     EstadoInspeccion.REPROG_SOLICITADA,
     EstadoInspeccion.EN_CAMINO,
-    EstadoInspeccion.CANCELADA
+    EstadoInspeccion.CANCELADA,
+    EstadoInspeccion.NO_REALIZADA // La fecha pasó sin visita
   ],
   [EstadoInspeccion.REPROG_SOLICITADA]: [
     EstadoInspeccion.REPROGRAMADA,
     EstadoInspeccion.NOTIFICADA, // Si el admin rechaza la reprogramación
     EstadoInspeccion.CANCELADA
+    // No vence sola: la oficina debe responder la solicitud aunque la fecha pase.
   ],
   [EstadoInspeccion.REPROGRAMADA]: [
     EstadoInspeccion.NOTIFICADA,
     EstadoInspeccion.CONFIRMADA,
     EstadoInspeccion.EN_CAMINO,
-    EstadoInspeccion.CANCELADA
+    EstadoInspeccion.CANCELADA,
+    EstadoInspeccion.NO_REALIZADA // La fecha pasó sin visita
   ],
   [EstadoInspeccion.EN_CAMINO]: [
     EstadoInspeccion.EN_SITIO,
-    EstadoInspeccion.CLIENTE_AUSENTE
+    EstadoInspeccion.CLIENTE_AUSENTE,
+    EstadoInspeccion.PENDIENTE_CIERRE // La fecha pasó sin cerrar la visita
   ],
   [EstadoInspeccion.EN_SITIO]: [
     EstadoInspeccion.COMPLETADA,
-    EstadoInspeccion.CLIENTE_AUSENTE
+    EstadoInspeccion.CLIENTE_AUSENTE,
+    EstadoInspeccion.PENDIENTE_CIERRE // La fecha pasó sin cerrar la visita
+  ],
+  // El inspector (o una sincronización tardía) cierra la visita, o la oficina
+  // confirma que no se hizo.
+  [EstadoInspeccion.PENDIENTE_CIERRE]: [
+    EstadoInspeccion.COMPLETADA,
+    EstadoInspeccion.CLIENTE_AUSENTE,
+    EstadoInspeccion.NO_REALIZADA
+  ],
+  [EstadoInspeccion.NO_REALIZADA]: [
+    EstadoInspeccion.PENDIENTE_CIERRE, // Llegó evidencia sincronizada tarde (modo sin señal)
+    EstadoInspeccion.REPROG_SOLICITADA, // El cliente pide una nueva fecha
+    EstadoInspeccion.REPROGRAMADA, // La oficina le da una nueva fecha
+    EstadoInspeccion.CANCELADA
   ],
   [EstadoInspeccion.CLIENTE_AUSENTE]: [],
   [EstadoInspeccion.COMPLETADA]: [],

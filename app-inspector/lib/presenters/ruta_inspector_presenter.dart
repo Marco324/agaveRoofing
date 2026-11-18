@@ -36,6 +36,25 @@ class RutaInspectorPresenter {
 
   String _mensajeDe(Object e) => e.toString().replaceAll('Exception: ', '');
 
+  /// Primera carga: pregunta a la API qué día es "hoy" y abre esa ruta.
+  /// Sin respuesta, usa la fecha del teléfono.
+  Future<void> iniciar(
+    int idInspector, {
+    required String fechaPorDefecto,
+  }) async {
+    var hoy = fechaPorDefecto;
+    var simulada = false;
+    try {
+      final ref = await apiService.getFechaReferencia();
+      hoy = ref.hoy;
+      simulada = ref.simulada;
+    } catch (_) {
+      // Se queda con la fecha del teléfono.
+    }
+    view.showFechaReferencia(hoy, simulada: simulada);
+    await cargarRuta(idInspector, hoy);
+  }
+
   Future<void> cargarRuta(int idInspector, String fecha) async {
     view.showLoading();
     try {

@@ -6,11 +6,14 @@
   "type": "module",
   "scripts": {
     "api": "node --experimental-strip-types --experimental-sqlite api/src/server.ts",
+    "api:demo": "FECHA_HOY=2026-11-12 node --experimental-strip-types --experimental-sqlite api/src/server.ts",
     "start": "node --experimental-strip-types --experimental-sqlite api/src/server.ts",
     "seed": "node --experimental-strip-types --experimental-sqlite api/src/seed.ts",
-    "test": "node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts && node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts && node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts",
-    "test:e07": "node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts",
-    "test:e08-e09": "node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts",
-    "test:e10-e11": "node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts"
+    "test": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts && AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/citas_pasadas.test.ts && node --experimental-strip-types api/test/fecha_referencia.test.ts",
+    "test:fecha": "node --experimental-strip-types api/test/fecha_referencia.test.ts",
+    "test:e07": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/agenda.test.ts",
+    "test:e08-e09": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e08_e09.test.ts",
+    "test:e10-e11": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/e10_e11.test.ts",
+    "test:pasadas": "AGAVE_DB_PATH=data/prueba.db node --experimental-strip-types --experimental-sqlite api/test/citas_pasadas.test.ts"
   }
 }

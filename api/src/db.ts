@@ -7,7 +7,10 @@ if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-const DB_PATH = path.join(DB_DIR, 'agavealerta.db');
+// AGAVE_DB_PATH permite a las pruebas usar otra base y no tocar la de la demo.
+const DB_PATH = process.env.AGAVE_DB_PATH
+  ? path.resolve(process.cwd(), process.env.AGAVE_DB_PATH)
+  : path.join(DB_DIR, 'agavealerta.db');
 
 export const db = new DatabaseSync(DB_PATH);
 

@@ -1,8 +1,9 @@
 import { db } from '../db.ts';
 import type { CitaClienteDTO } from '../../../shared/src/types/dtos.ts';
-import { EstadoInspeccion } from '../../../shared/src/types/estados.ts';
+import { EstadoInspeccion, ESTADOS_FINALIZADOS_O_VENCIDOS } from '../../../shared/src/types/estados.ts';
 import { obtenerSeguimientoVivo } from './trayectoService.ts';
 import { listarMensajesInspeccion } from './ejecucionSincronizacionService.ts';
+import { hoy as fechaHoy } from '../fechaReferencia.ts';
 
 export interface MisCitasResponse {
   proximaCita: CitaClienteDTO | null;
@@ -150,14 +151,18 @@ export function obtenerMisCitas(idCliente: number): MisCitasResponse {
   });
 
   // Próxima cita: la cita activa más próxima en fecha presente/futura, o la activa más reciente
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = fechaHoy();
+  // Próxima cita: solo citas vigentes de hoy en adelante. Una cita pasada que
+  // el cierre automático aún no procesa tampoco se muestra como "próxima".
   const activas = citas.filter(
-    (c) => !['COMPLETADA', 'CANCELADA', 'CLIENTE_AUSENTE'].includes(c.estado)
+    (c) => !ESTADOS_FINALIZADOS_O_VENCIDOS.includes(c.estado as EstadoInspeccion)
   );
   const proximaCita =
-    activas.find((c) => c.fechaProgramada >= hoy) ||
-    activas[0] ||
-    null;
+    activas
+      .filter((c) => c.fechaProgramada >= hoy)
+      .sort((a, b) =>
+        `${a.fechaProgramada} ${a.ventanaInicio}`.localeCompare(`${b.fechaProgramada} ${b.ventanaInicio}`)
+      )[0] || null;
 
   // Historial: citas pasadas o terminadas
   const historial = citas.filter((c) => c.idInspeccion !== proximaCita?.idInspeccion);
