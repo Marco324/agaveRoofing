@@ -43,16 +43,8 @@
             </div>
           </div>
 
-          <!-- User profile, Quick Switcher & Mobile Menu Toggle -->
+          <!-- Usuario de la sesión y cierre de sesión -->
           <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
-            <div class="hidden md:flex items-center gap-1.5 mr-1 border-r border-slate-700 pr-3">
-              <a href="../app-cliente/simulador_web/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap" title="Abrir Simulador App del Cliente">
-                <i class="fa-solid fa-mobile-screen-button"></i> <span>App Cliente</span>
-              </a>
-              <a href="../app-inspector/simulador_web/index.html" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap" title="Abrir Simulador App del Inspector">
-                <i class="fa-solid fa-helmet-safety"></i> <span>App Inspector</span>
-              </a>
-            </div>
             <div class="text-right hidden sm:block">
               <div id="nombreUsuarioPanel" class="text-xs font-semibold text-slate-200 leading-tight">—</div>
               <div class="text-[10px] text-slate-400">Administrador</div>
@@ -62,9 +54,6 @@
             </div>
             <button type="button" onclick="cerrarSesionPanel()" class="text-[11px] bg-slate-800 hover:bg-rose-700 text-slate-200 border border-slate-700 px-2.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap" title="Cerrar sesión">
               <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Salir</span>
-            </button>
-            <button id="btnMobileMenu" onclick="toggleMobileNav()" class="md:hidden p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" aria-label="Abrir menú rápido">
-              <i id="iconMobileMenu" class="fa-solid fa-bars text-sm"></i>
             </button>
           </div>
         </div>
@@ -91,19 +80,6 @@
             <i class="fa-solid fa-shield-halved text-amber-400"></i> <span>Catálogos y Seguridad (E05–E12)</span>
           </button>
         </nav>
-
-        <!-- Gaveta desplegable para Móvil (Accesos rápidos a simuladores y pestañas) -->
-        <div id="mobileQuickDrawer" class="hidden md:hidden py-3 border-t border-slate-800 space-y-2.5">
-          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Accesos directos a Simuladores Móviles</div>
-          <div class="grid grid-cols-2 gap-2">
-            <a href="../app-cliente/simulador_web/index.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-mobile-screen-button"></i> App Cliente
-            </a>
-            <a href="../app-inspector/simulador_web/index.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-helmet-safety"></i> App Inspector
-            </a>
-          </div>
-        </div>
       </div>
     </header>
 
@@ -1785,16 +1761,6 @@
     };
     document.getElementById('btnPrevDay').onclick = () => irAFecha(sumarDias(fechaFiltro, -1));
     document.getElementById('btnNextDay').onclick = () => irAFecha(sumarDias(fechaFiltro, 1));
-
-    function toggleMobileNav() {
-      const drawer = document.getElementById('mobileQuickDrawer');
-      const icon = document.getElementById('iconMobileMenu');
-      if (!drawer) return;
-      const isHidden = drawer.classList.toggle('hidden');
-      if (icon) {
-        icon.className = isHidden ? 'fa-solid fa-bars text-sm' : 'fa-solid fa-xmark text-sm';
-      }
-    }
 
     function cambiarTab(tab) {
       const vAgenda = document.getElementById('viewAgenda');

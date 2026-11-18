@@ -75,7 +75,7 @@ class PushService {
 
   /// Llamar una vez en `main()` antes de `runApp`.
   Future<void> inicializarFirebase() async {
-    if (kIsWeb) return; // El simulador web usa sus notificaciones simuladas.
+    if (kIsWeb) return; // Firebase Messaging no se configuró para web.
     try {
       await Firebase.initializeApp();
       FirebaseMessaging.onBackgroundMessage(manejarPushEnSegundoPlano);

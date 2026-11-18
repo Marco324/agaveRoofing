@@ -21,8 +21,8 @@
 
 - `api/` — API REST en Node.js 22 + TypeScript nativo (módulo `http`, sin Express) con SQLite en modo WAL (`node:sqlite`). Máquina de estados (`RN-01` a `RN-17`), notificaciones push reales con **Firebase Cloud Messaging** (simuladas si no hay credenciales) y SMS de respaldo simulado, con reintentos (`E08`), reprogramaciones (`E09`), trayecto y ETA estimado (`E10`), ejecución, sincronización idempotente e indicadores (`E11`), catálogos y bitácora (`E05`/`E06`).
 - `panel/` — Panel web de administración en una sola página (`panel/index.html`, HTML + JavaScript + Tailwind por CDN): agenda (`E07`), bitácora de notificaciones (`E08`), bandeja de reprogramaciones (`E09`), monitor en vivo (`E10`), tablero de indicadores con CSV (`E11`) y catálogos (`E05`/`E06`). Los archivos de `panel/src/pages/*.tsx` son prototipos en React que no forman parte de la versión entregada.
-- `app-inspector/` — App del inspector en **Flutter + Dart** (patrón MVP): ruta del día, "Voy en camino" con avance GPS simulado, llegada, resultado, cliente ausente y navegación a Maps/Waze. Su **simulador web** (`simulador_web/index.html`) agrega mensajería y cola sin conexión con sincronización idempotente (`RN-12`).
-- `app-cliente/` — App del cliente en **Flutter + Dart** (patrón MVP): próxima cita, confirmación, reprogramación (`RN-05`/`RN-06`), seguimiento con distancia y ETA, aviso *"Ya estoy en casa"*, reporte, encuesta piloto y notificaciones push con Firebase (`firebase_messaging`, por ahora solo Android). Su **simulador web** agrega notificaciones simuladas, mapa esquemático y mensajería.
+- `app-inspector/` — App del inspector en **Flutter + Dart** (patrón MVP): ruta del día, "Voy en camino" con avance GPS simulado, llegada, resultado, cliente ausente y navegación a Maps/Waze.
+- `app-cliente/` — App del cliente en **Flutter + Dart** (patrón MVP): próxima cita, confirmación, reprogramación (`RN-05`/`RN-06`), seguimiento con distancia y ETA, aviso *"Ya estoy en casa"*, reporte, encuesta piloto y notificaciones push con Firebase (`firebase_messaging`, por ahora solo Android).
 - `shared/` — Tipos de dominio, estados y DTOs compartidos.
 - `docs/` — Documentación normativa (`01` a `07`), manuales, casos y resultados de pruebas, y paquetes de entrega (`E03` a `E12`). Las diferencias entre el SRS y lo construido están en `docs/02_SRS_Requerimientos.md` §5.
 
@@ -58,15 +58,13 @@ El teléfono se acepta con o sin `+1`, guiones o espacios. Cada app solo admite 
 **Flujo de la prueba completa:** el ejecutivo entra al panel y programa la cita (cliente, domicilio, inspector, fecha y ventana) → el cliente entra a su app y confirma → el inspector entra a la suya, pulsa *Voy en camino* (GPS real), el cliente lo sigue en el mapa y avisa *Ya estoy en casa* → el inspector registra la llegada y captura el resultado con fotos → el panel muestra el monitor, el reporte y los indicadores.
 
 La sesión dura 30 días y sigue activa al cerrar la app o recargar el panel; *Cerrar sesión* está en el perfil de cada app y en el botón *Salir* del panel. Si la base existía antes de esta versión, la API asigna la contraseña inicial a las cuentas que no tenían.
-Con la API corriendo, abre estos archivos directamente en el navegador (la API no sirve archivos estáticos). Los tres piden iniciar sesión; los simuladores aceptan otra API con `?api=http://…/api`:
+Con la API corriendo, abre el panel directamente en el navegador (la API no sirve archivos estáticos); pide iniciar sesión y acepta otra API con `?api=http://…/api`:
 - **Panel de administración:** `panel/index.html`
-- **Simulador web app del inspector:** `app-inspector/simulador_web/index.html`
-- **Simulador web app del cliente:** `app-cliente/simulador_web/index.html`
 - **Healthcheck de la API:** `http://localhost:4000/api/salud`
 
 **Notificaciones push reales:** `FIREBASE_SERVICE_ACCOUNT=/ruta/cuenta-servicio.json npm run api`. Sin esa variable el envío PUSH se simula. Pasos completos en `docs/manual/Guia_Notificaciones_Firebase.md`.
 
-Para usar otro puerto: `PORT=5000 npm run api` (y actualizar `API_URL` en el panel y los simuladores).
+Para usar otro puerto: `PORT=5000 npm run api` (y abrir el panel con `?api=http://localhost:5000/api`; en las apps, `--dart-define=API_URL=...`).
 
 **Fecha de referencia ("hoy").** La API decide qué es "hoy" (próxima cita del cliente, ruta por defecto del inspector, botón *Hoy* del panel y de las apps) con la fecha de San Antonio (`America/Chicago`). Los datos de prueba están alrededor del **12 de noviembre de 2026**; para presentar la demo con esa fecha:
 ```bash

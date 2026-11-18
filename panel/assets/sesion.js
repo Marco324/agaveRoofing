@@ -1,5 +1,5 @@
 // =============================================================================
-// Inicio de sesión para el panel y los simuladores web (RF-01, RF-05, RF-07)
+// Inicio de sesión del panel de administración (RF-01, RF-05, RF-07)
 //
 // Uso:
 //   const sesion = SesionAgave.crear({ apiUrl, rol: 'ADMINISTRADOR', app: 'PANEL',

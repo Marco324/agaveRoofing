@@ -11,7 +11,7 @@
    - Avisos solo por correo, sin confirmación ni aviso del traslado.
    - Según el levantamiento inicial: ~18 % de visitas fallidas y ~$65 USD por vuelta perdida (citar la fuente).
 2. **La solución AgaveAlerta: 3 servicios + 1 API central**
-   - Panel web de administración, app del inspector y app del cliente (Flutter + simuladores web).
+   - Panel web de administración, app del inspector y app del cliente (Flutter).
 3. **Reglas de negocio críticas y riesgos mitigados**
    - Máquina de 13 estados (RN-01) con cierre automático de citas pasadas (RN-18), bloqueo de traslapes (RN-02), un solo trayecto activo (RN-03), respaldo push → SMS (riesgo R4), ubicación visible solo durante el trayecto (RN-08 / R7) y sincronización idempotente por `id_local` (RN-12).
 4. **Demostración en vivo de punta a punta (5 minutos)** — guion en la sección 2.
@@ -27,28 +27,28 @@
 
 **Antes de la defensa**
 
-- Comprobar que la computadora tenga internet o que existan copias locales de Tailwind y Font Awesome; sin ellas el panel y los simuladores se ven sin estilos.
+- Comprobar que la computadora tenga internet o que existan copias locales de Tailwind y Font Awesome; sin ellas el panel se ve sin estilos.
 - Ensayar el recorrido completo al menos una vez el día anterior.
 
 1. **Levantar el entorno** (en la raíz del proyecto):
    ```bash
-   npm run seed
+   npm run seed:demo  # cuentas + 12 citas de demostración
    npm run api:demo   # API en http://localhost:4000 con "hoy" = 12 nov 2026
    ```
-   > ⚠️ Usar `npm run api:demo`, **no** `npm run api`. La API cierra automáticamente las citas cuya fecha ya pasó (RN-18); con la fecha real del 19 de noviembre, las citas de demostración del 12 quedarían como `NO_REALIZADA` / `PENDIENTE_CIERRE` y el recorrido no funcionaría. Si se arrancó por error con `npm run api`, volver a ejecutar `npm run seed`.
-2. **Panel de administración** — abrir el archivo `panel/index.html` en el navegador.
+   > ⚠️ Usar `npm run api:demo`, **no** `npm run api`. La API cierra automáticamente las citas cuya fecha ya pasó (RN-18); con la fecha real del 19 de noviembre, las citas de demostración del 12 quedarían como `NO_REALIZADA` / `PENDIENTE_CIERRE` y el recorrido no funcionaría. Si se arrancó por error con `npm run api`, volver a ejecutar `npm run seed:demo`.
+2. **Panel de administración** — abrir el archivo `panel/index.html` en el navegador y entrar con `marco.admin@agaveroofing.com` / `Agave2026`.
    - Verificar que la barra superior indique "API Conectada" y que la agenda diga "Fecha de demo".
    - Arriba aparece la bandeja **"Visitas que requieren atención"** con las 7 citas de octubre no realizadas: sirve para explicar el cierre automático de citas pasadas (RN-18).
    - Mostrar la agenda, la bitácora de notificaciones, la bandeja de reprogramaciones y el monitor en vivo.
-3. **App del inspector** — abrir `app-inspector/simulador_web/index.html` (o la app Flutter).
+3. **App del inspector** — abrir la app Flutter (`flutter run` en `app-inspector/`) y entrar con `carlos.garza@agaveroofing.com` / `Agave2026`.
    - Seleccionar la parada confirmada `INS-2026-000010` y pulsar **"Voy en camino"**.
-   - Avanzar el GPS simulado y mostrar cómo se actualiza el monitor del panel.
-4. **App del cliente** — abrir `app-cliente/simulador_web/index.html` (o la app Flutter).
+   - Avanzar el GPS (real, o simulado con *Perfil → Modo demo*) y mostrar cómo se actualiza el monitor del panel.
+4. **App del cliente** — abrir la app Flutter (`flutter run` en `app-cliente/`) y entrar con el teléfono `210 555 0201` / `Agave2026`.
    - Mostrar el aviso "va en camino", el seguimiento con ETA y el aviso a menos de 1 km (`POR_LLEGAR`).
    - Pulsar **"Ya estoy en casa"**.
 5. **Llegada, modo sin señal y reporte**
    - En la app del inspector, pulsar **"Llegué"** (el seguimiento del cliente se apaga por privacidad, RN-08).
-   - Activar el modo sin señal (simulador web), capturar el resultado con fotos (RN-11) y sincronizar (RN-12).
+   - Capturar el resultado con fotos (RN-11); un reintento no duplica el registro (RN-12).
    - En la app del cliente, abrir el reporte de la inspección y cerrar mostrando el tablero de indicadores en el panel.
 
 **Qué decir si preguntan por las integraciones:** push, SMS y ETA están simulados dentro de la API para poder probar las reglas de negocio sin cuentas externas; la arquitectura objetivo (Supabase, FCM, Twilio, Google Directions) está en el ADR-001 §2.1.

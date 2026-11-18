@@ -85,9 +85,10 @@
    npm test       # Ejecuta las suites de E07, E08-E09 y E10-E11
    ```
 4. **Apertura de las 3 Aplicaciones:**
-   - **Panel Web de Administración:** Abrir `panel/index.html`.
-   - **App del Inspector:** Abrir `app-inspector/simulador_web/index.html` (o `flutter run` en `app-inspector/`).
-   - **App del Cliente:** Abrir `app-cliente/simulador_web/index.html` (o `flutter run` en `app-cliente/`).
+   - **Panel Web de Administración:** Abrir `panel/index.html` y entrar con `marco.admin@agaveroofing.com`.
+   - **App del Inspector:** `flutter run` en `app-inspector/` y entrar con `carlos.garza@agaveroofing.com`.
+   - **App del Cliente:** `flutter run` en `app-cliente/` y entrar con el teléfono `210 555 0201`.
+   - Todas las cuentas de prueba usan la contraseña `Agave2026` (ver README, *Cuentas de prueba*).
 
 ---
 
