@@ -16,7 +16,7 @@ El equipo entrega una plataforma compuesta por una **API central** y **tres serv
 
 ### 1.1 API central (`api/`)
 
-- Máquina de estados de la inspección con 11 estados y transiciones validadas (RN-01).
+- Máquina de estados de la inspección con 13 estados y transiciones validadas (RN-01), incluido el cierre automático de citas pasadas (RN-18).
 - Agenda con folio único `INS-YYYY-NNNNNN`, bloqueo de traslapes (RN-02), reasignación, cambio de fecha y cancelación con motivo.
 - Motor de notificaciones con registro de estados, reintentos (máx. 3) y respaldo por SMS, **con envío simulado** (no se conecta a FCM ni a Twilio).
 - Confirmación, horarios disponibles y solicitudes de reprogramación con límite de 3 (RN-04 a RN-06), y barrido de citas `SIN_CONFIRMAR` (RN-07).

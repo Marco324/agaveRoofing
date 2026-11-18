@@ -50,7 +50,21 @@ stateDiagram-v2
     CLIENTE_AUSENTE --> [*] : puede generar inspeccion de reintento
     COMPLETADA --> [*]
     CANCELADA --> [*]
+    CONFIRMADA --> NO_REALIZADA : paso la fecha sin visita
+    NOTIFICADA --> NO_REALIZADA : paso la fecha sin visita
+    SIN_CONFIRMAR --> NO_REALIZADA : paso la fecha sin visita
+    EN_CAMINO --> PENDIENTE_CIERRE : paso la fecha sin cerrar
+    EN_SITIO --> PENDIENTE_CIERRE : paso la fecha sin cerrar
+    PENDIENTE_CIERRE --> COMPLETADA : resultado tardio
+    PENDIENTE_CIERRE --> CLIENTE_AUSENTE : ausencia tardia
+    PENDIENTE_CIERRE --> NO_REALIZADA : la oficina confirma que no se hizo
+    NO_REALIZADA --> REPROGRAMADA : nueva fecha (mismo folio)
+    NO_REALIZADA --> REPROG_SOLICITADA : el cliente pide otra fecha
+    NO_REALIZADA --> PENDIENTE_CIERRE : llega evidencia sin senal
+    NO_REALIZADA --> CANCELADA
 ```
+
+**Citas pasadas (v1.3, 17 nov 2026 — RN-18 del SRS).** Cuando la fecha programada queda atrás, la API cierra la cita con origen `SISTEMA` en el historial. `PROGRAMADA` y `REPROGRAMADA` también pasan a `NO_REALIZADA` (el diagrama muestra solo los casos más comunes); `REPROG_SOLICITADA` no vence sola porque espera la respuesta del administrador. `NO_REALIZADA` cuenta como **visita perdida** en el tablero, distinta de `CLIENTE_AUSENTE` (visita fallida). En la versión construida (SQLite) la tabla no tiene `CHECK` de estados: la lista válida y las transiciones viven en `shared/src/types/estados.ts`.
 
 ### 1.2 Decisión de diseño: ubicación efímera, resumen permanente
 
@@ -456,7 +470,7 @@ El modelo está en **Tercera Forma Normal (3FN)**:
 | fecha_programada | DATE | No | | Día de la visita. |
 | ventana_inicio | TIME | No | | Inicio de la ventana de atención. |
 | ventana_fin | TIME | No | CHECK > ventana_inicio | Fin de la ventana. |
-| estado | VARCHAR(20) | No | CHECK contra la lista de estados, DEFAULT `PROGRAMADA` | Estado actual (RN-01). |
+| estado | VARCHAR(20) | No | CHECK contra la lista de estados, DEFAULT `PROGRAMADA` | Estado actual (RN-01). Desde v1.3 incluye `NO_REALIZADA` y `PENDIENTE_CIERRE` (RN-18). |
 | motivo_visita | VARCHAR(120) | Sí | | Ej. "revisión posterior a granizada". |
 | notas | VARCHAR(255) | Sí | | Indicaciones para el inspector. |
 | id_inspeccion_origen | BIGINT | Sí | FK → inspeccion | Cita de la que proviene (reintento o reprogramación). |
@@ -779,7 +793,8 @@ CREATE TABLE inspeccion (
     estado                   VARCHAR(20) NOT NULL DEFAULT 'PROGRAMADA'
         CHECK (estado IN ('PROGRAMADA','NOTIFICADA','CONFIRMADA','SIN_CONFIRMAR',
                           'REPROG_SOLICITADA','REPROGRAMADA','EN_CAMINO','EN_SITIO',
-                          'COMPLETADA','CLIENTE_AUSENTE','CANCELADA')),
+                          'COMPLETADA','CLIENTE_AUSENTE','CANCELADA',
+                          'NO_REALIZADA','PENDIENTE_CIERRE')),
     motivo_visita            VARCHAR(120),
     notas                    VARCHAR(255),
     id_inspeccion_origen     BIGINT REFERENCES inspeccion(id_inspeccion),
@@ -1159,6 +1174,7 @@ SELECT date_trunc('week', i.fecha_programada)::date            AS semana,
        COUNT(*)                                                AS citas,
        COUNT(*) FILTER (WHERE i.confirmado_en IS NOT NULL)      AS confirmadas,
        COUNT(*) FILTER (WHERE i.estado = 'CLIENTE_AUSENTE')     AS visitas_fallidas,
+       COUNT(*) FILTER (WHERE i.estado = 'NO_REALIZADA')        AS visitas_perdidas,
        COUNT(*) FILTER (WHERE i.estado = 'COMPLETADA')          AS completadas,
        COUNT(*) FILTER (WHERE i.veces_reprogramada > 0)         AS reprogramadas,
        ROUND(100.0 * COUNT(*) FILTER (WHERE i.confirmado_en IS NOT NULL)
@@ -1223,6 +1239,8 @@ enum EstadoInspeccion {
   COMPLETADA
   CLIENTE_AUSENTE
   CANCELADA
+  NO_REALIZADA
+  PENDIENTE_CIERRE
 }
 
 enum TipoNotificacion {

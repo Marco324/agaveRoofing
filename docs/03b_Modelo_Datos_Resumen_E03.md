@@ -166,7 +166,7 @@ El modelo que se implementa normaliza estas cinco entidades en tablas separadas.
 |---|---|---|
 | `USUARIOS` (con campo `rol`) | `usuario` + `rol` + `cliente` + `inspector` | El rol se normaliza en catálogo y cada perfil tiene su propia tabla de extensión. |
 | `PERFILES_CLIENTE` | `cliente` + `domicilio` (+ `zona`) | Un cliente puede tener más de un domicilio georreferenciado; por eso se separa. |
-| `CITAS` | `inspeccion` + `inspeccion_historial` + `reprogramacion` | El `estado` crece de 6 a **11 estados** y **toda** transición se registra en el historial (RN-01). De ahí salen los indicadores. |
+| `CITAS` | `inspeccion` + `inspeccion_historial` + `reprogramacion` | El `estado` crece de 6 a **11 estados** (13 desde la v1.3 del SRS, con `NO_REALIZADA` y `PENDIENTE_CIERRE` para citas pasadas) y **toda** transición se registra en el historial (RN-01). De ahí salen los indicadores. |
 | `NOTIFICACIONES` | `notificacion` + `plantilla_notificacion` + `dispositivo` | El texto sale de plantillas y se envía a los dispositivos registrados, con reintentos y respaldo por SMS. |
 | `UBICACIONES_TIEMPO_REAL` | `trayecto` + `punto_ubicacion` | El trayecto agrupa los puntos de una salida (índice único parcial: un solo trayecto activo por inspector). Retención de puntos: 30 días. |
 | — | `resultado_inspeccion`, `evidencia`, `mensaje`, `configuracion`, `bitacora` | Bloques que la vista resumida no representa. |

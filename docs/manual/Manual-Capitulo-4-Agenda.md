@@ -36,6 +36,10 @@ Cada cita en el sistema evoluciona mediante una máquina de estados estricta. En
 | **COMPLETADA** | Gris oscuro | Inspección finalizada con reporte y fotos registradas. | Proceso concluido exitosamente. |
 | **CLIENTE_AUSENTE** | Rojo carmesí | Inspector llegó pero nadie atendió tras el tiempo de espera. | Se registra evidencia para cobro de visita fallida. |
 | **CANCELADA** | Gris neutro | Cita cancelada con motivo justificado en el historial. | Proceso anulado. |
+| **NO_REALIZADA** | Rojo | La fecha pasó y nadie fue (cierre automático del sistema, RN-18). | Darle nueva fecha desde la bandeja *Visitas que requieren atención* (conserva el folio) o cancelarla. |
+| **PENDIENTE_CIERRE** | Fucsia | La fecha pasó con el inspector en camino o en el domicilio, sin cerrar la visita. | El inspector la cierra con el resultado o la ausencia; si no se hizo, la oficina pulsa *Marcar como no realizada*. |
+
+> **Citas pasadas (v1.3).** La API revisa las citas al arrancar y cada 10 minutos. Las que quedaron atrás de la fecha de hoy pasan a `NO_REALIZADA` o `PENDIENTE_CIERRE` y aparecen en la bandeja **Visitas que requieren atención**, arriba de la agenda. Una cita con solicitud de reprogramación pendiente (`REPROG_SOLICITADA`) no se cierra sola: espera tu respuesta en la bandeja de reprogramaciones. No es posible mover una cita a una fecha que ya pasó.
 
 ---
 

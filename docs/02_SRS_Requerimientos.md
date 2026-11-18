@@ -2,7 +2,7 @@
 ## Sistema de Alerta y Seguimiento de Inspecciones de Techo — Agave Roofing (AgaveAlerta)
 
 **Basado en la estructura del estándar IEEE 830.**
-**Versión 1.1 — 13 de noviembre de 2026** (ver §5, Control de cambios)
+**Versión 1.3 — 17 de noviembre de 2026** (ver §5, Control de cambios)
 **Universidad Autónoma de Nuevo León — FIME**
 **Proyecto Integrador I — Equipo 01 — Agosto–Diciembre 2026**
 
@@ -45,6 +45,8 @@ Los tres servicios se apoyan en una **API** única y una **base de datos central
 | Trayecto | Recorrido del inspector desde que pulsa "Voy en camino" hasta que registra su llegada. |
 | ETA | Tiempo estimado de llegada (*Estimated Time of Arrival*). |
 | Visita fallida | Traslado en el que el cliente no se encontraba en el domicilio; obliga a repetir la inspección. |
+| Visita perdida *(v1.3)* | Inspección cuya fecha pasó sin que el inspector fuera (`NO_REALIZADA`, RN-18). A diferencia de la visita fallida, no hubo traslado. |
+| Visita sin cerrar *(v1.3)* | Inspección cuya fecha pasó con el inspector en camino o en el domicilio, sin registrar resultado ni ausencia (`PENDIENTE_CIERRE`, RN-18). |
 | Evidencia | Fotografías y notas que el inspector captura como respaldo del resultado. |
 | Zona | Agrupación geográfica de domicilios que se asigna a uno o varios inspectores. |
 | Modo sin señal | Operación de la app del inspector sin datos móviles, con sincronización posterior. |
@@ -341,7 +343,7 @@ Prioridad: **A** = Alta (imprescindible), **M** = Media, **B** = Baja (deseable)
 
 | ID | Regla |
 |----|-------|
-| RN-01 | Una inspección solo puede avanzar por los estados definidos en la máquina de estados: `PROGRAMADA → NOTIFICADA → (CONFIRMADA | SIN_CONFIRMAR | REPROG_SOLICITADA) → EN_CAMINO → EN_SITIO → COMPLETADA`, con las salidas `REPROGRAMADA`, `CLIENTE_AUSENTE` y `CANCELADA`. Cualquier otra transición se rechaza. |
+| RN-01 | Una inspección solo puede avanzar por los estados definidos en la máquina de estados: `PROGRAMADA → NOTIFICADA → (CONFIRMADA | SIN_CONFIRMAR | REPROG_SOLICITADA) → EN_CAMINO → EN_SITIO → COMPLETADA`, con las salidas `REPROGRAMADA`, `CLIENTE_AUSENTE` y `CANCELADA`, y las salidas por fecha vencida `NO_REALIZADA` y `PENDIENTE_CIERRE` (RN-18, v1.3). Cualquier otra transición se rechaza. |
 | RN-02 | Un inspector **no puede tener dos inspecciones con ventanas traslapadas** el mismo día (RF-17). |
 | RN-03 | Un inspector **no puede tener dos trayectos activos** a la vez: para iniciar uno nuevo debe cerrar el anterior (llegada, ausente o cancelado). |
 | RN-04 | La **confirmación del cliente** se registra con su fecha y hora y **no se puede deshacer**; si el cliente cambia de opinión, solicita una reprogramación. |
@@ -358,6 +360,8 @@ Prioridad: **A** = Alta (imprescindible), **M** = Media, **B** = Baja (deseable)
 | RN-15 | La **baja de clientes, inspectores, domicilios y zonas es lógica** (campo `activo`), nunca física, para preservar el historial. |
 | RN-16 | Un **Cliente** solo puede ver y operar sus propias inspecciones; un **Inspector**, solo las que tiene asignadas; el **Administrador**, todas (RF-07). |
 | RN-17 | Los **puntos de ubicación** de un trayecto se eliminan al cumplir el periodo de retención; el **resumen** del trayecto (distancia, duración, hora de inicio y fin) se conserva para los indicadores. |
+| RN-18 | *(v1.3)* Cuando la fecha programada de una inspección queda atrás, el sistema la cierra automáticamente y lo registra en el historial con origen `SISTEMA`: si **nadie fue** (`PROGRAMADA`, `NOTIFICADA`, `CONFIRMADA`, `SIN_CONFIRMAR`, `REPROGRAMADA`) pasa a **`NO_REALIZADA`**; si la visita **quedó en curso** (`EN_CAMINO`, `EN_SITIO`) pasa a **`PENDIENTE_CIERRE`** y su trayecto activo se cancela (RN-08). Una inspección en `REPROG_SOLICITADA` **no vence sola**: espera la respuesta del Administrador. `PENDIENTE_CIERRE` acepta todavía el resultado (→ `COMPLETADA`) o la ausencia (→ `CLIENTE_AUSENTE`), o el Administrador confirma que no se hizo (→ `NO_REALIZADA`). `NO_REALIZADA` puede recibir una nueva fecha conservando el folio (→ `REPROGRAMADA` por el Administrador o `REPROG_SOLICITADA` por el Cliente, RN-06) o cancelarse. Si llega tarde una operación registrada sin conexión (RN-12) de una inspección `NO_REALIZADA`, la inspección se reabre como `PENDIENTE_CIERRE` y se cierra con lo recibido, sin avisar la llegada al Cliente. Una inspección `NO_REALIZADA` cuenta como **visita perdida**, distinta de la visita fallida por cliente ausente (RN-10). |
+| RN-19 | *(v1.3)* El **"hoy"** del negocio (próxima cita del Cliente, ruta por defecto del Inspector, botón *Hoy* del panel y cierre de RN-18) es la fecha en la zona horaria de San Antonio, TX (`America/Chicago`). Ninguna inspección se puede **mover ni solicitar** a una fecha anterior a "hoy", y una inspección pasada **nunca** se muestra al Cliente como su próxima cita. |
 
 ### 3.5 Casos de uso (resumen)
 
@@ -447,6 +451,7 @@ Ver detalle y diagramas en `04_Diagramas_UML.md`.
 | 1.0 | 17/sep/2026 | Mario (AN) / Marco (LP) | SRS validado y alcance congelado (ver `06_Acta_Congelacion_Alcance.md`). |
 | 1.1 | 13/nov/2026 | Marco (LP) | Se agrega esta sección para documentar las diferencias entre lo especificado y lo construido en la versión de demostración. **No se elimina ningún requerimiento**: los no implementados pasan al Product Backlog como trabajo futuro, según la condición 2 del acta de congelación. |
 | 1.2 | 15/nov/2026 | Marco (LP) | Mapa real, GPS y cámara en las apps Flutter y mapa real en el monitor del panel (rama `feat/mapa-gps-camara`). Se actualizan RF-08, RF-45, RF-46, RF-47, RF-48 y RF-54 en §5.3. |
+| 1.3 | 17/nov/2026 | Marco (LP) | Manejo de citas pasadas: estados `NO_REALIZADA` y `PENDIENTE_CIERRE` (RN-01 actualizada, **RN-18** nueva) y fecha de negocio en la zona horaria de San Antonio (**RN-19** nueva). Se agregan los términos *visita perdida* y *visita sin cerrar* (§1.3), una fila en §5.2 y notas en los módulos 3 (Agenda), 5 (Confirmación), 7 (Ejecución) y 9 (Tablero) de §5.3. No se elimina ningún requerimiento. |
 
 ### 5.2 Cambios de arquitectura y restricciones
 
@@ -464,6 +469,7 @@ La sección 2.1 describe la **arquitectura objetivo**. La versión entregada (Re
 | RES-02, IU-03 | Panel en React desplegado en Vercel | Página única HTML + JavaScript + Tailwind (`panel/index.html`), ejecutada localmente |
 | RNF-30 | Distribución mediante EAS Build | No aplica: EAS es de Expo y las apps son Flutter. Se sustituye por `flutter build apk` |
 | — | — | Cada app móvil tiene un **simulador web** que se usa en la demostración para los flujos aún no portados a Flutter |
+| RN-18, RN-19 | Cierre de citas pasadas con un programador de tareas | La API cierra las citas pasadas al arrancar, cada 10 minutos y bajo demanda (`POST /api/sistema/cerrar-citas-pasadas`). Para la demostración, "hoy" se puede fijar con la variable `FECHA_HOY` (`npm run api:demo` usa el 12 nov 2026, la fecha de los datos de prueba); `GET /api/sistema/fecha` la informa a las apps y al panel. El simulador web del inspector conserva sus fechas fijas |
 
 ### 5.3 Estado de implementación de requerimientos de prioridad Alta
 
@@ -476,20 +482,20 @@ Leyenda: **Completo** = implementado en la API y en el cliente correspondiente �
 | 1. Seguridad | RF-08 | Parcial | La app del inspector explica para qué usa la ubicación y luego pide el permiso; si se niega o el GPS está apagado, lo dice con claridad y no deja iniciar el trayecto. Permiso solo "mientras se usa la app" (no en segundo plano). Ninguna app pide aún el permiso de notificaciones. La cámara y la galería piden su permiso al usarse |
 | 2. Catálogos | RF-09, RF-10, RF-12 | Parcial | Alta y baja lógica de clientes en el panel; domicilios e inspectores por API |
 | 2. Catálogos | RF-11 (prioridad M) | Simulado | Las coordenadas se asignan aleatoriamente cerca del centro de San Antonio; no hay geocodificación ni ajuste del pin |
-| 3. Agenda | RF-16 a RF-20, RF-22 | Completo | Folio, traslapes, reasignación, cambio de fecha y cancelación con motivo obligatorio, desde el detalle de la cita en el panel (corregido el 13 nov 2026) |
+| 3. Agenda | RF-16 a RF-20, RF-22 | Completo | Folio, traslapes, reasignación, cambio de fecha y cancelación con motivo obligatorio, desde el detalle de la cita en el panel (corregido el 13 nov 2026). Desde v1.3: el panel muestra la bandeja **"Visitas que requieren atención"** con las inspecciones `PENDIENTE_CIERRE` (acción *Marcar como no realizada*) y `NO_REALIZADA` (acción *Dar nueva fecha*); mover una `NO_REALIZADA` la deja en `REPROGRAMADA`; no se puede mover a una fecha pasada ni mover una `PENDIENTE_CIERRE` (RN-18, RN-19) |
 | 3. Agenda | RF-21 | Parcial | Agenda por día con filtros por inspector y zona; no hay vista por semana |
 | 4. Notificaciones | RF-25 a RF-28, RF-31, RF-32 | Simulado | Motor completo en la API, sin envío real |
-| 5. Confirmación | RF-36 a RF-38, RF-40 a RF-43 | Completo | Confirmar desde la notificación solo se demuestra en el simulador web (RF-36); el paso a `SIN_CONFIRMAR` (RF-43) se ejecuta bajo demanda desde el panel, sin programador automático |
+| 5. Confirmación | RF-36 a RF-38, RF-40 a RF-43 | Completo | Confirmar desde la notificación solo se demuestra en el simulador web (RF-36); el paso a `SIN_CONFIRMAR` (RF-43) se ejecuta bajo demanda desde el panel, sin programador automático. Desde v1.3: en el historial del Cliente una visita `NO_REALIZADA` ofrece **Agendar nueva visita** (o pide llamar a la oficina si ya usó las 3 reprogramaciones, RN-06); los horarios disponibles empiezan después de "hoy" (RN-19) |
 | 6. Trayecto | RF-44, RF-49, RF-50, RF-51 | Completo | Bloqueo de doble trayecto y privacidad en la API; el cierre por tiempo máximo (RF-49) se ejecuta bajo demanda desde el panel |
 | 6. Trayecto | RF-45 | Parcial | "Voy en camino" envía la posición real y la app publica latitud, longitud, precisión, velocidad y hora cada 15 s hasta registrar la llegada o la ausencia, con indicador "Compartiendo ubicación con el cliente". Solo con la app en primer plano (el segundo plano y el disparo cada 50 m quedan como trabajo futuro). El avance simulado sigue disponible tras el interruptor "Modo demo" del perfil |
 | 6. Trayecto | RF-46 | Completo | La app Flutter del cliente muestra un mapa (OpenStreetMap) con el pin del domicilio, el del inspector y su rastro, más ETA y distancia, actualizados cada 15 s solo mientras la cita va en camino y la pantalla está visible. El panel muestra el mismo seguimiento en un mapa Leaflet |
 | 6. Trayecto | RF-47 | Simulado | La API recalcula ETA y distancia restante cada 60 s con los puntos reales, pero con estimación propia en lugar del servicio de rutas (ver §5.2) |
 | 6. Trayecto | RF-48 (prioridad M) | Completo | "Actualizado hace X min"; si se pierde la señal, el mapa conserva el último punto con "Última ubicación conocida hace X min" |
-| 7. Ejecución | RF-53, RF-55, RF-56 | Completo | Validaciones RN-10 y RN-11 en la API |
+| 7. Ejecución | RF-53, RF-55, RF-56 | Completo | Validaciones RN-10 y RN-11 en la API. Desde v1.3: en la app del inspector "Voy en camino" solo aparece el día de la visita; una visita `PENDIENTE_CIERRE` se cierra con **Cerrar con resultado** o **El cliente no estaba**, y la tira semanal marca en rojo los días con visitas sin cerrar (RN-18) |
 | 7. Ejecución | RF-54 | Completo | La app del inspector toma o elige de 1 a 5 fotos (cámara o galería), con miniaturas y opción de quitar; no deja enviar sin al menos una (RN-11). La descripción de cada foto se genera automáticamente. La captura es una pantalla por pasos (estado del techo → hallazgos → fotos → enviar). En "Cliente ausente" la foto de fachada y la nota son obligatorias (RN-10). El reporte HTML muestra las fotos |
 | 7. Ejecución | RF-57 | Parcial | La app Flutter genera el `idLocal` (UUID) una sola vez por operación y por foto y lo reúsa en cada reintento, así que reenviar no duplica (RN-12). Falta la cola local sin conexión con sincronización automática (sí existe en la API y el simulador web) |
 | 8. Comunicación | RF-61 | Parcial | Mensajería en la API y los simuladores web; no en las apps Flutter |
-| 9. Tablero | RF-65, RF-66, RF-70 | Completo | Indicadores con exportación CSV y monitor del día con mapa real (Leaflet); si el mapa no carga por falta de internet, se avisa y la lista sigue funcionando |
+| 9. Tablero | RF-65, RF-66, RF-70 | Completo | Indicadores con exportación CSV y monitor del día con mapa real (Leaflet); si el mapa no carga por falta de internet, se avisa y la lista sigue funcionando. Desde v1.3: indicador **Visitas No Realizadas** (cantidad, porcentaje y visitas sin cerrar), separado de *Visitas Fallidas (Ausente)* |
 
 Los requerimientos de prioridad Media y Baja no listados quedan como trabajo futuro y se registran en el Product Backlog.
 
